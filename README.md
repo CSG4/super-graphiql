@@ -1,8 +1,16 @@
-# super-graphiql
-SuperGraphiQL is a powerful yet simple GUI designed for testing your GraphQL API. 
+<h1 align="center">Super GraphiQL</h1>
+<p align="center">Super-GraphiQL is a powerful yet simple GUI designed for testing your GraphQL API.</p>
+
+Super-GraphiQL is an application dedicating to testing your GraphQL API. Users are able to quickly setup a series of tests for their project, understand the results and save the test cases for later use.
 
 ## Motivation
-SuperGraphiQL is an application dedicating to testing your GraphQL API. Users are able to quickly setup a series of tests for their project, understand the results and save the test cases for later use.
+Super GraphQL builds on components of [GraphiQL](https://github.com/graphql/graphiql) to enable smooth testing workflow. SuperGraphiQL noteablely offers the following additional functionality:
+  
+  - Automatic schema reloading
+  - Save and organize test scripts
+  - Searchable Query history
+  - Intuitive visualization of test results
+  - Supports multiple GraphQL Queries, Subscritpions or Mutations in one test script
 
 ## Build status
 Build status of continus integration i.e. travis, appveyor etc. Ex. - 
@@ -15,14 +23,6 @@ Ex. -
 
 <b>Built with</b>
 - [Electron](https://electron.atom.io)
-
-## Features
-Similar to GraphiQL, SuperGraphiQL supports the testing of queries, subscriptions and mutations through a clean and user friendly interface. SuperGraphiQL noteablely offers the following additional functionality:
-
-  - Users can send test multiple queries, subscriptions, mutations in one script
-  - Users can control the order of their asynchronous calls to clearly visualize the order of execution
-  - Users can test multiple GraphQL Servers at once
-  - Users can save and search through past test scripts and test results
 
 ## Code Example
 Show what the library does as concisely as possible, developers should be able to figure out **how** your project solves their problem by looking at the code example. Make sure the API you are showing off is obvious, and that your code is short and concise.
