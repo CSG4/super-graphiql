@@ -21,24 +21,23 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use("/*/graphiql.css", (req, res) => {
-  // console.log(req.url);
   res.sendFile(path.join(__dirname, "./../../graphiql.css"));
 });
 
 app.use(express.static(__dirname + "./../"));
+
+//------ To test database using Postman ------//
 
 app.use("/newStudent", studentController.addStudent);
 app.use("/removeStudent", studentController.rmStudent);
 app.use("/newSubject", subjectController.addSubject);
 app.use("/removeSubject", subjectController.rmSubject);
 
-app.use(
-  "/graphql",
-  graphqlHTTP({
-    schema,
-    graphiql: true
-  })
-);
+//------ Original GraphiQL implementation can be seen at route /graphql ------//
+
+app.use("/graphql", graphqlHTTP({ schema, graphiql: true }));
+
+//------ To test your GraphQL schema/server using Postman ------//
 
 // A get request to retrieve the result of a query using HTTP, via a query string
 app.get("/get", (req, res) => {
