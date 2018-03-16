@@ -9,7 +9,6 @@ module.exports = {
     contentBase: "./dist/",
     hot: false
   },
-
   output: {
     filename: "webpack-bundle.js",
     path: path.join(__dirname, "./dist/")
@@ -22,19 +21,11 @@ module.exports = {
         use: {
           loader: "babel-loader",
           options: {
-            presets: ["env", "react"]
+            presets: ["env", "react", "stage-0"]
           }
         }
-      }
-      //,
-      // {
-      //     test: /\.scss$/,
-      //     loader: [
-      //         "style-loader", // creates style nodes from JS strings
-      //         "css-loader", // translates CSS into CommonJS
-      //         "sass-loader" // compiles Sass to CSS
-      //     ]
-      // }
+      },
+      { test: /\.flow$/, loader: "ignore-loader" }
     ]
   }
 };
