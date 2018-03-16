@@ -9,30 +9,23 @@ module.exports = {
     contentBase: "./dist/",
     hot: false
   },
-
   output: {
     filename: "webpack-bundle.js",
     path: path.join(__dirname, "./dist/")
   },
   module: {
-    loaders: [
+    rules: [
       {
         test: /.(js|jsx)$/,
-        loader: "babel-loader",
         exclude: /node_modules/,
-        query: {
-          presets: ["es2015", "react", "stage-0"]
+        use: {
+          loader: "babel-loader",
+          options: {
+            presets: ["env", "react", "stage-0"]
+          }
         }
-      }
-      //,
-      // {
-      //     test: /\.scss$/,
-      //     loader: [
-      //         "style-loader", // creates style nodes from JS strings
-      //         "css-loader", // translates CSS into CommonJS
-      //         "sass-loader" // compiles Sass to CSS
-      //     ]
-      // }
+      },
+      { test: /\.flow$/, loader: "ignore-loader" }
     ]
   }
 };
