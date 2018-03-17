@@ -51,6 +51,15 @@ const StudentType = new GraphQLObjectType({
 const RootQuery = new GraphQLObjectType({
   name: "RootQueryType",
   fields: {
+    allStudents: {
+      type: new GraphQLList(StudentType),
+      resolve(parentValue) {
+        return Student.find({}, (err, docs) => {
+          if (err || !docs) return "No Entry Found";
+          return docs;
+        });
+      }
+    },
     student: {
       type: StudentType,
       args: { id: { type: GraphQLInt } },
@@ -58,6 +67,15 @@ const RootQuery = new GraphQLObjectType({
         return Student.findOne({ id: args.id }, (err, doc) => {
           if (!doc || err) return "Not Found";
           return doc;
+        });
+      }
+    },
+    allSubjects: {
+      type: new GraphQLList(SubjectType),
+      resolve(parentValue) {
+        return Subject.find({}, (err, docs) => {
+          if (err || !docs) return "No Entry Found";
+          return docs;
         });
       }
     },
