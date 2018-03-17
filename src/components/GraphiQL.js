@@ -16,6 +16,7 @@ import { ToolbarButton } from "./ToolbarButton";
 import { ToolbarGroup } from "./ToolbarGroup";
 import { ToolbarMenu, ToolbarMenuItem } from "./ToolbarMenu";
 import { ToolbarSelect, ToolbarSelectOption } from "./ToolbarSelect";
+import { PathEditor } from "./PathEditor";
 import { QueryEditor } from "./QueryEditor";
 import { VariableEditor } from "./VariableEditor";
 import { ResultViewer } from "./ResultViewer";
@@ -68,7 +69,6 @@ export class GraphiQL extends React.Component {
 
   constructor(props) {
     super(props);
-
     // Ensure props are correct
     if (typeof props.fetcher !== "function") {
       throw new TypeError("GraphiQL requires a fetcher function.");
@@ -108,6 +108,8 @@ export class GraphiQL extends React.Component {
 
     // Initialize state
     this.state = {
+      // NEED TO UPDATE
+      path: null,
       schema: props.schema,
       query,
       variables,
@@ -254,19 +256,22 @@ export class GraphiQL extends React.Component {
     ) || (
       <GraphiQL.Toolbar>
         <ToolbarButton
-          onClick={this.handlePrettifyQuery}
-          title="Prettify Query (Shift-Ctrl-P)"
-          label="Prettify"
-        />
-        <ToolbarButton
           onClick={this.handleToggleHistory}
           title="Show History"
           label="History"
+        />
+        <ToolbarButton
+          // className="docExplorerShow"
+          onClick={this.handleToggleDocs}
+          title="Show Schema Documentation"
+          label="Schema"
         />
       </GraphiQL.Toolbar>
     );
 
     const footer = find(children, child => child.type === GraphiQL.Footer);
+
+    /////////////////////////// Styles
 
     const queryWrapStyle = {
       WebkitFlex: this.state.editorFlex,
@@ -281,6 +286,7 @@ export class GraphiQL extends React.Component {
       "docExplorerWrap" +
       (this.state.docExplorerWidth < 200 ? " doc-explorer-narrow" : "");
 
+    // Whether the panel displays or not
     const historyPaneStyle = {
       display: this.state.historyPaneOpen ? "block" : "none",
       width: "230px",
@@ -312,22 +318,44 @@ export class GraphiQL extends React.Component {
           <div className="topBarWrap">
             <div className="topBar">
               {logo}
+              {/* {!this.state.docExplorerOpen && ( */}
+              {/* <ToolbarButton
+                // className="docExplorerShow"
+                onClick={this.handleToggleDocs}
+                title="Show Schema Documentation"
+                label="Schema"
+              /> */}
+              {/* <button
+                 className="docExplorerShow"
+                 onClick={this.handleToggleDocs}
+               >
+                 {"Docs"}
+              </button>
+             )} */}
+            </div>
+          </div>
+          <div className="topBarWrap">
+            <div className="topBar">
+              {toolbar}
+              <ToolbarButton
+                // NEED TO WRITE
+                onClick={this.handleToggleHeaders}
+                title="Edit Request Headers"
+                label="Headers"
+              />
+              <PathEditor onEdit={this.handleEditPath} />
               <ExecuteButton
                 isRunning={Boolean(this.state.subscription)}
                 onRun={this.handleRunQuery}
                 onStop={this.handleStopQuery}
                 operations={this.state.operations}
               />
-              {toolbar}
+              <ToolbarButton
+                onClick={this.handlePrettifyQuery}
+                title="Prettify Query (Shift-Ctrl-P)"
+                label="Prettify"
+              />
             </div>
-            {!this.state.docExplorerOpen && (
-              <button
-                className="docExplorerShow"
-                onClick={this.handleToggleDocs}
-              >
-                {"Docs"}
-              </button>
-            )}
           </div>
           <div
             ref={n => {
@@ -489,8 +517,11 @@ export class GraphiQL extends React.Component {
 
   _fetchSchema() {
     const fetcher = this.props.fetcher;
+    const serverPath = this.state.path;
 
-    const fetch = observableToPromise(fetcher({ query: introspectionQuery }));
+    const fetch = observableToPromise(
+      fetcher({ query: introspectionQuery }, serverPath)
+    );
     if (!isPromise(fetch)) {
       this.setState({
         response: "Fetcher did not return a Promise for introspection."
@@ -507,9 +538,12 @@ export class GraphiQL extends React.Component {
         // Try the stock introspection query first, falling back on the
         // sans-subscriptions query for services which do not yet support it.
         const fetch2 = observableToPromise(
-          fetcher({
-            query: introspectionQuerySansSubscriptions
-          })
+          fetcher(
+            {
+              query: introspectionQuerySansSubscriptions
+            },
+            serverPath
+          )
         );
         if (!isPromise(fetch)) {
           throw new Error(
@@ -552,6 +586,7 @@ export class GraphiQL extends React.Component {
 
   _fetchQuery(query, variables, operationName, cb) {
     const fetcher = this.props.fetcher;
+    const serverPath = this.state.path;
     let jsonVariables = null;
 
     try {
@@ -565,11 +600,14 @@ export class GraphiQL extends React.Component {
       throw new Error("Variables are not a JSON object.");
     }
 
-    const fetch = fetcher({
-      query,
-      variables: jsonVariables,
-      operationName
-    });
+    const fetch = fetcher(
+      {
+        query,
+        variables: jsonVariables,
+        operationName
+      },
+      serverPath
+    );
 
     if (isPromise(fetch)) {
       // If fetcher returned a Promise, then call the callback when the promise
@@ -613,6 +651,22 @@ export class GraphiQL extends React.Component {
     });
   };
 
+  getServerPath = serverPath => {
+    this.setState({ path: serverPath }, () => {
+      this.docExplorerComponent.reset();
+      this._fetchSchema();
+    });
+  };
+
+  // Path is updated as user types input
+
+  handleEditPath = debounce(100, value => {
+    this.setState({ path: serverPath }, () => {
+      this.docExplorerComponent.reset();
+      this._fetchSchema();
+    });
+  });
+
   handleRunQuery = selectedOperationName => {
     this._editorQueryID++;
     const queryID = this._editorQueryID;
@@ -620,6 +674,7 @@ export class GraphiQL extends React.Component {
     // Use the edited query after autoCompleteLeafs() runs or,
     // in case autoCompletion fails (the function returns undefined),
     // the current query from the editor.
+    const serverPath = this.state.path;
     const editedQuery = this.autoCompleteLeafs() || this.state.query;
     const variables = this.state.variables;
     let operationName = this.state.operationName;
@@ -969,7 +1024,7 @@ GraphiQL.Logo = function GraphiQLLogo(props) {
     <div className="title">
       {props.children || (
         <span>
-          {"Graph"}
+          {"Super Graph"}
           <em>{"i"}</em>
           {"QL"}
         </span>
