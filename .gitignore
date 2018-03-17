@@ -58,5 +58,5 @@ typings/
 .env
 
 # npm build middleware bundle
-./dist/
+dist/
 
