@@ -660,7 +660,7 @@ export class GraphiQL extends React.Component {
 
   // Path is updated as user types input
 
-  handleEditPath = debounce(100, value => {
+  handleEditPath = debounce(100, serverPath => {
     this.setState({ path: serverPath }, () => {
       this.docExplorerComponent.reset();
       this._fetchSchema();
