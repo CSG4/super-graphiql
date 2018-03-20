@@ -1,0 +1,10 @@
+{
+  "students":[
+    { "id": 23, "name": "Suzie", "classId": "CS411"},
+    { "id": 342, "name": "Bob", "classId": "ART321"}
+  ],
+  "classes":[
+    { "id": "CS411", "name": "CompSci", "professor": "Dr. Evil" },
+    { "id": "ART321", "name": "Painting 101", "professor": "Mrs. Sunshine" }
+  ]
+}
