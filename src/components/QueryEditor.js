@@ -32,6 +32,7 @@ const AUTO_COMPLETE_AFTER_KEY = /^[a-zA-Z0-9_@(]$/;
 export class QueryEditor extends React.Component {
   static propTypes = {
     schema: PropTypes.instanceOf(GraphQLSchema),
+    editorId: PropTypes.number,
     value: PropTypes.string,
     onEdit: PropTypes.func,
     readOnly: PropTypes.bool,
@@ -74,7 +75,7 @@ export class QueryEditor extends React.Component {
     require("codemirror-graphql/mode"); // specify language
 
     this.editor = CodeMirror(this._node, {
-      value: this.props.value || "",
+      value: "",
       lineNumbers: true,
       tabSize: 2,
       mode: "graphql",
@@ -144,6 +145,13 @@ export class QueryEditor extends React.Component {
     this.editor.on("keyup", this._onKeyUp);
     this.editor.on("hasCompletion", this._onHasCompletion);
     this.editor.on("beforeChange", this._onBeforeChange);
+    this.editor.on("cursorActivity", this._onEdit);
+
+    // Set the focus (mouse cursor) to the newest CodeMirror instance
+    this.textAreas = document.getElementsByTagName("textarea");
+    if (this.textAreas[this.props.editorId] !== undefined) {
+      this.textAreas[this.props.editorId].focus();
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -181,6 +189,7 @@ export class QueryEditor extends React.Component {
     return (
       <div
         className="query-editor"
+        id={this.props.editorId}
         ref={node => {
           this._node = node;
         }}

@@ -45,6 +45,8 @@ const DEFAULT_DOC_EXPLORER_WIDTH = 350;
  */
 export class GraphiQL extends React.Component {
   static propTypes = {
+    queriesQuantity: PropTypes.array,
+    // resultsQuantity: PropTypes.array,
     fetcher: PropTypes.func.isRequired,
     schema: PropTypes.instanceOf(GraphQLSchema),
     query: PropTypes.string,
@@ -120,6 +122,7 @@ export class GraphiQL extends React.Component {
     this.state = {
       path,
       schema: props.schema,
+      queriesQuantity: [0],
       query,
       variables,
       operationName,
@@ -139,7 +142,7 @@ export class GraphiQL extends React.Component {
     };
 
     // Ensure only the last executed editor query is rendered.
-    this._editorQueryID = 0;
+    this._editorQueryID = this.state.queriesQuantity.length - 1; // 0;
 
     // Subscribe to the browser window closing, treating it as an unmount.
     if (typeof window === "object") {
@@ -267,6 +270,16 @@ export class GraphiQL extends React.Component {
     ) || (
       <GraphiQL.Toolbar>
         <ToolbarButton
+          onClick={this.handlePrettifyQuery}
+          title="Prettify Query (Shift-Ctrl-P)"
+          label="Prettify"
+        />
+        <ToolbarButton
+          onClick={this.handleNewQueryBox}
+          title="Add a new query to the execution stack"
+          label="Add Query"
+        />
+        <ToolbarButton
           onClick={this.handleToggleHistory}
           title="Show History"
           label="History"
@@ -377,19 +390,25 @@ export class GraphiQL extends React.Component {
             onMouseDown={this.handleResizeStart}
           >
             <div className="queryWrap" style={queryWrapStyle}>
-              <QueryEditor
-                ref={n => {
-                  this.queryEditorComponent = n;
-                }}
-                schema={this.state.schema}
-                value={this.state.query}
-                onEdit={this.handleEditQuery}
-                onHintInformationRender={this.handleHintInformationRender}
-                onClickReference={this.handleClickReference}
-                onPrettifyQuery={this.handlePrettifyQuery}
-                onRunQuery={this.handleEditorRunQuery}
-                editorTheme={this.props.editorTheme}
-              />
+              {/* Render queries boxes */}
+              {this.state.queriesQuantity.map((query, index) => (
+                <QueryEditor
+                  lastEditor={this.state.queriesQuantity.length - 1}
+                  key={index}
+                  editorId={index}
+                  ref={n => {
+                    this.queryEditorComponent = n;
+                  }}
+                  schema={this.state.schema}
+                  onEdit={this.handleEditQuery}
+                  onHintInformationRender={this.handleHintInformationRender}
+                  onClickReference={this.handleClickReference}
+                  onPrettifyQuery={this.handlePrettifyQuery}
+                  onRunQuery={this.handleEditorRunQuery}
+                  editorTheme={this.props.editorTheme}
+                />
+              ))}
+
               <div className="variable-editor" style={variableStyle}>
                 <div
                   className="variable-editor-title"
@@ -761,6 +780,14 @@ export class GraphiQL extends React.Component {
 
     this.handleRunQuery(operationName);
   }
+
+  // Account the number of CodeMirror instances open.
+  handleNewQueryBox = () => {
+    this._editorQueryID = this.state.queriesQuantity.length;
+    const queriesNum = [...this.state.queriesQuantity];
+    queriesNum.push(queriesNum.length);
+    this.setState({ queriesQuantity: queriesNum });
+  };
 
   handlePrettifyQuery = () => {
     const editor = this.getQueryEditor();
