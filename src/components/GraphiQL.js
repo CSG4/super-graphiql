@@ -45,7 +45,7 @@ const DEFAULT_DOC_EXPLORER_WIDTH = 350;
  */
 export class GraphiQL extends React.Component {
   static propTypes = {
-    queriesQuantity: PropTypes.array,
+    queryList: PropTypes.array,
     // resultsQuantity: PropTypes.array,
     fetcher: PropTypes.func.isRequired,
     schema: PropTypes.instanceOf(GraphQLSchema),
@@ -118,11 +118,17 @@ export class GraphiQL extends React.Component {
             queryFacts && queryFacts.operations
           );
 
+    const storedQueryList = this._storage.get("queryList");
+    const prevQuery = storedQueryList ? storedQueryList.split(",") : [""];
+
+    console.log("prevQuery", prevQuery);
+    console.log("prevQuery length", prevQuery.length);
+
     // Initialize state
     this.state = {
       path,
       schema: props.schema,
-      queriesQuantity: [0],
+      queryList: prevQuery,
       query,
       variables,
       operationName,
@@ -142,7 +148,7 @@ export class GraphiQL extends React.Component {
     };
 
     // Ensure only the last executed editor query is rendered.
-    this._editorQueryID = this.state.queriesQuantity.length - 1; // 0;
+    this._editorQueryID = this.state.queryList.length - 1; // 0;
 
     // Subscribe to the browser window closing, treating it as an unmount.
     if (typeof window === "object") {
@@ -246,7 +252,9 @@ export class GraphiQL extends React.Component {
   // When the component is about to unmount, store any persistable state, such
   // that when the component is remounted, it will use the last used values.
   componentWillUnmount() {
+    // this should set "query" to the queryList
     this._storage.set("query", this.state.query);
+    this._storage.set("queryList", this.state.queryList);
     this._storage.set("path", this.state.path);
     this._storage.set("variables", this.state.variables);
     this._storage.set("operationName", this.state.operationName);
@@ -392,10 +400,12 @@ export class GraphiQL extends React.Component {
           >
             <div className="queryWrap" style={queryWrapStyle}>
               {/* Render queries boxes */}
-              {this.state.queriesQuantity.map((query, index) => (
+              {console.log("queryList length", this.state.queryList.length)}
+              {this.state.queryList.map((query, index) => (
                 <QueryEditor
-                  lastEditor={this.state.queriesQuantity.length - 1}
+                  lastEditor={this.state.queryList.length - 1}
                   key={index}
+                  value={query}
                   editorId={index}
                   ref={n => {
                     this.queryEditorComponent = n;
@@ -699,6 +709,7 @@ export class GraphiQL extends React.Component {
     // the current query from the editor.
     const serverPath = this.state.path;
     const editedQuery = this.autoCompleteLeafs() || this.state.query;
+    console.log("handleRunQuery", editedQuery);
     const variables = this.state.variables;
     let operationName = this.state.operationName;
 
@@ -784,10 +795,10 @@ export class GraphiQL extends React.Component {
 
   // Account the number of CodeMirror instances open.
   handleNewQueryBox = () => {
-    this._editorQueryID = this.state.queriesQuantity.length;
-    const queriesNum = [...this.state.queriesQuantity];
+    this._editorQueryID = this.state.queryList.length;
+    const queriesNum = [...this.state.queryList];
     queriesNum.push(queriesNum.length);
-    this.setState({ queriesQuantity: queriesNum });
+    this.setState({ queryList: queriesNum });
   };
 
   handlePrettifyQuery = () => {
@@ -795,17 +806,23 @@ export class GraphiQL extends React.Component {
     editor.setValue(print(parse(editor.getValue())));
   };
 
-  handleEditQuery = debounce(100, value => {
+  handleEditQuery = debounce(100, (value, editorID) => {
     const queryFacts = this._updateQueryFacts(
       value,
       this.state.operationName,
       this.state.operations,
       this.state.schema
     );
+    console.log("editorID", editorID);
+    const queryList = [...this.state.queryList];
+    queryList[editorID] = value;
+    //console.log('queryList', queryList)
     this.setState({
       query: value,
+      queryList,
       ...queryFacts
     });
+    console.log("this.state.queryList", this.state.queryList);
     if (this.props.onEditQuery) {
       return this.props.onEditQuery(value);
     }
