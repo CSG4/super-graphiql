@@ -173,10 +173,10 @@ var QueryEditor = (exports.QueryEditor = (function(_React$Component) {
         require("codemirror-graphql/lint");
         require("codemirror-graphql/info");
         require("codemirror-graphql/jump");
-        require("codemirror-graphql/mode");
+        require("codemirror-graphql/mode"); // specify language
 
         this.editor = CodeMirror(this._node, {
-          value: this.props.value || "",
+          value: "",
           lineNumbers: true,
           tabSize: 2,
           mode: "graphql",
@@ -260,6 +260,13 @@ var QueryEditor = (exports.QueryEditor = (function(_React$Component) {
         this.editor.on("keyup", this._onKeyUp);
         this.editor.on("hasCompletion", this._onHasCompletion);
         this.editor.on("beforeChange", this._onBeforeChange);
+        this.editor.on("cursorActivity", this._onEdit);
+
+        // Set the focus (mouse cursor) to the newest CodeMirror instance
+        this.textAreas = document.getElementsByTagName("textarea");
+        if (this.textAreas[this.props.editorId] !== undefined) {
+          this.textAreas[this.props.editorId].focus();
+        }
       }
     },
     {
@@ -304,6 +311,7 @@ var QueryEditor = (exports.QueryEditor = (function(_React$Component) {
 
         return _react2.default.createElement("div", {
           className: "query-editor",
+          id: this.props.editorId,
           ref: function ref(node) {
             _this3._node = node;
           }
@@ -353,6 +361,7 @@ var QueryEditor = (exports.QueryEditor = (function(_React$Component) {
 
 QueryEditor.propTypes = {
   schema: _propTypes2.default.instanceOf(_graphql.GraphQLSchema),
+  editorId: _propTypes2.default.number,
   value: _propTypes2.default.string,
   onEdit: _propTypes2.default.func,
   readOnly: _propTypes2.default.bool,

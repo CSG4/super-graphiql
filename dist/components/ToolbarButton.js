@@ -120,7 +120,10 @@ var ToolbarButton = (exports.ToolbarButton = (function(_React$Component) {
         return _react2.default.createElement(
           "a",
           {
-            className: "toolbar-button" + (error ? " error" : ""),
+            className:
+              "toolbar-button" +
+              (error ? " error" : "") +
+              (this.props.label === "Schema" ? " schema-button" : ""),
             onMouseDown: preventDefault,
             onClick: this.handleClick,
             title: error ? error.message : this.props.title

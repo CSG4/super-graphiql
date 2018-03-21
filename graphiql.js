@@ -182,7 +182,7 @@
 
             var initialNav = {
               name: "Schema",
-              title: "Documentation Explorer"
+              title: "Schema Explorer"
             };
 
             /**
@@ -270,7 +270,9 @@
                       content = _react2.default.createElement(
                         "div",
                         { className: "error-container" },
-                        "No Schema Available"
+                        "No Schema Available",
+                        _react2.default.createElement("br", null),
+                        "(Enter Route in Path field)"
                       );
                     } else if (navItem.search) {
                       content = _react2.default.createElement(
@@ -444,8 +446,8 @@
           "./DocExplorer/SearchBox": 7,
           "./DocExplorer/SearchResults": 8,
           "./DocExplorer/TypeDoc": 9,
-          graphql: 100,
-          "prop-types": 238
+          graphql: 101,
+          "prop-types": 239
         }
       ],
       2: [
@@ -528,7 +530,7 @@
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { "./DefaultValue": 3, "./TypeLink": 10, "prop-types": 238 }
+        { "./DefaultValue": 3, "./TypeLink": 10, "prop-types": 239 }
       ],
       3: [
         function(require, module, exports) {
@@ -598,7 +600,7 @@
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { graphql: 100, "prop-types": 238 }
+        { graphql: 101, "prop-types": 239 }
       ],
       4: [
         function(require, module, exports) {
@@ -823,7 +825,7 @@
           "./Argument": 2,
           "./MarkdownContent": 5,
           "./TypeLink": 10,
-          "prop-types": 238
+          "prop-types": 239
         }
       ],
       5: [
@@ -977,7 +979,7 @@
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { "markdown-it": 177, "prop-types": 238 }
+        { "markdown-it": 178, "prop-types": 239 }
       ],
       6: [
         function(require, module, exports) {
@@ -1193,7 +1195,7 @@
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { "./MarkdownContent": 5, "./TypeLink": 10, "prop-types": 238 }
+        { "./MarkdownContent": 5, "./TypeLink": 10, "prop-types": 239 }
       ],
       7: [
         function(require, module, exports) {
@@ -1366,7 +1368,7 @@
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { "../../utility/debounce": 26, "prop-types": 238 }
+        { "../../utility/debounce": 27, "prop-types": 239 }
       ],
       8: [
         function(require, module, exports) {
@@ -1733,7 +1735,7 @@
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { "./Argument": 2, "./TypeLink": 10, "prop-types": 238 }
+        { "./Argument": 2, "./TypeLink": 10, "prop-types": 239 }
       ],
       9: [
         function(require, module, exports) {
@@ -2174,8 +2176,8 @@
           "./DefaultValue": 3,
           "./MarkdownContent": 5,
           "./TypeLink": 10,
-          graphql: 100,
-          "prop-types": 238
+          graphql: 101,
+          "prop-types": 239
         }
       ],
       10: [
@@ -2347,7 +2349,7 @@
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { graphql: 100, "prop-types": 238 }
+        { graphql: 101, "prop-types": 239 }
       ],
       11: [
         function(require, module, exports) {
@@ -2612,7 +2614,7 @@
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { "prop-types": 238 }
+        { "prop-types": 239 }
       ],
       12: [
         function(require, module, exports) {
@@ -2701,6 +2703,8 @@
 
             var _ToolbarSelect = require("./ToolbarSelect");
 
+            var _PathEditor = require("./PathEditor");
+
             var _QueryEditor = require("./QueryEditor");
 
             var _VariableEditor = require("./VariableEditor");
@@ -2745,6 +2749,17 @@
 
             function _interopRequireDefault(obj) {
               return obj && obj.__esModule ? obj : { default: obj };
+            }
+
+            function _toConsumableArray(arr) {
+              if (Array.isArray(arr)) {
+                for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+                  arr2[i] = arr[i];
+                }
+                return arr2;
+              } else {
+                return Array.from(arr);
+              }
             }
 
             function _classCallCheck(instance, Constructor) {
@@ -2838,6 +2853,17 @@
                         ? props.defaultQuery
                         : defaultQuery;
 
+                // Determine the initial path to fetch schema from.
+                // Determine the initial schema?
+                var path =
+                  props.path !== undefined
+                    ? props.path
+                    : _this._storage.get("path") !== null
+                      ? _this._storage.get("path")
+                      : props.defaultPath !== undefined
+                        ? props.defaultPath
+                        : defaultPath;
+
                 // Get the initial query facts.
                 var queryFacts = (0, _getQueryFacts2.default)(
                   props.schema,
@@ -2863,7 +2889,9 @@
                 // Initialize state
                 _this.state = _extends(
                   {
+                    path: path,
                     schema: props.schema,
+                    queriesQuantity: [0],
                     query: query,
                     variables: variables,
                     operationName: operationName,
@@ -2886,7 +2914,7 @@
                 );
 
                 // Ensure only the last executed editor query is rendered.
-                _this._editorQueryID = 0;
+                _this._editorQueryID = _this.state.queriesQuantity.length - 1; // 0;
 
                 // Subscribe to the browser window closing, treating it as an unmount.
                 if (
@@ -2908,6 +2936,7 @@
                     // Only fetch schema via introspection if a schema has not been
                     // provided, including if `null` was provided.
                     if (this.state.schema === undefined) {
+                      console.log(this.state.path);
                       this._fetchSchema();
                     }
 
@@ -3008,6 +3037,7 @@
                   key: "componentWillUnmount",
                   value: function componentWillUnmount() {
                     this._storage.set("query", this.state.query);
+                    this._storage.set("path", this.state.path);
                     this._storage.set("variables", this.state.variables);
                     this._storage.set(
                       "operationName",
@@ -3055,10 +3085,21 @@
                         null,
                         _react2.default.createElement(
                           _ToolbarButton.ToolbarButton,
+                          // className="docExplorerShow"
+
+                          // NEED TO WRITE
                           {
                             onClick: this.handlePrettifyQuery,
                             title: "Prettify Query (Shift-Ctrl-P)",
                             label: "Prettify"
+                          }
+                        ),
+                        _react2.default.createElement(
+                          _ToolbarButton.ToolbarButton,
+                          {
+                            onClick: this.handleNewQueryBox,
+                            title: "Add a new query to the execution stack",
+                            label: "Add Query"
                           }
                         ),
                         _react2.default.createElement(
@@ -3075,6 +3116,8 @@
                       return child.type === GraphiQL.Footer;
                     });
 
+                    /////////////////////////// Styles
+
                     var queryWrapStyle = {
                       WebkitFlex: this.state.editorFlex,
                       flex: this.state.editorFlex
@@ -3090,6 +3133,7 @@
                         ? " doc-explorer-narrow"
                         : "");
 
+                    // Whether the panel displays or not
                     var historyPaneStyle = {
                       display: this.state.historyPaneOpen ? "block" : "none",
                       width: "230px",
@@ -3143,6 +3187,38 @@
                             { className: "topBar" },
                             logo,
                             _react2.default.createElement(
+                              _ToolbarButton.ToolbarButton,
+                              {
+                                onClick: this.handleToggleDocs,
+                                title: "Show Schema Documentation",
+                                label: "Schema"
+                              }
+                            )
+                          )
+                        ),
+                        _react2.default.createElement(
+                          "div",
+                          { className: "topBarWrap" },
+                          _react2.default.createElement(
+                            "div",
+                            { className: "topBar" },
+                            toolbar,
+                            _react2.default.createElement(
+                              _ToolbarButton.ToolbarButton,
+                              {
+                                onClick: this.handleToggleHeaders,
+                                title: "Edit Request Headers",
+                                label: "Headers"
+                              }
+                            ),
+                            _react2.default.createElement(
+                              _PathEditor.PathEditor,
+                              {
+                                onEdit: this.handleEditPath,
+                                path: this.state.path
+                              }
+                            ),
+                            _react2.default.createElement(
                               _ExecuteButton.ExecuteButton,
                               {
                                 isRunning: Boolean(this.state.subscription),
@@ -3150,18 +3226,8 @@
                                 onStop: this.handleStopQuery,
                                 operations: this.state.operations
                               }
-                            ),
-                            toolbar
-                          ),
-                          !this.state.docExplorerOpen &&
-                            _react2.default.createElement(
-                              "button",
-                              {
-                                className: "docExplorerShow",
-                                onClick: this.handleToggleDocs
-                              },
-                              "Docs"
                             )
+                          )
                         ),
                         _react2.default.createElement(
                           "div",
@@ -3176,23 +3242,31 @@
                           _react2.default.createElement(
                             "div",
                             { className: "queryWrap", style: queryWrapStyle },
-                            _react2.default.createElement(
-                              _QueryEditor.QueryEditor,
-                              {
-                                ref: function ref(n) {
-                                  _this3.queryEditorComponent = n;
-                                },
-                                schema: this.state.schema,
-                                value: this.state.query,
-                                onEdit: this.handleEditQuery,
-                                onHintInformationRender: this
-                                  .handleHintInformationRender,
-                                onClickReference: this.handleClickReference,
-                                onPrettifyQuery: this.handlePrettifyQuery,
-                                onRunQuery: this.handleEditorRunQuery,
-                                editorTheme: this.props.editorTheme
-                              }
-                            ),
+                            this.state.queriesQuantity.map(function(
+                              query,
+                              index
+                            ) {
+                              return _react2.default.createElement(
+                                _QueryEditor.QueryEditor,
+                                {
+                                  lastEditor:
+                                    _this3.state.queriesQuantity.length - 1,
+                                  key: index,
+                                  editorId: index,
+                                  ref: function ref(n) {
+                                    _this3.queryEditorComponent = n;
+                                  },
+                                  schema: _this3.state.schema,
+                                  onEdit: _this3.handleEditQuery,
+                                  onHintInformationRender:
+                                    _this3.handleHintInformationRender,
+                                  onClickReference: _this3.handleClickReference,
+                                  onPrettifyQuery: _this3.handlePrettifyQuery,
+                                  onRunQuery: _this3.handleEditorRunQuery,
+                                  editorTheme: _this3.props.editorTheme
+                                }
+                              );
+                            }),
                             _react2.default.createElement(
                               "div",
                               {
@@ -3395,11 +3469,12 @@
                     var _this4 = this;
 
                     var fetcher = this.props.fetcher;
-
+                    var serverPath = this.state.path;
                     var fetch = observableToPromise(
-                      fetcher({
-                        query: _introspectionQueries.introspectionQuery
-                      })
+                      fetcher(
+                        { query: _introspectionQueries.introspectionQuery },
+                        serverPath
+                      )
                     );
                     if (!isPromise(fetch)) {
                       this.setState({
@@ -3418,10 +3493,13 @@
                         // Try the stock introspection query first, falling back on the
                         // sans-subscriptions query for services which do not yet support it.
                         var fetch2 = observableToPromise(
-                          fetcher({
-                            query:
-                              _introspectionQueries.introspectionQuerySansSubscriptions
-                          })
+                          fetcher(
+                            {
+                              query:
+                                _introspectionQueries.introspectionQuerySansSubscriptions
+                            },
+                            serverPath
+                          )
                         );
                         if (!isPromise(fetch)) {
                           throw new Error(
@@ -3434,7 +3512,10 @@
                         // If a schema was provided while this fetch was underway, then
                         // satisfy the race condition by respecting the already
                         // provided schema.
-                        if (_this4.state.schema !== undefined) {
+                        if (
+                          _this4.state.schema !== undefined &&
+                          _this4.state.schema !== null
+                        ) {
                           return;
                         }
 
@@ -3480,6 +3561,7 @@
                     var _this5 = this;
 
                     var fetcher = this.props.fetcher;
+                    var serverPath = this.state.path;
                     var jsonVariables = null;
 
                     try {
@@ -3501,11 +3583,14 @@
                       throw new Error("Variables are not a JSON object.");
                     }
 
-                    var fetch = fetcher({
-                      query: query,
-                      variables: jsonVariables,
-                      operationName: operationName
-                    });
+                    var fetch = fetcher(
+                      {
+                        query: query,
+                        variables: jsonVariables,
+                        operationName: operationName
+                      },
+                      serverPath
+                    );
 
                     if (isPromise(fetch)) {
                       // If fetcher returned a Promise, then call the callback when the promise
@@ -3544,6 +3629,8 @@
                       );
                     }
                   }
+
+                  // Path is updated as user types input
                 },
                 {
                   key: "_runQueryAtCursor",
@@ -3578,6 +3665,8 @@
 
                     this.handleRunQuery(operationName);
                   }
+
+                  // Account the number of CodeMirror instances open.
                 },
                 {
                   key: "_didClickDragBar",
@@ -3612,6 +3701,8 @@
             // Configure the UI by providing this Component as a child of GraphiQL.
 
             GraphiQL.propTypes = {
+              queriesQuantity: _propTypes2.default.array,
+              // resultsQuantity: PropTypes.array,
               fetcher: _propTypes2.default.func.isRequired,
               schema: _propTypes2.default.instanceOf(_graphql.GraphQLSchema),
               query: _propTypes2.default.string,
@@ -3623,6 +3714,7 @@
                 setItem: _propTypes2.default.func,
                 removeItem: _propTypes2.default.func
               }),
+              defaultPath: _propTypes2.default.string,
               defaultQuery: _propTypes2.default.string,
               onEditQuery: _propTypes2.default.func,
               onEditVariables: _propTypes2.default.func,
@@ -3643,6 +3735,15 @@
                 });
               };
 
+              this.handleEditPath = (0, _debounce2.default)(100, function(
+                serverPath
+              ) {
+                _this6.setState({ path: serverPath }, function() {
+                  _this6.docExplorerComponent.reset();
+                  _this6._fetchSchema();
+                });
+              });
+
               this.handleRunQuery = function(selectedOperationName) {
                 _this6._editorQueryID++;
                 var queryID = _this6._editorQueryID;
@@ -3650,6 +3751,7 @@
                 // Use the edited query after autoCompleteLeafs() runs or,
                 // in case autoCompletion fails (the function returns undefined),
                 // the current query from the editor.
+                var serverPath = _this6.state.path;
                 var editedQuery =
                   _this6.autoCompleteLeafs() || _this6.state.query;
                 var variables = _this6.state.variables;
@@ -3705,6 +3807,15 @@
                 if (subscription) {
                   subscription.unsubscribe();
                 }
+              };
+
+              this.handleNewQueryBox = function() {
+                _this6._editorQueryID = _this6.state.queriesQuantity.length;
+                var queriesNum = [].concat(
+                  _toConsumableArray(_this6.state.queriesQuantity)
+                );
+                queriesNum.push(queriesNum.length);
+                _this6.setState({ queriesQuantity: queriesNum });
               };
 
               this.handlePrettifyQuery = function() {
@@ -4032,7 +4143,7 @@
                   _react2.default.createElement(
                     "span",
                     null,
-                    "Graph",
+                    "Super Graph",
                     _react2.default.createElement("em", null, "i"),
                     "QL"
                   )
@@ -4079,6 +4190,8 @@
 
             var defaultQuery =
               '# Welcome to GraphiQL\n#\n# GraphiQL is an in-browser tool for writing, validating, and\n# testing GraphQL queries.\n#\n# Type queries into this side of the screen, and you will see intelligent\n# typeaheads aware of the current GraphQL type schema and live syntax and\n# validation errors highlighted within the text.\n#\n# GraphQL queries typically start with a "{" character. Lines that starts\n# with a # are ignored.\n#\n# An example GraphQL query might look like:\n#\n#     {\n#       field(arg: "value") {\n#         subField\n#       }\n#     }\n#\n# Keyboard shortcuts:\n#\n#  Prettify Query:  Shift-Ctrl-P (or press the prettify button above)\n#\n#       Run Query:  Ctrl-Enter (or press the play button above)\n#\n#   Auto Complete:  Ctrl-Space (or just start typing)\n#\n\n';
+
+            var defaultPath = "/graphql";
 
             // Duck-type promise detection.
             function isPromise(value) {
@@ -4128,27 +4241,28 @@
           ));
         },
         {
-          "../utility/CodeMirrorSizer": 23,
-          "../utility/StorageAPI": 25,
-          "../utility/debounce": 26,
-          "../utility/elementPosition": 27,
-          "../utility/fillLeafs": 28,
-          "../utility/find": 29,
-          "../utility/getQueryFacts": 30,
-          "../utility/getSelectedOperationName": 31,
-          "../utility/introspectionQueries": 32,
+          "../utility/CodeMirrorSizer": 24,
+          "../utility/StorageAPI": 26,
+          "../utility/debounce": 27,
+          "../utility/elementPosition": 28,
+          "../utility/fillLeafs": 29,
+          "../utility/find": 30,
+          "../utility/getQueryFacts": 31,
+          "../utility/getSelectedOperationName": 32,
+          "../utility/introspectionQueries": 33,
           "./DocExplorer": 1,
           "./ExecuteButton": 11,
-          "./QueryEditor": 14,
-          "./QueryHistory": 15,
-          "./ResultViewer": 16,
-          "./ToolbarButton": 17,
-          "./ToolbarGroup": 18,
-          "./ToolbarMenu": 19,
-          "./ToolbarSelect": 20,
-          "./VariableEditor": 21,
-          graphql: 100,
-          "prop-types": 238
+          "./PathEditor": 14,
+          "./QueryEditor": 15,
+          "./QueryHistory": 16,
+          "./ResultViewer": 17,
+          "./ToolbarButton": 18,
+          "./ToolbarGroup": 19,
+          "./ToolbarMenu": 20,
+          "./ToolbarSelect": 21,
+          "./VariableEditor": 22,
+          graphql: 101,
+          "prop-types": 239
         }
       ],
       13: [
@@ -4366,9 +4480,185 @@
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { "prop-types": 238 }
+        { "prop-types": 239 }
       ],
       14: [
+        function(require, module, exports) {
+          (function(global) {
+            "use strict";
+
+            Object.defineProperty(exports, "__esModule", {
+              value: true
+            });
+            exports.PathEditor = undefined;
+
+            var _createClass = (function() {
+              function defineProperties(target, props) {
+                for (var i = 0; i < props.length; i++) {
+                  var descriptor = props[i];
+                  descriptor.enumerable = descriptor.enumerable || false;
+                  descriptor.configurable = true;
+                  if ("value" in descriptor) descriptor.writable = true;
+                  Object.defineProperty(target, descriptor.key, descriptor);
+                }
+              }
+              return function(Constructor, protoProps, staticProps) {
+                if (protoProps)
+                  defineProperties(Constructor.prototype, protoProps);
+                if (staticProps) defineProperties(Constructor, staticProps);
+                return Constructor;
+              };
+            })();
+
+            var _react =
+              typeof window !== "undefined"
+                ? window["React"]
+                : typeof global !== "undefined" ? global["React"] : null;
+
+            var _react2 = _interopRequireDefault(_react);
+
+            var _propTypes = require("prop-types");
+
+            var _propTypes2 = _interopRequireDefault(_propTypes);
+
+            var _graphql = require("graphql");
+
+            var _markdownIt = require("markdown-it");
+
+            var _markdownIt2 = _interopRequireDefault(_markdownIt);
+
+            var _normalizeWhitespace = require("../utility/normalizeWhitespace");
+
+            var _onHasCompletion = require("../utility/onHasCompletion");
+
+            var _onHasCompletion2 = _interopRequireDefault(_onHasCompletion);
+
+            function _interopRequireDefault(obj) {
+              return obj && obj.__esModule ? obj : { default: obj };
+            }
+
+            function _classCallCheck(instance, Constructor) {
+              if (!(instance instanceof Constructor)) {
+                throw new TypeError("Cannot call a class as a function");
+              }
+            }
+
+            function _possibleConstructorReturn(self, call) {
+              if (!self) {
+                throw new ReferenceError(
+                  "this hasn't been initialised - super() hasn't been called"
+                );
+              }
+              return call &&
+                (typeof call === "object" || typeof call === "function")
+                ? call
+                : self;
+            }
+
+            function _inherits(subClass, superClass) {
+              if (typeof superClass !== "function" && superClass !== null) {
+                throw new TypeError(
+                  "Super expression must either be null or a function, not " +
+                    typeof superClass
+                );
+              }
+              subClass.prototype = Object.create(
+                superClass && superClass.prototype,
+                {
+                  constructor: {
+                    value: subClass,
+                    enumerable: false,
+                    writable: true,
+                    configurable: true
+                  }
+                }
+              );
+              if (superClass)
+                Object.setPrototypeOf
+                  ? Object.setPrototypeOf(subClass, superClass)
+                  : (subClass.__proto__ = superClass);
+            }
+
+            var AUTO_COMPLETE_AFTER_KEY = /^[a-zA-Z0-9_@(]$/;
+
+            /**
+             * PathEditor
+             *
+             * Allows the user to input a server path for the query
+             *
+             * Props:
+             *
+             *   - schema: A GraphQLSchema instance enabling editor linting and hinting.
+             *   - value: The text of the editor.
+             *   - onEdit: A function called when the editor changes, given the edited text.
+             *   REMOVE - readOnly: Turns the editor to read-only mode.
+             *
+             */
+
+            //user a code mirror line to allow users to type into the field
+
+            var PathEditor = (exports.PathEditor = (function(_React$Component) {
+              _inherits(PathEditor, _React$Component);
+
+              function PathEditor(props) {
+                _classCallCheck(this, PathEditor);
+
+                return _possibleConstructorReturn(
+                  this,
+                  (
+                    PathEditor.__proto__ || Object.getPrototypeOf(PathEditor)
+                  ).call(this)
+                );
+              }
+
+              _createClass(PathEditor, [
+                {
+                  key: "render",
+                  value: function render() {
+                    var _this2 = this;
+
+                    return _react2.default.createElement(
+                      "div",
+                      { className: "path-editor" },
+                      "Path:",
+                      _react2.default.createElement("input", {
+                        className: "path-input",
+                        defaultValue: this.props.path,
+                        onChange: function onChange(e) {
+                          _this2.props.onEdit(e.target.value);
+                        },
+                        placeholder: "Enter server routes here"
+                      })
+                    );
+                  }
+                }
+              ]);
+
+              return PathEditor;
+            })(_react2.default.Component));
+
+            PathEditor.propTypes = {
+              path: _propTypes2.default.string,
+              onEdit: _propTypes2.default.func
+            };
+          }.call(
+            this,
+            typeof global !== "undefined"
+              ? global
+              : typeof self !== "undefined"
+                ? self
+                : typeof window !== "undefined" ? window : {}
+          ));
+        },
+        {
+          "../utility/normalizeWhitespace": 34,
+          "../utility/onHasCompletion": 35,
+          graphql: 101,
+          "markdown-it": 178,
+          "prop-types": 239
+        }
+      ],
+      15: [
         function(require, module, exports) {
           (function(global) {
             "use strict";
@@ -4558,10 +4848,10 @@
                     require("codemirror-graphql/lint");
                     require("codemirror-graphql/info");
                     require("codemirror-graphql/jump");
-                    require("codemirror-graphql/mode");
+                    require("codemirror-graphql/mode"); // specify language
 
                     this.editor = CodeMirror(this._node, {
-                      value: this.props.value || "",
+                      value: "",
                       lineNumbers: true,
                       tabSize: 2,
                       mode: "graphql",
@@ -4656,6 +4946,13 @@
                     this.editor.on("keyup", this._onKeyUp);
                     this.editor.on("hasCompletion", this._onHasCompletion);
                     this.editor.on("beforeChange", this._onBeforeChange);
+                    this.editor.on("cursorActivity", this._onEdit);
+
+                    // Set the focus (mouse cursor) to the newest CodeMirror instance
+                    this.textAreas = document.getElementsByTagName("textarea");
+                    if (this.textAreas[this.props.editorId] !== undefined) {
+                      this.textAreas[this.props.editorId].focus();
+                    }
                   }
                 },
                 {
@@ -4700,6 +4997,7 @@
 
                     return _react2.default.createElement("div", {
                       className: "query-editor",
+                      id: this.props.editorId,
                       ref: function ref(node) {
                         _this3._node = node;
                       }
@@ -4751,6 +5049,7 @@
 
             QueryEditor.propTypes = {
               schema: _propTypes2.default.instanceOf(_graphql.GraphQLSchema),
+              editorId: _propTypes2.default.number,
               value: _propTypes2.default.string,
               onEdit: _propTypes2.default.func,
               readOnly: _propTypes2.default.bool,
@@ -4770,32 +5069,32 @@
           ));
         },
         {
-          "../utility/normalizeWhitespace": 33,
-          "../utility/onHasCompletion": 34,
-          codemirror: 65,
-          "codemirror-graphql/hint": 36,
-          "codemirror-graphql/info": 37,
-          "codemirror-graphql/jump": 38,
-          "codemirror-graphql/lint": 39,
-          "codemirror-graphql/mode": 40,
-          "codemirror/addon/comment/comment": 52,
-          "codemirror/addon/dialog/dialog": 53,
-          "codemirror/addon/edit/closebrackets": 54,
-          "codemirror/addon/edit/matchbrackets": 55,
-          "codemirror/addon/fold/brace-fold": 56,
-          "codemirror/addon/fold/foldgutter": 58,
-          "codemirror/addon/hint/show-hint": 59,
-          "codemirror/addon/lint/lint": 60,
-          "codemirror/addon/search/jump-to-line": 61,
-          "codemirror/addon/search/search": 62,
-          "codemirror/addon/search/searchcursor": 63,
-          "codemirror/keymap/sublime": 64,
-          graphql: 100,
-          "markdown-it": 177,
-          "prop-types": 238
+          "../utility/normalizeWhitespace": 34,
+          "../utility/onHasCompletion": 35,
+          codemirror: 66,
+          "codemirror-graphql/hint": 37,
+          "codemirror-graphql/info": 38,
+          "codemirror-graphql/jump": 39,
+          "codemirror-graphql/lint": 40,
+          "codemirror-graphql/mode": 41,
+          "codemirror/addon/comment/comment": 53,
+          "codemirror/addon/dialog/dialog": 54,
+          "codemirror/addon/edit/closebrackets": 55,
+          "codemirror/addon/edit/matchbrackets": 56,
+          "codemirror/addon/fold/brace-fold": 57,
+          "codemirror/addon/fold/foldgutter": 59,
+          "codemirror/addon/hint/show-hint": 60,
+          "codemirror/addon/lint/lint": 61,
+          "codemirror/addon/search/jump-to-line": 62,
+          "codemirror/addon/search/search": 63,
+          "codemirror/addon/search/searchcursor": 64,
+          "codemirror/keymap/sublime": 65,
+          graphql: 101,
+          "markdown-it": 178,
+          "prop-types": 239
         }
       ],
-      15: [
+      16: [
         function(require, module, exports) {
           (function(global) {
             "use strict";
@@ -5096,13 +5395,13 @@
           ));
         },
         {
-          "../utility/QueryStore": 24,
+          "../utility/QueryStore": 25,
           "./HistoryQuery": 13,
-          graphql: 100,
-          "prop-types": 238
+          graphql: 101,
+          "prop-types": 239
         }
       ],
-      16: [
+      17: [
         function(require, module, exports) {
           (function(global) {
             "use strict";
@@ -5362,20 +5661,20 @@
           ));
         },
         {
-          codemirror: 65,
-          "codemirror-graphql/results/mode": 41,
-          "codemirror-graphql/utils/info-addon": 46,
-          "codemirror/addon/dialog/dialog": 53,
-          "codemirror/addon/fold/brace-fold": 56,
-          "codemirror/addon/fold/foldgutter": 58,
-          "codemirror/addon/search/jump-to-line": 61,
-          "codemirror/addon/search/search": 62,
-          "codemirror/addon/search/searchcursor": 63,
-          "codemirror/keymap/sublime": 64,
-          "prop-types": 238
+          codemirror: 66,
+          "codemirror-graphql/results/mode": 42,
+          "codemirror-graphql/utils/info-addon": 47,
+          "codemirror/addon/dialog/dialog": 54,
+          "codemirror/addon/fold/brace-fold": 57,
+          "codemirror/addon/fold/foldgutter": 59,
+          "codemirror/addon/search/jump-to-line": 62,
+          "codemirror/addon/search/search": 63,
+          "codemirror/addon/search/searchcursor": 64,
+          "codemirror/keymap/sublime": 65,
+          "prop-types": 239
         }
       ],
-      17: [
+      18: [
         function(require, module, exports) {
           (function(global) {
             "use strict";
@@ -5510,7 +5809,12 @@
                     return _react2.default.createElement(
                       "a",
                       {
-                        className: "toolbar-button" + (error ? " error" : ""),
+                        className:
+                          "toolbar-button" +
+                          (error ? " error" : "") +
+                          (this.props.label === "Schema"
+                            ? " schema-button"
+                            : ""),
                         onMouseDown: preventDefault,
                         onClick: this.handleClick,
                         title: error ? error.message : this.props.title
@@ -5542,9 +5846,9 @@
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { "prop-types": 238 }
+        { "prop-types": 239 }
       ],
-      18: [
+      19: [
         function(require, module, exports) {
           (function(global) {
             "use strict";
@@ -5596,7 +5900,7 @@
         },
         {}
       ],
-      19: [
+      20: [
         function(require, module, exports) {
           (function(global) {
             "use strict";
@@ -5840,9 +6144,9 @@
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { "prop-types": 238 }
+        { "prop-types": 239 }
       ],
-      20: [
+      21: [
         function(require, module, exports) {
           (function(global) {
             "use strict";
@@ -6138,9 +6442,9 @@
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { "prop-types": 238 }
+        { "prop-types": 239 }
       ],
-      21: [
+      22: [
         function(require, module, exports) {
           (function(global) {
             "use strict";
@@ -6499,25 +6803,25 @@
           ));
         },
         {
-          "../utility/onHasCompletion": 34,
-          codemirror: 65,
-          "codemirror-graphql/variables/hint": 49,
-          "codemirror-graphql/variables/lint": 50,
-          "codemirror-graphql/variables/mode": 51,
-          "codemirror/addon/dialog/dialog": 53,
-          "codemirror/addon/edit/closebrackets": 54,
-          "codemirror/addon/edit/matchbrackets": 55,
-          "codemirror/addon/fold/brace-fold": 56,
-          "codemirror/addon/fold/foldgutter": 58,
-          "codemirror/addon/hint/show-hint": 59,
-          "codemirror/addon/lint/lint": 60,
-          "codemirror/addon/search/jump-to-line": 61,
-          "codemirror/addon/search/searchcursor": 63,
-          "codemirror/keymap/sublime": 64,
-          "prop-types": 238
+          "../utility/onHasCompletion": 35,
+          codemirror: 66,
+          "codemirror-graphql/variables/hint": 50,
+          "codemirror-graphql/variables/lint": 51,
+          "codemirror-graphql/variables/mode": 52,
+          "codemirror/addon/dialog/dialog": 54,
+          "codemirror/addon/edit/closebrackets": 55,
+          "codemirror/addon/edit/matchbrackets": 56,
+          "codemirror/addon/fold/brace-fold": 57,
+          "codemirror/addon/fold/foldgutter": 59,
+          "codemirror/addon/hint/show-hint": 60,
+          "codemirror/addon/lint/lint": 61,
+          "codemirror/addon/search/jump-to-line": 62,
+          "codemirror/addon/search/searchcursor": 64,
+          "codemirror/keymap/sublime": 65,
+          "prop-types": 239
         }
       ],
-      22: [
+      23: [
         function(require, module, exports) {
           "use strict";
 
@@ -6534,7 +6838,7 @@
         },
         { "./components/GraphiQL": 12 }
       ],
-      23: [
+      24: [
         function(require, module, exports) {
           "use strict";
 
@@ -6609,7 +6913,7 @@
         },
         {}
       ],
-      24: [
+      25: [
         function(require, module, exports) {
           "use strict";
 
@@ -6747,7 +7051,7 @@
         },
         {}
       ],
-      25: [
+      26: [
         function(require, module, exports) {
           "use strict";
 
@@ -6856,7 +7160,7 @@
         },
         {}
       ],
-      26: [
+      27: [
         function(require, module, exports) {
           "use strict";
 
@@ -6892,7 +7196,7 @@
         },
         {}
       ],
-      27: [
+      28: [
         function(require, module, exports) {
           "use strict";
 
@@ -6935,7 +7239,7 @@
         },
         {}
       ],
-      28: [
+      29: [
         function(require, module, exports) {
           "use strict";
 
@@ -7128,9 +7432,9 @@
             return str.substring(indentStart, indentEnd);
           }
         },
-        { graphql: 100 }
+        { graphql: 101 }
       ],
-      29: [
+      30: [
         function(require, module, exports) {
           "use strict";
 
@@ -7158,7 +7462,7 @@
         },
         {}
       ],
-      30: [
+      31: [
         function(require, module, exports) {
           "use strict";
 
@@ -7235,9 +7539,9 @@
             return variableToType;
           }
         },
-        { graphql: 100 }
+        { graphql: 101 }
       ],
-      31: [
+      32: [
         function(require, module, exports) {
           "use strict";
 
@@ -7295,7 +7599,7 @@
         },
         {}
       ],
-      32: [
+      33: [
         function(require, module, exports) {
           "use strict";
 
@@ -7318,9 +7622,9 @@
           var introspectionQuerySansSubscriptions = (exports.introspectionQuerySansSubscriptions =
             "\n  query IntrospectionQuery {\n    __schema {\n      queryType { name }\n      mutationType { name }\n      types {\n        ...FullType\n      }\n      directives {\n        name\n        description\n        locations\n        args {\n          ...InputValue\n        }\n      }\n    }\n  }\n\n  fragment FullType on __Type {\n    kind\n    name\n    description\n    fields(includeDeprecated: true) {\n      name\n      description\n      args {\n        ...InputValue\n      }\n      type {\n        ...TypeRef\n      }\n      isDeprecated\n      deprecationReason\n    }\n    inputFields {\n      ...InputValue\n    }\n    interfaces {\n      ...TypeRef\n    }\n    enumValues(includeDeprecated: true) {\n      name\n      description\n      isDeprecated\n      deprecationReason\n    }\n    possibleTypes {\n      ...TypeRef\n    }\n  }\n\n  fragment InputValue on __InputValue {\n    name\n    description\n    type { ...TypeRef }\n    defaultValue\n  }\n\n  fragment TypeRef on __Type {\n    kind\n    name\n    ofType {\n      kind\n      name\n      ofType {\n        kind\n        name\n        ofType {\n          kind\n          name\n          ofType {\n            kind\n            name\n            ofType {\n              kind\n              name\n              ofType {\n                kind\n                name\n                ofType {\n                  kind\n                  name\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n");
         },
-        { graphql: 100 }
+        { graphql: 101 }
       ],
-      33: [
+      34: [
         function(require, module, exports) {
           "use strict";
 
@@ -7356,7 +7660,7 @@
         },
         {}
       ],
-      34: [
+      35: [
         function(require, module, exports) {
           "use strict";
 
@@ -7475,9 +7779,9 @@
             return '<a class="typeName">' + type.name + "</a>";
           }
         },
-        { codemirror: 65, graphql: 100, "markdown-it": 177 }
+        { codemirror: 66, graphql: 101, "markdown-it": 178 }
       ],
-      35: [
+      36: [
         function(require, module, exports) {
           (function(global) {
             "use strict";
@@ -8068,9 +8372,9 @@
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { "util/": 249 }
+        { "util/": 250 }
       ],
-      36: [
+      37: [
         function(require, module, exports) {
           "use strict";
 
@@ -8182,9 +8486,9 @@
             return results;
           });
         },
-        { codemirror: 65, "graphql-language-service-interface": 76 }
+        { codemirror: 66, "graphql-language-service-interface": 77 }
       ],
-      37: [
+      38: [
         function(require, module, exports) {
           "use strict";
 
@@ -8437,14 +8741,14 @@
           }
         },
         {
-          "./utils/SchemaReference": 42,
-          "./utils/getTypeInfo": 44,
-          "./utils/info-addon": 46,
-          codemirror: 65,
-          graphql: 100
+          "./utils/SchemaReference": 43,
+          "./utils/getTypeInfo": 45,
+          "./utils/info-addon": 47,
+          codemirror: 66,
+          graphql: 101
         }
       ],
-      38: [
+      39: [
         function(require, module, exports) {
           "use strict";
 
@@ -8523,13 +8827,13 @@
           });
         },
         {
-          "./utils/SchemaReference": 42,
-          "./utils/getTypeInfo": 44,
-          "./utils/jump-addon": 48,
-          codemirror: 65
+          "./utils/SchemaReference": 43,
+          "./utils/getTypeInfo": 45,
+          "./utils/jump-addon": 49,
+          codemirror: 66
         }
       ],
-      39: [
+      40: [
         function(require, module, exports) {
           "use strict";
 
@@ -8600,9 +8904,9 @@
             return results;
           });
         },
-        { codemirror: 65, "graphql-language-service-interface": 76 }
+        { codemirror: 66, "graphql-language-service-interface": 77 }
       ],
-      40: [
+      41: [
         function(require, module, exports) {
           "use strict";
 
@@ -8682,9 +8986,9 @@
             return level * this.config.indentUnit;
           }
         },
-        { codemirror: 65, "graphql-language-service-parser": 85 }
+        { codemirror: 66, "graphql-language-service-parser": 86 }
       ],
-      41: [
+      42: [
         function(require, module, exports) {
           "use strict";
 
@@ -8842,9 +9146,9 @@
             ]
           };
         },
-        { codemirror: 65, "graphql-language-service-parser": 85 }
+        { codemirror: 66, "graphql-language-service-parser": 86 }
       ],
-      42: [
+      43: [
         function(require, module, exports) {
           "use strict";
 
@@ -8925,9 +9229,9 @@
             return fieldDef.name.slice(0, 2) === "__";
           }
         },
-        { graphql: 100 }
+        { graphql: 101 }
       ],
-      43: [
+      44: [
         function(require, module, exports) {
           "use strict";
 
@@ -8959,7 +9263,7 @@
         },
         {}
       ],
-      44: [
+      45: [
         function(require, module, exports) {
           "use strict";
 
@@ -9143,12 +9447,12 @@
           }
         },
         {
-          "./forEachState": 43,
-          graphql: 100,
-          "graphql/type/introspection": 123
+          "./forEachState": 44,
+          graphql: 101,
+          "graphql/type/introspection": 124
         }
       ],
-      45: [
+      46: [
         function(require, module, exports) {
           "use strict";
 
@@ -9302,7 +9606,7 @@
         },
         {}
       ],
-      46: [
+      47: [
         function(require, module, exports) {
           "use strict";
 
@@ -9515,9 +9819,9 @@
             );
           }
         },
-        { codemirror: 65 }
+        { codemirror: 66 }
       ],
-      47: [
+      48: [
         function(require, module, exports) {
           "use strict";
 
@@ -9845,7 +10149,7 @@
         },
         {}
       ],
-      48: [
+      49: [
         function(require, module, exports) {
           "use strict";
 
@@ -10028,9 +10332,9 @@
             marker.clear();
           }
         },
-        { codemirror: 65 }
+        { codemirror: 66 }
       ],
-      49: [
+      50: [
         function(require, module, exports) {
           "use strict";
 
@@ -10250,13 +10554,13 @@
           }
         },
         {
-          "../utils/forEachState": 43,
-          "../utils/hintList": 45,
-          codemirror: 65,
-          graphql: 100
+          "../utils/forEachState": 44,
+          "../utils/hintList": 46,
+          codemirror: 66,
+          graphql: 101
         }
       ],
-      50: [
+      51: [
         function(require, module, exports) {
           "use strict";
 
@@ -10490,9 +10794,9 @@
             return Array.prototype.concat.apply([], array.map(mapper));
           }
         },
-        { "../utils/jsonParse": 47, codemirror: 65, graphql: 100 }
+        { "../utils/jsonParse": 48, codemirror: 66, graphql: 101 }
       ],
-      51: [
+      52: [
         function(require, module, exports) {
           "use strict";
 
@@ -10671,9 +10975,9 @@
             };
           }
         },
-        { codemirror: 65, "graphql-language-service-parser": 85 }
+        { codemirror: 66, "graphql-language-service-parser": 86 }
       ],
-      52: [
+      53: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -10998,9 +11302,9 @@
             });
           });
         },
-        { "../../lib/codemirror": 65 }
+        { "../../lib/codemirror": 66 }
       ],
-      53: [
+      54: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -11198,9 +11502,9 @@
             });
           });
         },
-        { "../../lib/codemirror": 65 }
+        { "../../lib/codemirror": 66 }
       ],
-      54: [
+      55: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -11447,9 +11751,9 @@
             }
           });
         },
-        { "../../lib/codemirror": 65 }
+        { "../../lib/codemirror": 66 }
       ],
-      55: [
+      56: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -11680,9 +11984,9 @@
             });
           });
         },
-        { "../../lib/codemirror": 65 }
+        { "../../lib/codemirror": 66 }
       ],
-      56: [
+      57: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -11835,9 +12139,9 @@
             });
           });
         },
-        { "../../lib/codemirror": 65 }
+        { "../../lib/codemirror": 66 }
       ],
-      57: [
+      58: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -12000,9 +12304,9 @@
             });
           });
         },
-        { "../../lib/codemirror": 65 }
+        { "../../lib/codemirror": 66 }
       ],
-      58: [
+      59: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -12168,9 +12472,9 @@
             }
           });
         },
-        { "../../lib/codemirror": 65, "./foldcode": 57 }
+        { "../../lib/codemirror": 66, "./foldcode": 58 }
       ],
-      59: [
+      60: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -12768,9 +13072,9 @@
             CodeMirror.defineOption("hintOptions", null);
           });
         },
-        { "../../lib/codemirror": 65 }
+        { "../../lib/codemirror": 66 }
       ],
-      60: [
+      61: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -13103,9 +13407,9 @@
             });
           });
         },
-        { "../../lib/codemirror": 65 }
+        { "../../lib/codemirror": 66 }
       ],
-      61: [
+      62: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -13176,9 +13480,9 @@
             CodeMirror.keyMap["default"]["Alt-G"] = "jumpToLine";
           });
         },
-        { "../../lib/codemirror": 65, "../dialog/dialog": 53 }
+        { "../../lib/codemirror": 66, "../dialog/dialog": 54 }
       ],
-      62: [
+      63: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -13573,12 +13877,12 @@
           });
         },
         {
-          "../../lib/codemirror": 65,
-          "../dialog/dialog": 53,
-          "./searchcursor": 63
+          "../../lib/codemirror": 66,
+          "../dialog/dialog": 54,
+          "./searchcursor": 64
         }
       ],
-      63: [
+      64: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -14060,9 +14364,9 @@
             });
           });
         },
-        { "../../lib/codemirror": 65 }
+        { "../../lib/codemirror": 66 }
       ],
-      64: [
+      65: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -14978,12 +15282,12 @@
           });
         },
         {
-          "../addon/edit/matchbrackets": 55,
-          "../addon/search/searchcursor": 63,
-          "../lib/codemirror": 65
+          "../addon/edit/matchbrackets": 56,
+          "../addon/search/searchcursor": 64,
+          "../lib/codemirror": 66
         }
       ],
-      65: [
+      66: [
         function(require, module, exports) {
           // CodeMirror, copyright (c) by Marijn Haverbeke and others
           // Distributed under an MIT license: http://codemirror.net/LICENSE
@@ -30236,7 +30540,7 @@
         },
         {}
       ],
-      66: [
+      67: [
         function(require, module, exports) {
           module.exports = {
             Aacute: "\u00C1",
@@ -32368,7 +32672,7 @@
         },
         {}
       ],
-      67: [
+      68: [
         function(require, module, exports) {
           "use strict";
 
@@ -32409,7 +32713,7 @@
         },
         {}
       ],
-      68: [
+      69: [
         function(require, module, exports) {
           (function(process) {
             /**
@@ -32474,9 +32778,9 @@
             module.exports = invariant;
           }.call(this, require("_process")));
         },
-        { _process: 234 }
+        { _process: 235 }
       ],
-      69: [
+      70: [
         function(require, module, exports) {
           (function(process) {
             /**
@@ -32560,9 +32864,9 @@
             module.exports = warning;
           }.call(this, require("_process")));
         },
-        { "./emptyFunction": 67, _process: 234 }
+        { "./emptyFunction": 68, _process: 235 }
       ],
-      70: [
+      71: [
         function(require, module, exports) {
           "use strict";
 
@@ -33015,15 +33319,15 @@
           })());
         },
         {
-          "./getAutocompleteSuggestions": 72,
-          "./getDefinition": 73,
-          "./getDiagnostics": 74,
-          graphql: 100,
-          "graphql-language-service-utils": 89,
-          "graphql/language/kinds": 110
+          "./getAutocompleteSuggestions": 73,
+          "./getDefinition": 74,
+          "./getDiagnostics": 75,
+          graphql: 101,
+          "graphql-language-service-utils": 90,
+          "graphql/language/kinds": 111
         }
       ],
-      71: [
+      72: [
         function(require, module, exports) {
           "use strict";
 
@@ -33241,9 +33545,9 @@
             return d[aLength][bLength];
           }
         },
-        { graphql: 100, "graphql/type/introspection": 123 }
+        { graphql: 101, "graphql/type/introspection": 124 }
       ],
-      72: [
+      73: [
         function(require, module, exports) {
           "use strict";
 
@@ -33947,12 +34251,12 @@
           }
         },
         {
-          "./autocompleteUtils": 71,
-          graphql: 100,
-          "graphql-language-service-parser": 80
+          "./autocompleteUtils": 72,
+          graphql: 101,
+          "graphql-language-service-parser": 81
         }
       ],
-      73: [
+      74: [
         function(require, module, exports) {
           (function(process) {
             "use strict";
@@ -34103,9 +34407,9 @@
             }
           }.call(this, require("_process")));
         },
-        { _process: 234, assert: 35, "graphql-language-service-utils": 89 }
+        { _process: 235, assert: 36, "graphql-language-service-utils": 90 }
       ],
-      74: [
+      75: [
         function(require, module, exports) {
           "use strict";
 
@@ -34305,13 +34609,13 @@
           }
         },
         {
-          assert: 35,
-          graphql: 100,
-          "graphql-language-service-parser": 80,
-          "graphql-language-service-utils": 89
+          assert: 36,
+          graphql: 101,
+          "graphql-language-service-parser": 81,
+          "graphql-language-service-utils": 90
         }
       ],
-      75: [
+      76: [
         function(require, module, exports) {
           "use strict";
 
@@ -34479,12 +34783,12 @@
           }
         },
         {
-          graphql: 100,
-          "graphql-language-service-utils": 89,
-          "graphql/language/kinds": 110
+          graphql: 101,
+          "graphql-language-service-utils": 90,
+          "graphql/language/kinds": 111
         }
       ],
-      76: [
+      77: [
         function(require, module, exports) {
           "use strict";
 
@@ -34597,15 +34901,15 @@
           });
         },
         {
-          "./GraphQLLanguageService": 70,
-          "./autocompleteUtils": 71,
-          "./getAutocompleteSuggestions": 72,
-          "./getDefinition": 73,
-          "./getDiagnostics": 74,
-          "./getOutline": 75
+          "./GraphQLLanguageService": 71,
+          "./autocompleteUtils": 72,
+          "./getAutocompleteSuggestions": 73,
+          "./getDefinition": 74,
+          "./getDiagnostics": 75,
+          "./getOutline": 76
         }
       ],
-      77: [
+      78: [
         function(require, module, exports) {
           "use strict";
 
@@ -34819,7 +35123,7 @@
         },
         {}
       ],
-      78: [
+      79: [
         function(require, module, exports) {
           "use strict";
 
@@ -34894,7 +35198,7 @@
         },
         {}
       ],
-      79: [
+      80: [
         function(require, module, exports) {
           "use strict";
 
@@ -35289,9 +35593,9 @@
             };
           }
         },
-        { "./RuleHelpers": 78 }
+        { "./RuleHelpers": 79 }
       ],
-      80: [
+      81: [
         function(require, module, exports) {
           "use strict";
 
@@ -35376,13 +35680,13 @@
           }
         },
         {
-          "./CharacterStream": 77,
-          "./RuleHelpers": 78,
-          "./Rules": 79,
-          "./onlineParser": 81
+          "./CharacterStream": 78,
+          "./RuleHelpers": 79,
+          "./Rules": 80,
+          "./onlineParser": 82
         }
       ],
-      81: [
+      82: [
         function(require, module, exports) {
           "use strict";
 
@@ -35714,13 +36018,7 @@
             }
           }
         },
-        { "./Rules": 79 }
-      ],
-      82: [
-        function(require, module, exports) {
-          arguments[4][77][0].apply(exports, arguments);
-        },
-        { dup: 77 }
+        { "./Rules": 80 }
       ],
       83: [
         function(require, module, exports) {
@@ -35729,6 +36027,12 @@
         { dup: 78 }
       ],
       84: [
+        function(require, module, exports) {
+          arguments[4][79][0].apply(exports, arguments);
+        },
+        { dup: 79 }
+      ],
+      85: [
         function(require, module, exports) {
           "use strict";
 
@@ -36123,27 +36427,27 @@
             };
           }
         },
-        { "./RuleHelpers": 83 }
-      ],
-      85: [
-        function(require, module, exports) {
-          arguments[4][80][0].apply(exports, arguments);
-        },
-        {
-          "./CharacterStream": 82,
-          "./RuleHelpers": 83,
-          "./Rules": 84,
-          "./onlineParser": 86,
-          dup: 80
-        }
+        { "./RuleHelpers": 84 }
       ],
       86: [
         function(require, module, exports) {
           arguments[4][81][0].apply(exports, arguments);
         },
-        { "./Rules": 84, dup: 81 }
+        {
+          "./CharacterStream": 83,
+          "./RuleHelpers": 84,
+          "./Rules": 85,
+          "./onlineParser": 87,
+          dup: 81
+        }
       ],
       87: [
+        function(require, module, exports) {
+          arguments[4][82][0].apply(exports, arguments);
+        },
+        { "./Rules": 85, dup: 82 }
+      ],
+      88: [
         function(require, module, exports) {
           "use strict";
 
@@ -36248,7 +36552,7 @@
         },
         {}
       ],
-      88: [
+      89: [
         function(require, module, exports) {
           "use strict";
 
@@ -36315,9 +36619,9 @@
             );
           }
         },
-        { "./Range": 87, graphql: 100 }
+        { "./Range": 88, graphql: 101 }
       ],
-      89: [
+      90: [
         function(require, module, exports) {
           "use strict";
 
@@ -36377,12 +36681,12 @@
           });
         },
         {
-          "./Range": 87,
-          "./getASTNodeAtPosition": 88,
-          "./validateWithCustomRules": 90
+          "./Range": 88,
+          "./getASTNodeAtPosition": 89,
+          "./validateWithCustomRules": 91
         }
       ],
-      90: [
+      91: [
         function(require, module, exports) {
           "use strict";
 
@@ -36459,12 +36763,12 @@
            */
         },
         {
-          graphql: 100,
-          "graphql/validation/rules/KnownFragmentNames": 152,
-          "graphql/validation/rules/NoUnusedFragments": 157
+          graphql: 101,
+          "graphql/validation/rules/KnownFragmentNames": 153,
+          "graphql/validation/rules/NoUnusedFragments": 158
         }
       ],
-      91: [
+      92: [
         function(require, module, exports) {
           "use strict";
 
@@ -36590,9 +36894,9 @@
             name: { value: "GraphQLError" }
           });
         },
-        { "../language/location": 112 }
+        { "../language/location": 113 }
       ],
-      92: [
+      93: [
         function(require, module, exports) {
           "use strict";
 
@@ -36632,9 +36936,9 @@
            *  of patent rights can be found in the PATENTS file in the same directory.
            */
         },
-        { "../jsutils/invariant": 102 }
+        { "../jsutils/invariant": 103 }
       ],
-      93: [
+      94: [
         function(require, module, exports) {
           "use strict";
 
@@ -36679,13 +36983,13 @@
           });
         },
         {
-          "./GraphQLError": 91,
-          "./formatError": 92,
-          "./locatedError": 94,
-          "./syntaxError": 95
+          "./GraphQLError": 92,
+          "./formatError": 93,
+          "./locatedError": 95,
+          "./syntaxError": 96
         }
       ],
-      94: [
+      95: [
         function(require, module, exports) {
           "use strict";
 
@@ -36729,9 +37033,9 @@
            *  of patent rights can be found in the PATENTS file in the same directory.
            */
         },
-        { "./GraphQLError": 91 }
+        { "./GraphQLError": 92 }
       ],
-      95: [
+      96: [
         function(require, module, exports) {
           "use strict";
 
@@ -36824,9 +37128,9 @@
             return whitespace(len - str.length) + str;
           }
         },
-        { "../language/location": 112, "./GraphQLError": 91 }
+        { "../language/location": 113, "./GraphQLError": 92 }
       ],
-      96: [
+      97: [
         function(require, module, exports) {
           "use strict";
 
@@ -38213,20 +38517,20 @@
           }
         },
         {
-          "../error": 93,
-          "../jsutils/invariant": 102,
-          "../jsutils/isNullish": 104,
-          "../language/kinds": 110,
-          "../type/definition": 120,
-          "../type/directives": 121,
-          "../type/introspection": 123,
-          "../type/schema": 125,
-          "../utilities/typeFromAST": 143,
-          "./values": 98,
-          iterall: 174
+          "../error": 94,
+          "../jsutils/invariant": 103,
+          "../jsutils/isNullish": 105,
+          "../language/kinds": 111,
+          "../type/definition": 121,
+          "../type/directives": 122,
+          "../type/introspection": 124,
+          "../type/schema": 126,
+          "../utilities/typeFromAST": 144,
+          "./values": 99,
+          iterall: 175
         }
       ],
-      97: [
+      98: [
         function(require, module, exports) {
           "use strict";
 
@@ -38264,9 +38568,9 @@
             }
           });
         },
-        { "./execute": 96, "./values": 98 }
+        { "./execute": 97, "./values": 99 }
       ],
-      98: [
+      99: [
         function(require, module, exports) {
           "use strict";
 
@@ -38637,23 +38941,23 @@
           }
         },
         {
-          "../error": 93,
-          "../jsutils/find": 101,
-          "../jsutils/invariant": 102,
-          "../jsutils/isInvalid": 103,
-          "../jsutils/isNullish": 104,
-          "../jsutils/keyMap": 105,
-          "../language/kinds": 110,
-          "../language/printer": 114,
-          "../type/definition": 120,
-          "../utilities/isValidJSValue": 138,
-          "../utilities/isValidLiteralValue": 139,
-          "../utilities/typeFromAST": 143,
-          "../utilities/valueFromAST": 144,
-          iterall: 174
+          "../error": 94,
+          "../jsutils/find": 102,
+          "../jsutils/invariant": 103,
+          "../jsutils/isInvalid": 104,
+          "../jsutils/isNullish": 105,
+          "../jsutils/keyMap": 106,
+          "../language/kinds": 111,
+          "../language/printer": 115,
+          "../type/definition": 121,
+          "../utilities/isValidJSValue": 139,
+          "../utilities/isValidLiteralValue": 140,
+          "../utilities/typeFromAST": 144,
+          "../utilities/valueFromAST": 145,
+          iterall: 175
         }
       ],
-      99: [
+      100: [
         function(require, module, exports) {
           "use strict";
 
@@ -38781,12 +39085,12 @@
           }
         },
         {
-          "./execution/execute": 96,
-          "./language/parser": 113,
-          "./validation/validate": 173
+          "./execution/execute": 97,
+          "./language/parser": 114,
+          "./validation/validate": 174
         }
       ],
-      100: [
+      101: [
         function(require, module, exports) {
           "use strict";
 
@@ -39569,17 +39873,17 @@
           });
         },
         {
-          "./error": 93,
-          "./execution": 97,
-          "./graphql": 99,
-          "./language": 109,
-          "./subscription": 117,
-          "./type": 122,
-          "./utilities": 136,
-          "./validation": 145
+          "./error": 94,
+          "./execution": 98,
+          "./graphql": 100,
+          "./language": 110,
+          "./subscription": 118,
+          "./type": 123,
+          "./utilities": 137,
+          "./validation": 146
         }
       ],
-      101: [
+      102: [
         function(require, module, exports) {
           "use strict";
 
@@ -39607,7 +39911,7 @@
         },
         {}
       ],
-      102: [
+      103: [
         function(require, module, exports) {
           "use strict";
 
@@ -39633,7 +39937,7 @@
         },
         {}
       ],
-      103: [
+      104: [
         function(require, module, exports) {
           "use strict";
 
@@ -39660,7 +39964,7 @@
         },
         {}
       ],
-      104: [
+      105: [
         function(require, module, exports) {
           "use strict";
 
@@ -39687,7 +39991,7 @@
         },
         {}
       ],
-      105: [
+      106: [
         function(require, module, exports) {
           "use strict";
 
@@ -39736,7 +40040,7 @@
         },
         {}
       ],
-      106: [
+      107: [
         function(require, module, exports) {
           "use strict";
 
@@ -39779,7 +40083,7 @@
         },
         {}
       ],
-      107: [
+      108: [
         function(require, module, exports) {
           "use strict";
 
@@ -39820,7 +40124,7 @@
         },
         {}
       ],
-      108: [
+      109: [
         function(require, module, exports) {
           "use strict";
 
@@ -39917,7 +40221,7 @@
         },
         {}
       ],
-      109: [
+      110: [
         function(require, module, exports) {
           "use strict";
 
@@ -40045,16 +40349,16 @@
           exports.Kind = Kind;
         },
         {
-          "./kinds": 110,
-          "./lexer": 111,
-          "./location": 112,
-          "./parser": 113,
-          "./printer": 114,
-          "./source": 115,
-          "./visitor": 116
+          "./kinds": 111,
+          "./lexer": 112,
+          "./location": 113,
+          "./parser": 114,
+          "./printer": 115,
+          "./source": 116,
+          "./visitor": 117
         }
       ],
-      110: [
+      111: [
         function(require, module, exports) {
           "use strict";
 
@@ -40155,7 +40459,7 @@
         },
         {}
       ],
-      111: [
+      112: [
         function(require, module, exports) {
           "use strict";
 
@@ -40876,9 +41180,9 @@
             );
           }
         },
-        { "../error": 93 }
+        { "../error": 94 }
       ],
-      112: [
+      113: [
         function(require, module, exports) {
           "use strict";
 
@@ -40922,7 +41226,7 @@
         },
         {}
       ],
-      113: [
+      114: [
         function(require, module, exports) {
           "use strict";
 
@@ -42038,9 +42342,9 @@
             return nodes;
           }
         },
-        { "../error": 93, "./kinds": 110, "./lexer": 111, "./source": 115 }
+        { "../error": 94, "./kinds": 111, "./lexer": 112, "./source": 116 }
       ],
-      114: [
+      115: [
         function(require, module, exports) {
           "use strict";
 
@@ -42414,9 +42718,9 @@
             return maybeString && maybeString.replace(/\n/g, "\n  ");
           }
         },
-        { "./visitor": 116 }
+        { "./visitor": 117 }
       ],
-      115: [
+      116: [
         function(require, module, exports) {
           "use strict";
 
@@ -42479,9 +42783,9 @@
               : void 0;
           });
         },
-        { "../jsutils/invariant": 102 }
+        { "../jsutils/invariant": 103 }
       ],
-      116: [
+      117: [
         function(require, module, exports) {
           "use strict";
 
@@ -42920,7 +43224,7 @@
         },
         {}
       ],
-      117: [
+      118: [
         function(require, module, exports) {
           "use strict";
 
@@ -42943,9 +43247,9 @@
             }
           });
         },
-        { "./subscribe": 119 }
+        { "./subscribe": 120 }
       ],
-      118: [
+      119: [
         function(require, module, exports) {
           "use strict";
 
@@ -43040,9 +43344,9 @@
             return { value: value, done: false };
           }
         },
-        { iterall: 174 }
+        { iterall: 175 }
       ],
-      119: [
+      120: [
         function(require, module, exports) {
           "use strict";
 
@@ -43277,14 +43581,14 @@
           }
         },
         {
-          "../execution/execute": 96,
-          "../jsutils/invariant": 102,
-          "../type/schema": 125,
-          "./mapAsyncIterator": 118,
-          iterall: 174
+          "../execution/execute": 97,
+          "../jsutils/invariant": 103,
+          "../type/schema": 126,
+          "./mapAsyncIterator": 119,
+          iterall: 175
         }
       ],
-      120: [
+      121: [
         function(require, module, exports) {
           "use strict";
 
@@ -44502,13 +44806,13 @@
             GraphQLNonNull.prototype.toString;
         },
         {
-          "../jsutils/invariant": 102,
-          "../jsutils/isNullish": 104,
-          "../language/kinds": 110,
-          "../utilities/assertValidName": 127
+          "../jsutils/invariant": 103,
+          "../jsutils/isNullish": 105,
+          "../language/kinds": 111,
+          "../utilities/assertValidName": 128
         }
       ],
-      121: [
+      122: [
         function(require, module, exports) {
           "use strict";
 
@@ -44719,13 +45023,13 @@
           ]);
         },
         {
-          "../jsutils/invariant": 102,
-          "../utilities/assertValidName": 127,
-          "./definition": 120,
-          "./scalars": 124
+          "../jsutils/invariant": 103,
+          "../utilities/assertValidName": 128,
+          "./definition": 121,
+          "./scalars": 125
         }
       ],
-      122: [
+      123: [
         function(require, module, exports) {
           "use strict";
 
@@ -45043,14 +45347,14 @@
           });
         },
         {
-          "./definition": 120,
-          "./directives": 121,
-          "./introspection": 123,
-          "./scalars": 124,
-          "./schema": 125
+          "./definition": 121,
+          "./directives": 122,
+          "./introspection": 124,
+          "./scalars": 125,
+          "./schema": 126
         }
       ],
-      123: [
+      124: [
         function(require, module, exports) {
           "use strict";
 
@@ -45678,15 +45982,15 @@
           });
         },
         {
-          "../jsutils/isInvalid": 103,
-          "../language/printer": 114,
-          "../utilities/astFromValue": 128,
-          "./definition": 120,
-          "./directives": 121,
-          "./scalars": 124
+          "../jsutils/isInvalid": 104,
+          "../language/printer": 115,
+          "../utilities/astFromValue": 129,
+          "./definition": 121,
+          "./directives": 122,
+          "./scalars": 125
         }
       ],
-      124: [
+      125: [
         function(require, module, exports) {
           "use strict";
 
@@ -45856,9 +46160,9 @@
             }
           ));
         },
-        { "../language/kinds": 110, "./definition": 120 }
+        { "../language/kinds": 111, "./definition": 121 }
       ],
-      125: [
+      126: [
         function(require, module, exports) {
           "use strict";
 
@@ -46342,15 +46646,15 @@
           }
         },
         {
-          "../jsutils/find": 101,
-          "../jsutils/invariant": 102,
-          "../utilities/typeComparators": 142,
-          "./definition": 120,
-          "./directives": 121,
-          "./introspection": 123
+          "../jsutils/find": 102,
+          "../jsutils/invariant": 103,
+          "../utilities/typeComparators": 143,
+          "./definition": 121,
+          "./directives": 122,
+          "./introspection": 124
         }
       ],
-      126: [
+      127: [
         function(require, module, exports) {
           "use strict";
 
@@ -46654,14 +46958,14 @@
           }
         },
         {
-          "../jsutils/find": 101,
-          "../language/kinds": 110,
-          "../type/definition": 120,
-          "../type/introspection": 123,
-          "./typeFromAST": 143
+          "../jsutils/find": 102,
+          "../language/kinds": 111,
+          "../type/definition": 121,
+          "../type/introspection": 124,
+          "./typeFromAST": 144
         }
       ],
-      127: [
+      128: [
         function(require, module, exports) {
           (function(process) {
             "use strict";
@@ -46748,9 +47052,9 @@
             }
           }.call(this, require("_process")));
         },
-        { _process: 234 }
+        { _process: 235 }
       ],
-      128: [
+      129: [
         function(require, module, exports) {
           "use strict";
 
@@ -46962,16 +47266,16 @@
           }
         },
         {
-          "../jsutils/invariant": 102,
-          "../jsutils/isInvalid": 103,
-          "../jsutils/isNullish": 104,
-          "../language/kinds": 110,
-          "../type/definition": 120,
-          "../type/scalars": 124,
-          iterall: 174
+          "../jsutils/invariant": 103,
+          "../jsutils/isInvalid": 104,
+          "../jsutils/isNullish": 105,
+          "../language/kinds": 111,
+          "../type/definition": 121,
+          "../type/scalars": 125,
+          iterall: 175
         }
       ],
-      129: [
+      130: [
         function(require, module, exports) {
           "use strict";
 
@@ -47560,21 +47864,21 @@
           }
         },
         {
-          "../execution/values": 98,
-          "../jsutils/invariant": 102,
-          "../jsutils/keyValMap": 106,
-          "../language/kinds": 110,
-          "../language/lexer": 111,
-          "../language/parser": 113,
-          "../type/definition": 120,
-          "../type/directives": 121,
-          "../type/introspection": 123,
-          "../type/scalars": 124,
-          "../type/schema": 125,
-          "./valueFromAST": 144
+          "../execution/values": 99,
+          "../jsutils/invariant": 103,
+          "../jsutils/keyValMap": 107,
+          "../language/kinds": 111,
+          "../language/lexer": 112,
+          "../language/parser": 114,
+          "../type/definition": 121,
+          "../type/directives": 122,
+          "../type/introspection": 124,
+          "../type/scalars": 125,
+          "../type/schema": 126,
+          "./valueFromAST": 145
         }
       ],
-      130: [
+      131: [
         function(require, module, exports) {
           "use strict";
 
@@ -47982,19 +48286,19 @@
           }
         },
         {
-          "../jsutils/invariant": 102,
-          "../jsutils/keyMap": 105,
-          "../jsutils/keyValMap": 106,
-          "../language/parser": 113,
-          "../type/definition": 120,
-          "../type/directives": 121,
-          "../type/introspection": 123,
-          "../type/scalars": 124,
-          "../type/schema": 125,
-          "./valueFromAST": 144
+          "../jsutils/invariant": 103,
+          "../jsutils/keyMap": 106,
+          "../jsutils/keyValMap": 107,
+          "../language/parser": 114,
+          "../type/definition": 121,
+          "../type/directives": 122,
+          "../type/introspection": 124,
+          "../type/scalars": 125,
+          "../type/schema": 126,
+          "./valueFromAST": 145
         }
       ],
-      131: [
+      132: [
         function(require, module, exports) {
           "use strict";
 
@@ -48032,7 +48336,7 @@
         },
         {}
       ],
-      132: [
+      133: [
         function(require, module, exports) {
           "use strict";
 
@@ -48724,21 +49028,21 @@
           }
         },
         {
-          "../error/GraphQLError": 91,
-          "../jsutils/invariant": 102,
-          "../jsutils/keyMap": 105,
-          "../jsutils/keyValMap": 106,
-          "../language/kinds": 110,
-          "../type/definition": 120,
-          "../type/directives": 121,
-          "../type/introspection": 123,
-          "../type/scalars": 124,
-          "../type/schema": 125,
-          "./buildASTSchema": 129,
-          "./valueFromAST": 144
+          "../error/GraphQLError": 92,
+          "../jsutils/invariant": 103,
+          "../jsutils/keyMap": 106,
+          "../jsutils/keyValMap": 107,
+          "../language/kinds": 111,
+          "../type/definition": 121,
+          "../type/directives": 122,
+          "../type/introspection": 124,
+          "../type/scalars": 125,
+          "../type/schema": 126,
+          "./buildASTSchema": 130,
+          "./valueFromAST": 145
         }
       ],
-      133: [
+      134: [
         function(require, module, exports) {
           "use strict";
 
@@ -49349,9 +49653,9 @@
             return breakingChanges;
           }
         },
-        { "../type/definition": 120, "../type/schema": 125 }
+        { "../type/definition": 121, "../type/schema": 126 }
       ],
-      134: [
+      135: [
         function(require, module, exports) {
           "use strict";
 
@@ -49439,14 +49743,14 @@
            */
         },
         {
-          "../error/GraphQLError": 91,
-          "../language/visitor": 116,
-          "../type/definition": 120,
-          "../type/schema": 125,
-          "./TypeInfo": 126
+          "../error/GraphQLError": 92,
+          "../language/visitor": 117,
+          "../type/definition": 121,
+          "../type/schema": 126,
+          "./TypeInfo": 127
         }
       ],
-      135: [
+      136: [
         function(require, module, exports) {
           "use strict";
 
@@ -49494,9 +49798,9 @@
            *  of patent rights can be found in the PATENTS file in the same directory.
            */
         },
-        { "../language/kinds": 110 }
+        { "../language/kinds": 111 }
       ],
-      136: [
+      137: [
         function(require, module, exports) {
           "use strict";
 
@@ -49709,27 +50013,27 @@
           });
         },
         {
-          "./TypeInfo": 126,
-          "./assertValidName": 127,
-          "./astFromValue": 128,
-          "./buildASTSchema": 129,
-          "./buildClientSchema": 130,
-          "./concatAST": 131,
-          "./extendSchema": 132,
-          "./findBreakingChanges": 133,
-          "./findDeprecatedUsages": 134,
-          "./getOperationAST": 135,
-          "./introspectionQuery": 137,
-          "./isValidJSValue": 138,
-          "./isValidLiteralValue": 139,
-          "./schemaPrinter": 140,
-          "./separateOperations": 141,
-          "./typeComparators": 142,
-          "./typeFromAST": 143,
-          "./valueFromAST": 144
+          "./TypeInfo": 127,
+          "./assertValidName": 128,
+          "./astFromValue": 129,
+          "./buildASTSchema": 130,
+          "./buildClientSchema": 131,
+          "./concatAST": 132,
+          "./extendSchema": 133,
+          "./findBreakingChanges": 134,
+          "./findDeprecatedUsages": 135,
+          "./getOperationAST": 136,
+          "./introspectionQuery": 138,
+          "./isValidJSValue": 139,
+          "./isValidLiteralValue": 140,
+          "./schemaPrinter": 141,
+          "./separateOperations": 142,
+          "./typeComparators": 143,
+          "./typeFromAST": 144,
+          "./valueFromAST": 145
         }
       ],
-      137: [
+      138: [
         function(require, module, exports) {
           "use strict";
 
@@ -49749,7 +50053,7 @@
         },
         {}
       ],
-      138: [
+      139: [
         function(require, module, exports) {
           "use strict";
 
@@ -49911,13 +50215,13 @@
           }
         },
         {
-          "../jsutils/invariant": 102,
-          "../jsutils/isNullish": 104,
-          "../type/definition": 120,
-          iterall: 174
+          "../jsutils/invariant": 103,
+          "../jsutils/isNullish": 105,
+          "../type/definition": 121,
+          iterall: 175
         }
       ],
-      139: [
+      140: [
         function(require, module, exports) {
           "use strict";
 
@@ -50077,14 +50381,14 @@
            */
         },
         {
-          "../jsutils/invariant": 102,
-          "../jsutils/keyMap": 105,
-          "../language/kinds": 110,
-          "../language/printer": 114,
-          "../type/definition": 120
+          "../jsutils/invariant": 103,
+          "../jsutils/keyMap": 106,
+          "../language/kinds": 111,
+          "../language/printer": 115,
+          "../type/definition": 121
         }
       ],
-      140: [
+      141: [
         function(require, module, exports) {
           "use strict";
 
@@ -50501,17 +50805,17 @@
           }
         },
         {
-          "../jsutils/invariant": 102,
-          "../jsutils/isInvalid": 103,
-          "../jsutils/isNullish": 104,
-          "../language/printer": 114,
-          "../type/definition": 120,
-          "../type/directives": 121,
-          "../type/scalars": 124,
-          "../utilities/astFromValue": 128
+          "../jsutils/invariant": 103,
+          "../jsutils/isInvalid": 104,
+          "../jsutils/isNullish": 105,
+          "../language/printer": 115,
+          "../type/definition": 121,
+          "../type/directives": 122,
+          "../type/scalars": 125,
+          "../utilities/astFromValue": 129
         }
       ],
-      141: [
+      142: [
         function(require, module, exports) {
           "use strict";
 
@@ -50617,9 +50921,9 @@
             }
           }
         },
-        { "../language/visitor": 116 }
+        { "../language/visitor": 117 }
       ],
-      142: [
+      143: [
         function(require, module, exports) {
           "use strict";
 
@@ -50764,9 +51068,9 @@
             return false;
           }
         },
-        { "../type/definition": 120 }
+        { "../type/definition": 121 }
       ],
-      143: [
+      144: [
         function(require, module, exports) {
           "use strict";
 
@@ -50845,12 +51149,12 @@
           var typeFromAST = (exports.typeFromAST = typeFromASTImpl);
         },
         {
-          "../jsutils/invariant": 102,
-          "../language/kinds": 110,
-          "../type/definition": 120
+          "../jsutils/invariant": 103,
+          "../language/kinds": 111,
+          "../type/definition": 121
         }
       ],
-      144: [
+      145: [
         function(require, module, exports) {
           "use strict";
 
@@ -51070,15 +51374,15 @@
           }
         },
         {
-          "../jsutils/invariant": 102,
-          "../jsutils/isInvalid": 103,
-          "../jsutils/isNullish": 104,
-          "../jsutils/keyMap": 105,
-          "../language/kinds": 110,
-          "../type/definition": 120
+          "../jsutils/invariant": 103,
+          "../jsutils/isInvalid": 104,
+          "../jsutils/isNullish": 105,
+          "../jsutils/keyMap": 106,
+          "../language/kinds": 111,
+          "../type/definition": 121
         }
       ],
-      145: [
+      146: [
         function(require, module, exports) {
           "use strict";
 
@@ -51345,37 +51649,37 @@
           });
         },
         {
-          "./rules/ArgumentsOfCorrectType": 146,
-          "./rules/DefaultValuesOfCorrectType": 147,
-          "./rules/FieldsOnCorrectType": 148,
-          "./rules/FragmentsOnCompositeTypes": 149,
-          "./rules/KnownArgumentNames": 150,
-          "./rules/KnownDirectives": 151,
-          "./rules/KnownFragmentNames": 152,
-          "./rules/KnownTypeNames": 153,
-          "./rules/LoneAnonymousOperation": 154,
-          "./rules/NoFragmentCycles": 155,
-          "./rules/NoUndefinedVariables": 156,
-          "./rules/NoUnusedFragments": 157,
-          "./rules/NoUnusedVariables": 158,
-          "./rules/OverlappingFieldsCanBeMerged": 159,
-          "./rules/PossibleFragmentSpreads": 160,
-          "./rules/ProvidedNonNullArguments": 161,
-          "./rules/ScalarLeafs": 162,
-          "./rules/SingleFieldSubscriptions": 163,
-          "./rules/UniqueArgumentNames": 164,
-          "./rules/UniqueDirectivesPerLocation": 165,
-          "./rules/UniqueFragmentNames": 166,
-          "./rules/UniqueInputFieldNames": 167,
-          "./rules/UniqueOperationNames": 168,
-          "./rules/UniqueVariableNames": 169,
-          "./rules/VariablesAreInputTypes": 170,
-          "./rules/VariablesInAllowedPosition": 171,
-          "./specifiedRules": 172,
-          "./validate": 173
+          "./rules/ArgumentsOfCorrectType": 147,
+          "./rules/DefaultValuesOfCorrectType": 148,
+          "./rules/FieldsOnCorrectType": 149,
+          "./rules/FragmentsOnCompositeTypes": 150,
+          "./rules/KnownArgumentNames": 151,
+          "./rules/KnownDirectives": 152,
+          "./rules/KnownFragmentNames": 153,
+          "./rules/KnownTypeNames": 154,
+          "./rules/LoneAnonymousOperation": 155,
+          "./rules/NoFragmentCycles": 156,
+          "./rules/NoUndefinedVariables": 157,
+          "./rules/NoUnusedFragments": 158,
+          "./rules/NoUnusedVariables": 159,
+          "./rules/OverlappingFieldsCanBeMerged": 160,
+          "./rules/PossibleFragmentSpreads": 161,
+          "./rules/ProvidedNonNullArguments": 162,
+          "./rules/ScalarLeafs": 163,
+          "./rules/SingleFieldSubscriptions": 164,
+          "./rules/UniqueArgumentNames": 165,
+          "./rules/UniqueDirectivesPerLocation": 166,
+          "./rules/UniqueFragmentNames": 167,
+          "./rules/UniqueInputFieldNames": 168,
+          "./rules/UniqueOperationNames": 169,
+          "./rules/UniqueVariableNames": 170,
+          "./rules/VariablesAreInputTypes": 171,
+          "./rules/VariablesInAllowedPosition": 172,
+          "./specifiedRules": 173,
+          "./validate": 174
         }
       ],
-      146: [
+      147: [
         function(require, module, exports) {
           "use strict";
 
@@ -51447,12 +51751,12 @@
           }
         },
         {
-          "../../error": 93,
-          "../../language/printer": 114,
-          "../../utilities/isValidLiteralValue": 139
+          "../../error": 94,
+          "../../language/printer": 115,
+          "../../utilities/isValidLiteralValue": 140
         }
       ],
-      147: [
+      148: [
         function(require, module, exports) {
           "use strict";
 
@@ -51563,13 +51867,13 @@
           }
         },
         {
-          "../../error": 93,
-          "../../language/printer": 114,
-          "../../type/definition": 120,
-          "../../utilities/isValidLiteralValue": 139
+          "../../error": 94,
+          "../../language/printer": 115,
+          "../../type/definition": 121,
+          "../../utilities/isValidLiteralValue": 140
         }
       ],
-      148: [
+      149: [
         function(require, module, exports) {
           "use strict";
 
@@ -51737,13 +52041,13 @@
           }
         },
         {
-          "../../error": 93,
-          "../../jsutils/quotedOrList": 107,
-          "../../jsutils/suggestionList": 108,
-          "../../type/definition": 120
+          "../../error": 94,
+          "../../jsutils/quotedOrList": 108,
+          "../../jsutils/suggestionList": 109,
+          "../../type/definition": 121
         }
       ],
-      149: [
+      150: [
         function(require, module, exports) {
           "use strict";
 
@@ -51835,13 +52139,13 @@
           }
         },
         {
-          "../../error": 93,
-          "../../language/printer": 114,
-          "../../type/definition": 120,
-          "../../utilities/typeFromAST": 143
+          "../../error": 94,
+          "../../language/printer": 115,
+          "../../type/definition": 121,
+          "../../utilities/typeFromAST": 144
         }
       ],
-      150: [
+      151: [
         function(require, module, exports) {
           "use strict";
 
@@ -52012,15 +52316,15 @@
           }
         },
         {
-          "../../error": 93,
-          "../../jsutils/find": 101,
-          "../../jsutils/invariant": 102,
-          "../../jsutils/quotedOrList": 107,
-          "../../jsutils/suggestionList": 108,
-          "../../language/kinds": 110
+          "../../error": 94,
+          "../../jsutils/find": 102,
+          "../../jsutils/invariant": 103,
+          "../../jsutils/quotedOrList": 108,
+          "../../jsutils/suggestionList": 109,
+          "../../language/kinds": 111
         }
       ],
-      151: [
+      152: [
         function(require, module, exports) {
           "use strict";
 
@@ -52190,13 +52494,13 @@
           }
         },
         {
-          "../../error": 93,
-          "../../jsutils/find": 101,
-          "../../language/kinds": 110,
-          "../../type/directives": 121
+          "../../error": 94,
+          "../../jsutils/find": 102,
+          "../../language/kinds": 111,
+          "../../type/directives": 122
         }
       ],
-      152: [
+      153: [
         function(require, module, exports) {
           "use strict";
 
@@ -52244,9 +52548,9 @@
             };
           }
         },
-        { "../../error": 93 }
+        { "../../error": 94 }
       ],
-      153: [
+      154: [
         function(require, module, exports) {
           "use strict";
 
@@ -52336,12 +52640,12 @@
           }
         },
         {
-          "../../error": 93,
-          "../../jsutils/quotedOrList": 107,
-          "../../jsutils/suggestionList": 108
+          "../../error": 94,
+          "../../jsutils/quotedOrList": 108,
+          "../../jsutils/suggestionList": 109
         }
       ],
-      154: [
+      155: [
         function(require, module, exports) {
           "use strict";
 
@@ -52395,9 +52699,9 @@
             };
           }
         },
-        { "../../error": 93, "../../language/kinds": 110 }
+        { "../../error": 94, "../../language/kinds": 111 }
       ],
-      155: [
+      156: [
         function(require, module, exports) {
           "use strict";
 
@@ -52504,9 +52808,9 @@
             }
           }
         },
-        { "../../error": 93 }
+        { "../../error": 94 }
       ],
-      156: [
+      157: [
         function(require, module, exports) {
           "use strict";
 
@@ -52578,9 +52882,9 @@
             };
           }
         },
-        { "../../error": 93 }
+        { "../../error": 94 }
       ],
-      157: [
+      158: [
         function(require, module, exports) {
           "use strict";
 
@@ -52651,9 +52955,9 @@
             };
           }
         },
-        { "../../error": 93 }
+        { "../../error": 94 }
       ],
-      158: [
+      159: [
         function(require, module, exports) {
           "use strict";
 
@@ -52728,9 +53032,9 @@
             };
           }
         },
-        { "../../error": 93 }
+        { "../../error": 94 }
       ],
-      159: [
+      160: [
         function(require, module, exports) {
           "use strict";
 
@@ -53646,15 +53950,15 @@
           }
         },
         {
-          "../../error": 93,
-          "../../jsutils/find": 101,
-          "../../language/kinds": 110,
-          "../../language/printer": 114,
-          "../../type/definition": 120,
-          "../../utilities/typeFromAST": 143
+          "../../error": 94,
+          "../../jsutils/find": 102,
+          "../../language/kinds": 111,
+          "../../language/printer": 115,
+          "../../type/definition": 121,
+          "../../utilities/typeFromAST": 144
         }
       ],
-      160: [
+      161: [
         function(require, module, exports) {
           "use strict";
 
@@ -53777,12 +54081,12 @@
           }
         },
         {
-          "../../error": 93,
-          "../../utilities/typeComparators": 142,
-          "../../utilities/typeFromAST": 143
+          "../../error": 94,
+          "../../utilities/typeComparators": 143,
+          "../../utilities/typeFromAST": 144
         }
       ],
-      161: [
+      162: [
         function(require, module, exports) {
           "use strict";
 
@@ -53917,12 +54221,12 @@
           }
         },
         {
-          "../../error": 93,
-          "../../jsutils/keyMap": 105,
-          "../../type/definition": 120
+          "../../error": 94,
+          "../../jsutils/keyMap": 106,
+          "../../type/definition": 121
         }
       ],
-      162: [
+      163: [
         function(require, module, exports) {
           "use strict";
 
@@ -54004,9 +54308,9 @@
             };
           }
         },
-        { "../../error": 93, "../../type/definition": 120 }
+        { "../../error": 94, "../../type/definition": 121 }
       ],
-      163: [
+      164: [
         function(require, module, exports) {
           "use strict";
 
@@ -54058,9 +54362,9 @@
             };
           }
         },
-        { "../../error": 93 }
+        { "../../error": 94 }
       ],
-      164: [
+      165: [
         function(require, module, exports) {
           "use strict";
 
@@ -54117,9 +54421,9 @@
             };
           }
         },
-        { "../../error": 93 }
+        { "../../error": 94 }
       ],
-      165: [
+      166: [
         function(require, module, exports) {
           "use strict";
 
@@ -54181,9 +54485,9 @@
             };
           }
         },
-        { "../../error": 93 }
+        { "../../error": 94 }
       ],
-      166: [
+      167: [
         function(require, module, exports) {
           "use strict";
 
@@ -54236,9 +54540,9 @@
             };
           }
         },
-        { "../../error": 93 }
+        { "../../error": 94 }
       ],
-      167: [
+      168: [
         function(require, module, exports) {
           "use strict";
 
@@ -54302,9 +54606,9 @@
             };
           }
         },
-        { "../../error": 93 }
+        { "../../error": 94 }
       ],
-      168: [
+      169: [
         function(require, module, exports) {
           "use strict";
 
@@ -54365,9 +54669,9 @@
             };
           }
         },
-        { "../../error": 93 }
+        { "../../error": 94 }
       ],
-      169: [
+      170: [
         function(require, module, exports) {
           "use strict";
 
@@ -54422,9 +54726,9 @@
             };
           }
         },
-        { "../../error": 93 }
+        { "../../error": 94 }
       ],
-      170: [
+      171: [
         function(require, module, exports) {
           "use strict";
 
@@ -54494,13 +54798,13 @@
           }
         },
         {
-          "../../error": 93,
-          "../../language/printer": 114,
-          "../../type/definition": 120,
-          "../../utilities/typeFromAST": 143
+          "../../error": 94,
+          "../../language/printer": 115,
+          "../../type/definition": 121,
+          "../../utilities/typeFromAST": 144
         }
       ],
-      171: [
+      172: [
         function(require, module, exports) {
           "use strict";
 
@@ -54604,13 +54908,13 @@
           }
         },
         {
-          "../../error": 93,
-          "../../type/definition": 120,
-          "../../utilities/typeComparators": 142,
-          "../../utilities/typeFromAST": 143
+          "../../error": 94,
+          "../../type/definition": 121,
+          "../../utilities/typeComparators": 143,
+          "../../utilities/typeFromAST": 144
         }
       ],
-      172: [
+      173: [
         function(require, module, exports) {
           "use strict";
 
@@ -54768,35 +55072,35 @@
           // Spec Section: "Lone Anonymous Operation"
         },
         {
-          "./rules/ArgumentsOfCorrectType": 146,
-          "./rules/DefaultValuesOfCorrectType": 147,
-          "./rules/FieldsOnCorrectType": 148,
-          "./rules/FragmentsOnCompositeTypes": 149,
-          "./rules/KnownArgumentNames": 150,
-          "./rules/KnownDirectives": 151,
-          "./rules/KnownFragmentNames": 152,
-          "./rules/KnownTypeNames": 153,
-          "./rules/LoneAnonymousOperation": 154,
-          "./rules/NoFragmentCycles": 155,
-          "./rules/NoUndefinedVariables": 156,
-          "./rules/NoUnusedFragments": 157,
-          "./rules/NoUnusedVariables": 158,
-          "./rules/OverlappingFieldsCanBeMerged": 159,
-          "./rules/PossibleFragmentSpreads": 160,
-          "./rules/ProvidedNonNullArguments": 161,
-          "./rules/ScalarLeafs": 162,
-          "./rules/SingleFieldSubscriptions": 163,
-          "./rules/UniqueArgumentNames": 164,
-          "./rules/UniqueDirectivesPerLocation": 165,
-          "./rules/UniqueFragmentNames": 166,
-          "./rules/UniqueInputFieldNames": 167,
-          "./rules/UniqueOperationNames": 168,
-          "./rules/UniqueVariableNames": 169,
-          "./rules/VariablesAreInputTypes": 170,
-          "./rules/VariablesInAllowedPosition": 171
+          "./rules/ArgumentsOfCorrectType": 147,
+          "./rules/DefaultValuesOfCorrectType": 148,
+          "./rules/FieldsOnCorrectType": 149,
+          "./rules/FragmentsOnCompositeTypes": 150,
+          "./rules/KnownArgumentNames": 151,
+          "./rules/KnownDirectives": 152,
+          "./rules/KnownFragmentNames": 153,
+          "./rules/KnownTypeNames": 154,
+          "./rules/LoneAnonymousOperation": 155,
+          "./rules/NoFragmentCycles": 156,
+          "./rules/NoUndefinedVariables": 157,
+          "./rules/NoUnusedFragments": 158,
+          "./rules/NoUnusedVariables": 159,
+          "./rules/OverlappingFieldsCanBeMerged": 160,
+          "./rules/PossibleFragmentSpreads": 161,
+          "./rules/ProvidedNonNullArguments": 162,
+          "./rules/ScalarLeafs": 163,
+          "./rules/SingleFieldSubscriptions": 164,
+          "./rules/UniqueArgumentNames": 165,
+          "./rules/UniqueDirectivesPerLocation": 166,
+          "./rules/UniqueFragmentNames": 167,
+          "./rules/UniqueInputFieldNames": 168,
+          "./rules/UniqueOperationNames": 169,
+          "./rules/UniqueVariableNames": 170,
+          "./rules/VariablesAreInputTypes": 171,
+          "./rules/VariablesInAllowedPosition": 172
         }
       ],
-      173: [
+      174: [
         function(require, module, exports) {
           "use strict";
 
@@ -55101,16 +55405,16 @@
           })());
         },
         {
-          "../error": 93,
-          "../jsutils/invariant": 102,
-          "../language/kinds": 110,
-          "../language/visitor": 116,
-          "../type/schema": 125,
-          "../utilities/TypeInfo": 126,
-          "./specifiedRules": 172
+          "../error": 94,
+          "../jsutils/invariant": 103,
+          "../language/kinds": 111,
+          "../language/visitor": 117,
+          "../type/schema": 126,
+          "../utilities/TypeInfo": 127,
+          "./specifiedRules": 173
         }
       ],
-      174: [
+      175: [
         function(require, module, exports) {
           /**
            * Copyright (c) 2016, Lee Byron
@@ -55785,7 +56089,7 @@
         },
         {}
       ],
-      175: [
+      176: [
         function(require, module, exports) {
           "use strict";
 
@@ -56481,9 +56785,9 @@
 
           module.exports = LinkifyIt;
         },
-        { "./lib/re": 176 }
+        { "./lib/re": 177 }
       ],
-      176: [
+      177: [
         function(require, module, exports) {
           "use strict";
 
@@ -56706,21 +57010,21 @@
           };
         },
         {
-          "uc.micro/categories/Cc/regex": 241,
-          "uc.micro/categories/P/regex": 243,
-          "uc.micro/categories/Z/regex": 244,
-          "uc.micro/properties/Any/regex": 246
+          "uc.micro/categories/Cc/regex": 242,
+          "uc.micro/categories/P/regex": 244,
+          "uc.micro/categories/Z/regex": 245,
+          "uc.micro/properties/Any/regex": 247
         }
       ],
-      177: [
+      178: [
         function(require, module, exports) {
           "use strict";
 
           module.exports = require("./lib/");
         },
-        { "./lib/": 186 }
+        { "./lib/": 187 }
       ],
-      178: [
+      179: [
         function(require, module, exports) {
           // HTML5 entities map: { name -> utf16string }
           //
@@ -56729,9 +57033,9 @@
           /*eslint quotes:0*/
           module.exports = require("entities/maps/entities.json");
         },
-        { "entities/maps/entities.json": 66 }
+        { "entities/maps/entities.json": 67 }
       ],
-      179: [
+      180: [
         function(require, module, exports) {
           // List of valid html blocks names, accorting to commonmark spec
           // http://jgm.github.io/CommonMark/spec.html#html-blocks
@@ -56806,7 +57110,7 @@
         },
         {}
       ],
-      180: [
+      181: [
         function(require, module, exports) {
           // Regexps to match html elements
 
@@ -56856,7 +57160,7 @@
         },
         {}
       ],
-      181: [
+      182: [
         function(require, module, exports) {
           // Utilities
           //
@@ -57179,13 +57483,13 @@
           exports.normalizeReference = normalizeReference;
         },
         {
-          "./entities": 178,
-          mdurl: 232,
-          "uc.micro": 245,
-          "uc.micro/categories/P/regex": 243
+          "./entities": 179,
+          mdurl: 233,
+          "uc.micro": 246,
+          "uc.micro/categories/P/regex": 244
         }
       ],
-      182: [
+      183: [
         function(require, module, exports) {
           // Just a shortcut for bulk export
           "use strict";
@@ -57195,12 +57499,12 @@
           exports.parseLinkTitle = require("./parse_link_title");
         },
         {
-          "./parse_link_destination": 183,
-          "./parse_link_label": 184,
-          "./parse_link_title": 185
+          "./parse_link_destination": 184,
+          "./parse_link_label": 185,
+          "./parse_link_title": 186
         }
       ],
-      183: [
+      184: [
         function(require, module, exports) {
           // Parse link destination
           //
@@ -57294,9 +57598,9 @@
             return result;
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      184: [
+      185: [
         function(require, module, exports) {
           // Parse link label
           //
@@ -57356,7 +57660,7 @@
         },
         {}
       ],
-      185: [
+      186: [
         function(require, module, exports) {
           // Parse link title
           //
@@ -57420,9 +57724,9 @@
             return result;
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      186: [
+      187: [
         function(require, module, exports) {
           // Main parser class
 
@@ -58034,21 +58338,21 @@
           module.exports = MarkdownIt;
         },
         {
-          "./common/utils": 181,
-          "./helpers": 182,
-          "./parser_block": 187,
-          "./parser_core": 188,
-          "./parser_inline": 189,
-          "./presets/commonmark": 190,
-          "./presets/default": 191,
-          "./presets/zero": 192,
-          "./renderer": 193,
-          "linkify-it": 175,
-          mdurl: 232,
-          punycode: 240
+          "./common/utils": 182,
+          "./helpers": 183,
+          "./parser_block": 188,
+          "./parser_core": 189,
+          "./parser_inline": 190,
+          "./presets/commonmark": 191,
+          "./presets/default": 192,
+          "./presets/zero": 193,
+          "./renderer": 194,
+          "linkify-it": 176,
+          mdurl: 233,
+          punycode: 241
         }
       ],
-      187: [
+      188: [
         function(require, module, exports) {
           /** internal
            * class ParserBlock
@@ -58206,22 +58510,22 @@
           module.exports = ParserBlock;
         },
         {
-          "./ruler": 194,
-          "./rules_block/blockquote": 195,
-          "./rules_block/code": 196,
-          "./rules_block/fence": 197,
-          "./rules_block/heading": 198,
-          "./rules_block/hr": 199,
-          "./rules_block/html_block": 200,
-          "./rules_block/lheading": 201,
-          "./rules_block/list": 202,
-          "./rules_block/paragraph": 203,
-          "./rules_block/reference": 204,
-          "./rules_block/state_block": 205,
-          "./rules_block/table": 206
+          "./ruler": 195,
+          "./rules_block/blockquote": 196,
+          "./rules_block/code": 197,
+          "./rules_block/fence": 198,
+          "./rules_block/heading": 199,
+          "./rules_block/hr": 200,
+          "./rules_block/html_block": 201,
+          "./rules_block/lheading": 202,
+          "./rules_block/list": 203,
+          "./rules_block/paragraph": 204,
+          "./rules_block/reference": 205,
+          "./rules_block/state_block": 206,
+          "./rules_block/table": 207
         }
       ],
-      188: [
+      189: [
         function(require, module, exports) {
           /** internal
            * class Core
@@ -58278,17 +58582,17 @@
           module.exports = Core;
         },
         {
-          "./ruler": 194,
-          "./rules_core/block": 207,
-          "./rules_core/inline": 208,
-          "./rules_core/linkify": 209,
-          "./rules_core/normalize": 210,
-          "./rules_core/replacements": 211,
-          "./rules_core/smartquotes": 212,
-          "./rules_core/state_core": 213
+          "./ruler": 195,
+          "./rules_core/block": 208,
+          "./rules_core/inline": 209,
+          "./rules_core/linkify": 210,
+          "./rules_core/normalize": 211,
+          "./rules_core/replacements": 212,
+          "./rules_core/smartquotes": 213,
+          "./rules_core/state_core": 214
         }
       ],
-      189: [
+      190: [
         function(require, module, exports) {
           /** internal
            * class ParserInline
@@ -58474,24 +58778,24 @@
           module.exports = ParserInline;
         },
         {
-          "./ruler": 194,
-          "./rules_inline/autolink": 214,
-          "./rules_inline/backticks": 215,
-          "./rules_inline/balance_pairs": 216,
-          "./rules_inline/emphasis": 217,
-          "./rules_inline/entity": 218,
-          "./rules_inline/escape": 219,
-          "./rules_inline/html_inline": 220,
-          "./rules_inline/image": 221,
-          "./rules_inline/link": 222,
-          "./rules_inline/newline": 223,
-          "./rules_inline/state_inline": 224,
-          "./rules_inline/strikethrough": 225,
-          "./rules_inline/text": 226,
-          "./rules_inline/text_collapse": 227
+          "./ruler": 195,
+          "./rules_inline/autolink": 215,
+          "./rules_inline/backticks": 216,
+          "./rules_inline/balance_pairs": 217,
+          "./rules_inline/emphasis": 218,
+          "./rules_inline/entity": 219,
+          "./rules_inline/escape": 220,
+          "./rules_inline/html_inline": 221,
+          "./rules_inline/image": 222,
+          "./rules_inline/link": 223,
+          "./rules_inline/newline": 224,
+          "./rules_inline/state_inline": 225,
+          "./rules_inline/strikethrough": 226,
+          "./rules_inline/text": 227,
+          "./rules_inline/text_collapse": 228
         }
       ],
-      190: [
+      191: [
         function(require, module, exports) {
           // Commonmark default options
 
@@ -58566,7 +58870,7 @@
         },
         {}
       ],
-      191: [
+      192: [
         function(require, module, exports) {
           // markdown-it default options
 
@@ -58610,7 +58914,7 @@
         },
         {}
       ],
-      192: [
+      193: [
         function(require, module, exports) {
           // "Zero" preset, with nothing enabled. Useful for manual configuring of simple
           // modes. For example, to parse bold/italic only.
@@ -58664,7 +58968,7 @@
         },
         {}
       ],
-      193: [
+      194: [
         function(require, module, exports) {
           /**
            * class Renderer
@@ -59042,9 +59346,9 @@
 
           module.exports = Renderer;
         },
-        { "./common/utils": 181 }
+        { "./common/utils": 182 }
       ],
-      194: [
+      195: [
         function(require, module, exports) {
           /**
            * class Ruler
@@ -59415,7 +59719,7 @@
         },
         {}
       ],
-      195: [
+      196: [
         function(require, module, exports) {
           // Block quotes
 
@@ -59734,9 +60038,9 @@
             return true;
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      196: [
+      197: [
         function(require, module, exports) {
           // Code block (4 spaces padded)
 
@@ -59785,7 +60089,7 @@
         },
         {}
       ],
-      197: [
+      198: [
         function(require, module, exports) {
           // fences (``` lang, ~~~ lang)
 
@@ -59905,7 +60209,7 @@
         },
         {}
       ],
-      198: [
+      199: [
         function(require, module, exports) {
           // heading (#, ##, ...)
 
@@ -59973,9 +60277,9 @@
             return true;
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      199: [
+      200: [
         function(require, module, exports) {
           // Horizontal rule
 
@@ -60037,9 +60341,9 @@
             return true;
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      200: [
+      201: [
         function(require, module, exports) {
           // HTML block
 
@@ -60153,9 +60457,9 @@
             return true;
           };
         },
-        { "../common/html_blocks": 179, "../common/html_re": 180 }
+        { "../common/html_blocks": 180, "../common/html_re": 181 }
       ],
-      201: [
+      202: [
         function(require, module, exports) {
           // lheading (---, ===)
 
@@ -60265,7 +60569,7 @@
         },
         {}
       ],
-      202: [
+      203: [
         function(require, module, exports) {
           // Lists
 
@@ -60640,9 +60944,9 @@
             return true;
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      203: [
+      204: [
         function(require, module, exports) {
           // Paragraph
 
@@ -60711,7 +61015,7 @@
         },
         {}
       ],
-      204: [
+      205: [
         function(require, module, exports) {
           "use strict";
 
@@ -60946,9 +61250,9 @@
             return true;
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      205: [
+      206: [
         function(require, module, exports) {
           // Parser state class
 
@@ -61221,9 +61525,9 @@
 
           module.exports = StateBlock;
         },
-        { "../common/utils": 181, "../token": 228 }
+        { "../common/utils": 182, "../token": 229 }
       ],
-      206: [
+      207: [
         function(require, module, exports) {
           // GFM table, non-standard
 
@@ -61473,9 +61777,9 @@
             return true;
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      207: [
+      208: [
         function(require, module, exports) {
           "use strict";
 
@@ -61500,7 +61804,7 @@
         },
         {}
       ],
-      208: [
+      209: [
         function(require, module, exports) {
           "use strict";
 
@@ -61526,7 +61830,7 @@
         },
         {}
       ],
-      209: [
+      210: [
         function(require, module, exports) {
           // Replace link-like texts with link nodes.
           //
@@ -61696,9 +62000,9 @@
             }
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      210: [
+      211: [
         function(require, module, exports) {
           // Normalize input string
 
@@ -61721,7 +62025,7 @@
         },
         {}
       ],
-      211: [
+      212: [
         function(require, module, exports) {
           // Simple typographyc replacements
           //
@@ -61843,7 +62147,7 @@
         },
         {}
       ],
-      212: [
+      213: [
         function(require, module, exports) {
           // Convert straight quotation marks to typographic ones
           //
@@ -62096,9 +62400,9 @@
             }
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      213: [
+      214: [
         function(require, module, exports) {
           // Core state object
           //
@@ -62119,9 +62423,9 @@
 
           module.exports = StateCore;
         },
-        { "../token": 228 }
+        { "../token": 229 }
       ],
-      214: [
+      215: [
         function(require, module, exports) {
           // Process autolinks '<protocol:...>'
 
@@ -62209,7 +62513,7 @@
         },
         {}
       ],
-      215: [
+      216: [
         function(require, module, exports) {
           // Parse backticks
 
@@ -62274,7 +62578,7 @@
         },
         {}
       ],
-      216: [
+      217: [
         function(require, module, exports) {
           // For each opening emphasis-like marker find a matching closing one
           //
@@ -62329,7 +62633,7 @@
         },
         {}
       ],
-      217: [
+      218: [
         function(require, module, exports) {
           // Process *this* and _that_
           //
@@ -62469,7 +62773,7 @@
         },
         {}
       ],
-      218: [
+      219: [
         function(require, module, exports) {
           // Process html entity - &#123;, &#xAF;, &quot;, ...
 
@@ -62533,9 +62837,9 @@
             return true;
           };
         },
-        { "../common/entities": 178, "../common/utils": 181 }
+        { "../common/entities": 179, "../common/utils": 182 }
       ],
-      219: [
+      220: [
         function(require, module, exports) {
           // Process escaped chars and hardbreaks
 
@@ -62602,9 +62906,9 @@
             return true;
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      220: [
+      221: [
         function(require, module, exports) {
           // Process html tags
 
@@ -62659,9 +62963,9 @@
             return true;
           };
         },
-        { "../common/html_re": 180 }
+        { "../common/html_re": 181 }
       ],
-      221: [
+      222: [
         function(require, module, exports) {
           // Process ![image](<src> "title")
 
@@ -62846,9 +63150,9 @@
             return true;
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      222: [
+      223: [
         function(require, module, exports) {
           // Process [link](<to> "stuff")
 
@@ -63025,9 +63329,9 @@
             return true;
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      223: [
+      224: [
         function(require, module, exports) {
           // Proceess '\n'
 
@@ -63076,9 +63380,9 @@
             return true;
           };
         },
-        { "../common/utils": 181 }
+        { "../common/utils": 182 }
       ],
-      224: [
+      225: [
         function(require, module, exports) {
           // Inline parser state
 
@@ -63221,9 +63525,9 @@
 
           module.exports = StateInline;
         },
-        { "../common/utils": 181, "../token": 228 }
+        { "../common/utils": 182, "../token": 229 }
       ],
-      225: [
+      226: [
         function(require, module, exports) {
           // ~~strike through~~
           //
@@ -63358,7 +63662,7 @@
         },
         {}
       ],
-      226: [
+      227: [
         function(require, module, exports) {
           // Skip text characters for text token, place those to pending buffer
           // and increment current pos
@@ -63458,7 +63762,7 @@ module.exports = function text(state, silent) {
         },
         {}
       ],
-      227: [
+      228: [
         function(require, module, exports) {
           // Merge adjacent text nodes into one, and re-calculate all token levels
           //
@@ -63500,7 +63804,7 @@ module.exports = function text(state, silent) {
         },
         {}
       ],
-      228: [
+      229: [
         function(require, module, exports) {
           // Token class
 
@@ -63700,7 +64004,7 @@ module.exports = function text(state, silent) {
         },
         {}
       ],
-      229: [
+      230: [
         function(require, module, exports) {
           "use strict";
 
@@ -63844,7 +64148,7 @@ module.exports = function text(state, silent) {
         },
         {}
       ],
-      230: [
+      231: [
         function(require, module, exports) {
           "use strict";
 
@@ -63952,7 +64256,7 @@ module.exports = function text(state, silent) {
         },
         {}
       ],
-      231: [
+      232: [
         function(require, module, exports) {
           "use strict";
 
@@ -63980,7 +64284,7 @@ module.exports = function text(state, silent) {
         },
         {}
       ],
-      232: [
+      233: [
         function(require, module, exports) {
           "use strict";
 
@@ -63989,9 +64293,9 @@ module.exports = function text(state, silent) {
           module.exports.format = require("./format");
           module.exports.parse = require("./parse");
         },
-        { "./decode": 229, "./encode": 230, "./format": 231, "./parse": 233 }
+        { "./decode": 230, "./encode": 231, "./format": 232, "./parse": 234 }
       ],
-      233: [
+      234: [
         function(require, module, exports) {
           // Copyright Joyent, Inc. and other Node contributors.
           //
@@ -64329,7 +64633,7 @@ module.exports = function text(state, silent) {
         },
         {}
       ],
-      234: [
+      235: [
         function(require, module, exports) {
           // shim for using process in browser
           var process = (module.exports = {});
@@ -64526,7 +64830,7 @@ module.exports = function text(state, silent) {
         },
         {}
       ],
-      235: [
+      236: [
         function(require, module, exports) {
           (function(process) {
             /**
@@ -64633,13 +64937,13 @@ module.exports = function text(state, silent) {
           }.call(this, require("_process")));
         },
         {
-          "./lib/ReactPropTypesSecret": 239,
-          _process: 234,
-          "fbjs/lib/invariant": 68,
-          "fbjs/lib/warning": 69
+          "./lib/ReactPropTypesSecret": 240,
+          _process: 235,
+          "fbjs/lib/invariant": 69,
+          "fbjs/lib/warning": 70
         }
       ],
-      236: [
+      237: [
         function(require, module, exports) {
           /**
            * Copyright 2013-present, Facebook, Inc.
@@ -64696,9 +65000,9 @@ module.exports = function text(state, silent) {
             return ReactPropTypes;
           };
         },
-        { "fbjs/lib/emptyFunction": 67, "fbjs/lib/invariant": 68 }
+        { "fbjs/lib/emptyFunction": 68, "fbjs/lib/invariant": 69 }
       ],
-      237: [
+      238: [
         function(require, module, exports) {
           (function(process) {
             /**
@@ -65429,15 +65733,15 @@ module.exports = function text(state, silent) {
           }.call(this, require("_process")));
         },
         {
-          "./checkPropTypes": 235,
-          "./lib/ReactPropTypesSecret": 239,
-          _process: 234,
-          "fbjs/lib/emptyFunction": 67,
-          "fbjs/lib/invariant": 68,
-          "fbjs/lib/warning": 69
+          "./checkPropTypes": 236,
+          "./lib/ReactPropTypesSecret": 240,
+          _process: 235,
+          "fbjs/lib/emptyFunction": 68,
+          "fbjs/lib/invariant": 69,
+          "fbjs/lib/warning": 70
         }
       ],
-      238: [
+      239: [
         function(require, module, exports) {
           (function(process) {
             /**
@@ -65479,12 +65783,12 @@ module.exports = function text(state, silent) {
           }.call(this, require("_process")));
         },
         {
-          "./factoryWithThrowingShims": 236,
-          "./factoryWithTypeCheckers": 237,
-          _process: 234
+          "./factoryWithThrowingShims": 237,
+          "./factoryWithTypeCheckers": 238,
+          _process: 235
         }
       ],
-      239: [
+      240: [
         function(require, module, exports) {
           /**
            * Copyright 2013-present, Facebook, Inc.
@@ -65504,7 +65808,7 @@ module.exports = function text(state, silent) {
         },
         {}
       ],
-      240: [
+      241: [
         function(require, module, exports) {
           (function(global) {
             /*! https://mths.be/punycode v1.4.1 by @mathias */
@@ -66072,31 +66376,31 @@ module.exports = function text(state, silent) {
         },
         {}
       ],
-      241: [
+      242: [
         function(require, module, exports) {
           module.exports = /[\0-\x1F\x7F-\x9F]/;
         },
         {}
       ],
-      242: [
+      243: [
         function(require, module, exports) {
           module.exports = /[\xAD\u0600-\u0605\u061C\u06DD\u070F\u08E2\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u206F\uFEFF\uFFF9-\uFFFB]|\uD804\uDCBD|\uD82F[\uDCA0-\uDCA3]|\uD834[\uDD73-\uDD7A]|\uDB40[\uDC01\uDC20-\uDC7F]/;
         },
         {}
       ],
-      243: [
+      244: [
         function(require, module, exports) {
           module.exports = /[!-#%-\*,-/:;\?@\[-\]_\{\}\xA1\xA7\xAB\xB6\xB7\xBB\xBF\u037E\u0387\u055A-\u055F\u0589\u058A\u05BE\u05C0\u05C3\u05C6\u05F3\u05F4\u0609\u060A\u060C\u060D\u061B\u061E\u061F\u066A-\u066D\u06D4\u0700-\u070D\u07F7-\u07F9\u0830-\u083E\u085E\u0964\u0965\u0970\u09FD\u0AF0\u0DF4\u0E4F\u0E5A\u0E5B\u0F04-\u0F12\u0F14\u0F3A-\u0F3D\u0F85\u0FD0-\u0FD4\u0FD9\u0FDA\u104A-\u104F\u10FB\u1360-\u1368\u1400\u166D\u166E\u169B\u169C\u16EB-\u16ED\u1735\u1736\u17D4-\u17D6\u17D8-\u17DA\u1800-\u180A\u1944\u1945\u1A1E\u1A1F\u1AA0-\u1AA6\u1AA8-\u1AAD\u1B5A-\u1B60\u1BFC-\u1BFF\u1C3B-\u1C3F\u1C7E\u1C7F\u1CC0-\u1CC7\u1CD3\u2010-\u2027\u2030-\u2043\u2045-\u2051\u2053-\u205E\u207D\u207E\u208D\u208E\u2308-\u230B\u2329\u232A\u2768-\u2775\u27C5\u27C6\u27E6-\u27EF\u2983-\u2998\u29D8-\u29DB\u29FC\u29FD\u2CF9-\u2CFC\u2CFE\u2CFF\u2D70\u2E00-\u2E2E\u2E30-\u2E49\u3001-\u3003\u3008-\u3011\u3014-\u301F\u3030\u303D\u30A0\u30FB\uA4FE\uA4FF\uA60D-\uA60F\uA673\uA67E\uA6F2-\uA6F7\uA874-\uA877\uA8CE\uA8CF\uA8F8-\uA8FA\uA8FC\uA92E\uA92F\uA95F\uA9C1-\uA9CD\uA9DE\uA9DF\uAA5C-\uAA5F\uAADE\uAADF\uAAF0\uAAF1\uABEB\uFD3E\uFD3F\uFE10-\uFE19\uFE30-\uFE52\uFE54-\uFE61\uFE63\uFE68\uFE6A\uFE6B\uFF01-\uFF03\uFF05-\uFF0A\uFF0C-\uFF0F\uFF1A\uFF1B\uFF1F\uFF20\uFF3B-\uFF3D\uFF3F\uFF5B\uFF5D\uFF5F-\uFF65]|\uD800[\uDD00-\uDD02\uDF9F\uDFD0]|\uD801\uDD6F|\uD802[\uDC57\uDD1F\uDD3F\uDE50-\uDE58\uDE7F\uDEF0-\uDEF6\uDF39-\uDF3F\uDF99-\uDF9C]|\uD804[\uDC47-\uDC4D\uDCBB\uDCBC\uDCBE-\uDCC1\uDD40-\uDD43\uDD74\uDD75\uDDC5-\uDDC9\uDDCD\uDDDB\uDDDD-\uDDDF\uDE38-\uDE3D\uDEA9]|\uD805[\uDC4B-\uDC4F\uDC5B\uDC5D\uDCC6\uDDC1-\uDDD7\uDE41-\uDE43\uDE60-\uDE6C\uDF3C-\uDF3E]|\uD806[\uDE3F-\uDE46\uDE9A-\uDE9C\uDE9E-\uDEA2]|\uD807[\uDC41-\uDC45\uDC70\uDC71]|\uD809[\uDC70-\uDC74]|\uD81A[\uDE6E\uDE6F\uDEF5\uDF37-\uDF3B\uDF44]|\uD82F\uDC9F|\uD836[\uDE87-\uDE8B]|\uD83A[\uDD5E\uDD5F]/;
         },
         {}
       ],
-      244: [
+      245: [
         function(require, module, exports) {
           module.exports = /[ \xA0\u1680\u2000-\u200A\u202F\u205F\u3000]/;
         },
         {}
       ],
-      245: [
+      246: [
         function(require, module, exports) {
           "use strict";
 
@@ -66107,20 +66411,20 @@ module.exports = function text(state, silent) {
           exports.Z = require("./categories/Z/regex");
         },
         {
-          "./categories/Cc/regex": 241,
-          "./categories/Cf/regex": 242,
-          "./categories/P/regex": 243,
-          "./categories/Z/regex": 244,
-          "./properties/Any/regex": 246
+          "./categories/Cc/regex": 242,
+          "./categories/Cf/regex": 243,
+          "./categories/P/regex": 244,
+          "./categories/Z/regex": 245,
+          "./properties/Any/regex": 247
         }
       ],
-      246: [
+      247: [
         function(require, module, exports) {
           module.exports = /[\0-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/;
         },
         {}
       ],
-      247: [
+      248: [
         function(require, module, exports) {
           if (typeof Object.create === "function") {
             // implementation from standard node.js 'util' module
@@ -66148,7 +66452,7 @@ module.exports = function text(state, silent) {
         },
         {}
       ],
-      248: [
+      249: [
         function(require, module, exports) {
           module.exports = function isBuffer(arg) {
             return (
@@ -66162,7 +66466,7 @@ module.exports = function text(state, silent) {
         },
         {}
       ],
-      249: [
+      250: [
         function(require, module, exports) {
           (function(process, global) {
             // Copyright Joyent, Inc. and other Node contributors.
@@ -66843,10 +67147,10 @@ module.exports = function text(state, silent) {
                 : typeof window !== "undefined" ? window : {}
           ));
         },
-        { "./support/isBuffer": 248, _process: 234, inherits: 247 }
+        { "./support/isBuffer": 249, _process: 235, inherits: 248 }
       ]
     },
     {},
-    [22]
-  )(22);
+    [23]
+  )(23);
 });

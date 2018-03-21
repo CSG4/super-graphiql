@@ -74,6 +74,8 @@ var _ToolbarMenu = require("./ToolbarMenu");
 
 var _ToolbarSelect = require("./ToolbarSelect");
 
+var _PathEditor = require("./PathEditor");
+
 var _QueryEditor = require("./QueryEditor");
 
 var _VariableEditor = require("./VariableEditor");
@@ -118,6 +120,17 @@ var _introspectionQueries = require("../utility/introspectionQueries");
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : { default: obj };
+}
+
+function _toConsumableArray(arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+      arr2[i] = arr[i];
+    }
+    return arr2;
+  } else {
+    return Array.from(arr);
+  }
 }
 
 function _classCallCheck(instance, Constructor) {
@@ -204,6 +217,15 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
             ? props.defaultQuery
             : defaultQuery;
 
+    // Determine the initial path to fetch schema from.
+    // Determine the initial schema?
+    var path =
+      props.path !== undefined
+        ? props.path
+        : _this._storage.get("path") !== null
+          ? _this._storage.get("path")
+          : props.defaultPath !== undefined ? props.defaultPath : defaultPath;
+
     // Get the initial query facts.
     var queryFacts = (0, _getQueryFacts2.default)(props.schema, query);
 
@@ -226,7 +248,9 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
     // Initialize state
     _this.state = _extends(
       {
+        path: path,
         schema: props.schema,
+        queriesQuantity: [0],
         query: query,
         variables: variables,
         operationName: operationName,
@@ -249,7 +273,7 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
     );
 
     // Ensure only the last executed editor query is rendered.
-    _this._editorQueryID = 0;
+    _this._editorQueryID = _this.state.queriesQuantity.length - 1; // 0;
 
     // Subscribe to the browser window closing, treating it as an unmount.
     if (
@@ -270,6 +294,7 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
         // Only fetch schema via introspection if a schema has not been
         // provided, including if `null` was provided.
         if (this.state.schema === undefined) {
+          console.log(this.state.path);
           this._fetchSchema();
         }
 
@@ -369,6 +394,7 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
       key: "componentWillUnmount",
       value: function componentWillUnmount() {
         this._storage.set("query", this.state.query);
+        this._storage.set("path", this.state.path);
         this._storage.set("variables", this.state.variables);
         this._storage.set("operationName", this.state.operationName);
         this._storage.set("editorFlex", this.state.editorFlex);
@@ -400,10 +426,21 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
           _react2.default.createElement(
             GraphiQL.Toolbar,
             null,
+            _react2.default.createElement(
+              _ToolbarButton.ToolbarButton,
+              // className="docExplorerShow"
+
+              // NEED TO WRITE
+              {
+                onClick: this.handlePrettifyQuery,
+                title: "Prettify Query (Shift-Ctrl-P)",
+                label: "Prettify"
+              }
+            ),
             _react2.default.createElement(_ToolbarButton.ToolbarButton, {
-              onClick: this.handlePrettifyQuery,
-              title: "Prettify Query (Shift-Ctrl-P)",
-              label: "Prettify"
+              onClick: this.handleNewQueryBox,
+              title: "Add a new query to the execution stack",
+              label: "Add Query"
             }),
             _react2.default.createElement(_ToolbarButton.ToolbarButton, {
               onClick: this.handleToggleHistory,
@@ -415,6 +452,8 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
         var footer = (0, _find2.default)(children, function(child) {
           return child.type === GraphiQL.Footer;
         });
+
+        /////////////////////////// Styles
 
         var queryWrapStyle = {
           WebkitFlex: this.state.editorFlex,
@@ -429,6 +468,7 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
           "docExplorerWrap" +
           (this.state.docExplorerWidth < 200 ? " doc-explorer-narrow" : "");
 
+        // Whether the panel displays or not
         var historyPaneStyle = {
           display: this.state.historyPaneOpen ? "block" : "none",
           width: "230px",
@@ -476,23 +516,36 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
                 "div",
                 { className: "topBar" },
                 logo,
+                _react2.default.createElement(_ToolbarButton.ToolbarButton, {
+                  onClick: this.handleToggleDocs,
+                  title: "Show Schema Documentation",
+                  label: "Schema"
+                })
+              )
+            ),
+            _react2.default.createElement(
+              "div",
+              { className: "topBarWrap" },
+              _react2.default.createElement(
+                "div",
+                { className: "topBar" },
+                toolbar,
+                _react2.default.createElement(_ToolbarButton.ToolbarButton, {
+                  onClick: this.handleToggleHeaders,
+                  title: "Edit Request Headers",
+                  label: "Headers"
+                }),
+                _react2.default.createElement(_PathEditor.PathEditor, {
+                  onEdit: this.handleEditPath,
+                  path: this.state.path
+                }),
                 _react2.default.createElement(_ExecuteButton.ExecuteButton, {
                   isRunning: Boolean(this.state.subscription),
                   onRun: this.handleRunQuery,
                   onStop: this.handleStopQuery,
                   operations: this.state.operations
-                }),
-                toolbar
-              ),
-              !this.state.docExplorerOpen &&
-                _react2.default.createElement(
-                  "button",
-                  {
-                    className: "docExplorerShow",
-                    onClick: this.handleToggleDocs
-                  },
-                  "Docs"
-                )
+                })
+              )
             ),
             _react2.default.createElement(
               "div",
@@ -507,18 +560,26 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
               _react2.default.createElement(
                 "div",
                 { className: "queryWrap", style: queryWrapStyle },
-                _react2.default.createElement(_QueryEditor.QueryEditor, {
-                  ref: function ref(n) {
-                    _this3.queryEditorComponent = n;
-                  },
-                  schema: this.state.schema,
-                  value: this.state.query,
-                  onEdit: this.handleEditQuery,
-                  onHintInformationRender: this.handleHintInformationRender,
-                  onClickReference: this.handleClickReference,
-                  onPrettifyQuery: this.handlePrettifyQuery,
-                  onRunQuery: this.handleEditorRunQuery,
-                  editorTheme: this.props.editorTheme
+                this.state.queriesQuantity.map(function(query, index) {
+                  return _react2.default.createElement(
+                    _QueryEditor.QueryEditor,
+                    {
+                      lastEditor: _this3.state.queriesQuantity.length - 1,
+                      key: index,
+                      editorId: index,
+                      ref: function ref(n) {
+                        _this3.queryEditorComponent = n;
+                      },
+                      schema: _this3.state.schema,
+                      onEdit: _this3.handleEditQuery,
+                      onHintInformationRender:
+                        _this3.handleHintInformationRender,
+                      onClickReference: _this3.handleClickReference,
+                      onPrettifyQuery: _this3.handlePrettifyQuery,
+                      onRunQuery: _this3.handleEditorRunQuery,
+                      editorTheme: _this3.props.editorTheme
+                    }
+                  );
                 }),
                 _react2.default.createElement(
                   "div",
@@ -708,9 +769,12 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
         var _this4 = this;
 
         var fetcher = this.props.fetcher;
-
+        var serverPath = this.state.path;
         var fetch = observableToPromise(
-          fetcher({ query: _introspectionQueries.introspectionQuery })
+          fetcher(
+            { query: _introspectionQueries.introspectionQuery },
+            serverPath
+          )
         );
         if (!isPromise(fetch)) {
           this.setState({
@@ -728,9 +792,13 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
             // Try the stock introspection query first, falling back on the
             // sans-subscriptions query for services which do not yet support it.
             var fetch2 = observableToPromise(
-              fetcher({
-                query: _introspectionQueries.introspectionQuerySansSubscriptions
-              })
+              fetcher(
+                {
+                  query:
+                    _introspectionQueries.introspectionQuerySansSubscriptions
+                },
+                serverPath
+              )
             );
             if (!isPromise(fetch)) {
               throw new Error(
@@ -743,7 +811,10 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
             // If a schema was provided while this fetch was underway, then
             // satisfy the race condition by respecting the already
             // provided schema.
-            if (_this4.state.schema !== undefined) {
+            if (
+              _this4.state.schema !== undefined &&
+              _this4.state.schema !== null
+            ) {
               return;
             }
 
@@ -780,6 +851,7 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
         var _this5 = this;
 
         var fetcher = this.props.fetcher;
+        var serverPath = this.state.path;
         var jsonVariables = null;
 
         try {
@@ -797,11 +869,14 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
           throw new Error("Variables are not a JSON object.");
         }
 
-        var fetch = fetcher({
-          query: query,
-          variables: jsonVariables,
-          operationName: operationName
-        });
+        var fetch = fetcher(
+          {
+            query: query,
+            variables: jsonVariables,
+            operationName: operationName
+          },
+          serverPath
+        );
 
         if (isPromise(fetch)) {
           // If fetcher returned a Promise, then call the callback when the promise
@@ -838,6 +913,8 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
           throw new Error("Fetcher did not return Promise or Observable.");
         }
       }
+
+      // Path is updated as user types input
     },
     {
       key: "_runQueryAtCursor",
@@ -871,6 +948,8 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
 
         this.handleRunQuery(operationName);
       }
+
+      // Account the number of CodeMirror instances open.
     },
     {
       key: "_didClickDragBar",
@@ -903,6 +982,8 @@ var GraphiQL = (exports.GraphiQL = (function(_React$Component) {
 // Configure the UI by providing this Component as a child of GraphiQL.
 
 GraphiQL.propTypes = {
+  queriesQuantity: _propTypes2.default.array,
+  // resultsQuantity: PropTypes.array,
   fetcher: _propTypes2.default.func.isRequired,
   schema: _propTypes2.default.instanceOf(_graphql.GraphQLSchema),
   query: _propTypes2.default.string,
@@ -914,6 +995,7 @@ GraphiQL.propTypes = {
     setItem: _propTypes2.default.func,
     removeItem: _propTypes2.default.func
   }),
+  defaultPath: _propTypes2.default.string,
   defaultQuery: _propTypes2.default.string,
   onEditQuery: _propTypes2.default.func,
   onEditVariables: _propTypes2.default.func,
@@ -934,6 +1016,13 @@ var _initialiseProps = function _initialiseProps() {
     });
   };
 
+  this.handleEditPath = (0, _debounce2.default)(100, function(serverPath) {
+    _this6.setState({ path: serverPath }, function() {
+      _this6.docExplorerComponent.reset();
+      _this6._fetchSchema();
+    });
+  });
+
   this.handleRunQuery = function(selectedOperationName) {
     _this6._editorQueryID++;
     var queryID = _this6._editorQueryID;
@@ -941,6 +1030,7 @@ var _initialiseProps = function _initialiseProps() {
     // Use the edited query after autoCompleteLeafs() runs or,
     // in case autoCompletion fails (the function returns undefined),
     // the current query from the editor.
+    var serverPath = _this6.state.path;
     var editedQuery = _this6.autoCompleteLeafs() || _this6.state.query;
     var variables = _this6.state.variables;
     var operationName = _this6.state.operationName;
@@ -992,6 +1082,15 @@ var _initialiseProps = function _initialiseProps() {
     if (subscription) {
       subscription.unsubscribe();
     }
+  };
+
+  this.handleNewQueryBox = function() {
+    _this6._editorQueryID = _this6.state.queriesQuantity.length;
+    var queriesNum = [].concat(
+      _toConsumableArray(_this6.state.queriesQuantity)
+    );
+    queriesNum.push(queriesNum.length);
+    _this6.setState({ queriesQuantity: queriesNum });
   };
 
   this.handlePrettifyQuery = function() {
@@ -1289,7 +1388,7 @@ GraphiQL.Logo = function GraphiQLLogo(props) {
       _react2.default.createElement(
         "span",
         null,
-        "Graph",
+        "Super Graph",
         _react2.default.createElement("em", null, "i"),
         "QL"
       )
@@ -1336,6 +1435,8 @@ GraphiQL.Footer = function GraphiQLFooter(props) {
 
 var defaultQuery =
   '# Welcome to GraphiQL\n#\n# GraphiQL is an in-browser tool for writing, validating, and\n# testing GraphQL queries.\n#\n# Type queries into this side of the screen, and you will see intelligent\n# typeaheads aware of the current GraphQL type schema and live syntax and\n# validation errors highlighted within the text.\n#\n# GraphQL queries typically start with a "{" character. Lines that starts\n# with a # are ignored.\n#\n# An example GraphQL query might look like:\n#\n#     {\n#       field(arg: "value") {\n#         subField\n#       }\n#     }\n#\n# Keyboard shortcuts:\n#\n#  Prettify Query:  Shift-Ctrl-P (or press the prettify button above)\n#\n#       Run Query:  Ctrl-Enter (or press the play button above)\n#\n#   Auto Complete:  Ctrl-Space (or just start typing)\n#\n\n';
+
+var defaultPath = "/graphql";
 
 // Duck-type promise detection.
 function isPromise(value) {

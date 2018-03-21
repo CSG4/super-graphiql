@@ -30,7 +30,11 @@ export class ToolbarButton extends React.Component {
     const { error } = this.state;
     return (
       <a
-        className={"toolbar-button" + (error ? " error" : "")}
+        className={
+          "toolbar-button" +
+          (error ? " error" : "") +
+          (this.props.label === "Schema" ? " schema-button" : "")
+        }
         onMouseDown={preventDefault}
         onClick={this.handleClick}
         title={error ? error.message : this.props.title}

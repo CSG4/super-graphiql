@@ -284,12 +284,12 @@ export class GraphiQL extends React.Component {
           title="Show History"
           label="History"
         />
-        <ToolbarButton
+        {/*<ToolbarButton
           // className="docExplorerShow"
           onClick={this.handleToggleDocs}
           title="Show Schema Documentation"
           label="Schema"
-        />
+        />*/}
       </GraphiQL.Toolbar>
     );
 
@@ -356,6 +356,12 @@ export class GraphiQL extends React.Component {
                  {"Docs"}
               </button>
              )} */}
+              <ToolbarButton
+                // className="docExplorerShow"
+                onClick={this.handleToggleDocs}
+                title="Show Schema Documentation"
+                label="Schema"
+              />
             </div>
           </div>
           <div className="topBarWrap">
@@ -373,11 +379,6 @@ export class GraphiQL extends React.Component {
                 onRun={this.handleRunQuery}
                 onStop={this.handleStopQuery}
                 operations={this.state.operations}
-              />
-              <ToolbarButton
-                onClick={this.handlePrettifyQuery}
-                title="Prettify Query (Shift-Ctrl-P)"
-                label="Prettify"
               />
             </div>
           </div>
