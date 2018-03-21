@@ -3,7 +3,7 @@ const resolvers = require("./resolvers");
 
 const typeDefs = `
 	type Subject {
-		id: Int,
+		id: String,
 		name: String,
     professor: String,
     students: [Student]
@@ -17,14 +17,14 @@ const typeDefs = `
 
 	type Query {
     Student(id: Int!): Student
-    Subject(id: Int!): Subject
+    Subject(id: String!): Subject
 		allStudents(last: Int): [Student!]!
-		allSubjects(last: Int): [Subject!]!
+		allSubjects(last: String): [Subject!]!
 	}
 
 	type Mutation {
 		addStudent(name: String!, id: Int!, subjects: String): Student
-		addSubject(name: String!, professor: String!, id: Int!, students: String): Subject
+		addSubject(name: String!, professor: String!, id: String!, students: String): Subject
 	}
 `;
 

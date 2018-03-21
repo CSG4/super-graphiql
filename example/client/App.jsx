@@ -56,19 +56,28 @@ function updateURL() {
 // use fetch, and could instead implement graphQLFetcher however you like,
 // as long as it returns a Promise or Observable.
 function graphQLFetcher(graphQLParams, path) {
-  // let qPath = path;
-  console.log(path);
+  let sPath = path || '/graphql'
+  // let queryString = '?' + Object.keys(graphQLParams).filter(function (key) {
+  //   return Boolean(graphQLParams[key]);
+  // }).map(function (key) {
+  //   return encodeURIComponent(key) + '=' +
+  //     encodeURIComponent(graphQLParams[key]);
+  // }).join('&');
+
   // This example expects a GraphQL server at the path /graphql.
   // Change this to point wherever you host your GraphQL server.
   return fetch(path, {
     method: 'post',
     headers: {
-      'Accept': 'application/json',
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     },
     body: JSON.stringify(graphQLParams),
+    
     credentials: 'include', // Always send user credentials (cookies, basic http auth, etc..), even for cross-origin calls.
+    // mode: 'no-cors'
   }).then(function (response) {
+    // console.log('response 1', new Promise((resolve, reject) => { resolve(response.text()) }));
     return response.text();
   }).then(function (responseBody) {
     try {
