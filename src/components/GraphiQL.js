@@ -356,7 +356,6 @@ export class GraphiQL extends React.Component {
                     this.queryEditorComponent = n;
                   }}
                   schema={this.state.schema}
-                  //value={this.state.query}
                   onEdit={this.handleEditQuery}
                   onHintInformationRender={this.handleHintInformationRender}
                   onClickReference={this.handleClickReference}
@@ -719,6 +718,7 @@ export class GraphiQL extends React.Component {
     this.handleRunQuery(operationName);
   }
 
+  // Account the number of CodeMirror instances open.
   handleNewQueryBox = () => {
     this._editorQueryID = this.state.queriesQuantity.length;
     const queriesNum = this.state.queriesQuantity;

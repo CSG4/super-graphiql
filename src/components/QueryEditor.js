@@ -76,7 +76,7 @@ export class QueryEditor extends React.Component {
     require("codemirror-graphql/mode");
 
     this.editor = CodeMirror(this._node, {
-      value: "", // this.props.value || "",
+      value: "",
       lineNumbers: true,
       tabSize: 2,
       mode: "graphql",
@@ -150,7 +150,9 @@ export class QueryEditor extends React.Component {
 
     // Set the focus (mouse cursor) to the newest CodeMirror instance
     this.textAreas = document.getElementsByTagName("textarea");
-    //this.textAreas[this.props.editorId].focus()
+    if (this.textAreas[this.props.editorId] !== undefined) {
+      this.textAreas[this.props.editorId].focus();
+    }
   }
 
   componentDidUpdate(prevProps) {
