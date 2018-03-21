@@ -721,7 +721,7 @@ export class GraphiQL extends React.Component {
   // Account the number of CodeMirror instances open.
   handleNewQueryBox = () => {
     this._editorQueryID = this.state.queriesQuantity.length;
-    const queriesNum = this.state.queriesQuantity;
+    const queriesNum = [...this.state.queriesQuantity];
     queriesNum.push(queriesNum.length);
     this.setState({ queriesQuantity: queriesNum });
   };

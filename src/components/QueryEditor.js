@@ -12,7 +12,6 @@ import { GraphQLSchema } from "graphql";
 import MD from "markdown-it";
 import { normalizeWhitespace } from "../utility/normalizeWhitespace";
 import onHasCompletion from "../utility/onHasCompletion";
-import { ExecuteButton } from "./ExecuteButton";
 
 const md = new MD();
 const AUTO_COMPLETE_AFTER_KEY = /^[a-zA-Z0-9_@(]$/;
