@@ -166,6 +166,37 @@ body {
   position: relative;
 }
 
+.graphiql-container div .path-editor {
+  background: #fdfdfd;
+  background: linear-gradient(#f9f9f9, #ececec);
+  border-radius: 3px;
+  box-shadow:
+  inset 0 0 0 1px rgba(0,0,0,0.20),
+  0 1px 0 rgba(255,255,255, 0.7),
+  inset 0 1px #fff;
+  color: #555;
+  cursor: text;
+  display: inline-block;
+  flex: 1;
+  margin: 0 25px;
+  padding: 5px 11px 7px;
+  position: relative;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 550px;
+}
+
+.graphiql-container .path-input {
+  margin: 0 5px;
+  padding: 0px 11px;
+  width: 485px;
+}
+
+.graphiql-container .path-input:focus {
+  outline: 0;
+}
+
 .graphiql-container .variable-editor {
   display: flex;
   flex-direction: column;
@@ -245,8 +276,8 @@ body {
   color: #555;
   cursor: pointer;
   display: inline-block;
-  margin: 0 5px;
-  padding: 3px 11px 5px;
+  margin: 0 7px;
+  padding: 5px 11px 7px;
   text-decoration: none;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -289,7 +320,7 @@ body {
 
 .graphiql-container .execute-button-wrap {
   height: 34px;
-  margin: 0 14px 0 28px;
+  /* margin: 0 14px 0 28px; */
   position: relative;
 }
 

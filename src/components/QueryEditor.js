@@ -72,7 +72,7 @@ export class QueryEditor extends React.Component {
     require("codemirror-graphql/lint");
     require("codemirror-graphql/info");
     require("codemirror-graphql/jump");
-    require("codemirror-graphql/mode");
+    require("codemirror-graphql/mode"); // specify language
 
     this.editor = CodeMirror(this._node, {
       value: "",

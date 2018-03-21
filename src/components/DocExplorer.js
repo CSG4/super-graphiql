@@ -18,7 +18,7 @@ import TypeDoc from "./DocExplorer/TypeDoc";
 
 const initialNav = {
   name: "Schema",
-  title: "Documentation Explorer"
+  title: "Schema Explorer"
 };
 
 /**
@@ -71,7 +71,13 @@ export class DocExplorer extends React.Component {
     } else if (!schema) {
       // Schema is null when it explicitly does not exist, typically due to
       // an error during introspection.
-      content = <div className="error-container">{"No Schema Available"}</div>;
+      content = (
+        <div className="error-container">
+          {"No Schema Available"}
+          <br />
+          {"(Enter Route in Path field)"}
+        </div>
+      );
     } else if (navItem.search) {
       content = (
         <SearchResults

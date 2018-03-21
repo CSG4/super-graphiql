@@ -17,6 +17,7 @@ search.substr(1).split('&').forEach(function (entry) {
 if (parameters.variables) {
   try {
     parameters.variables =
+      //parses the user input from a json object to a formatted string
       JSON.stringify(JSON.parse(parameters.variables), null, 2);
   } catch (e) {
     // Do nothing, we want to display the invalid JSON as a string, rather
@@ -54,18 +55,29 @@ function updateURL() {
 // Defines a GraphQL fetcher using the fetch API. You're not required to
 // use fetch, and could instead implement graphQLFetcher however you like,
 // as long as it returns a Promise or Observable.
-function graphQLFetcher(graphQLParams) {
+function graphQLFetcher(graphQLParams, path) {
+  let sPath = path || '/graphql'
+  // let queryString = '?' + Object.keys(graphQLParams).filter(function (key) {
+  //   return Boolean(graphQLParams[key]);
+  // }).map(function (key) {
+  //   return encodeURIComponent(key) + '=' +
+  //     encodeURIComponent(graphQLParams[key]);
+  // }).join('&');
+
   // This example expects a GraphQL server at the path /graphql.
   // Change this to point wherever you host your GraphQL server.
-  return fetch('/graphql', {
+  return fetch(path, {
     method: 'post',
     headers: {
-      'Accept': 'application/json',
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     },
     body: JSON.stringify(graphQLParams),
-    credentials: 'include',
+    
+    credentials: 'include', // Always send user credentials (cookies, basic http auth, etc..), even for cross-origin calls.
+    // mode: 'no-cors'
   }).then(function (response) {
+    // console.log('response 1', new Promise((resolve, reject) => { resolve(response.text()) }));
     return response.text();
   }).then(function (responseBody) {
     try {
@@ -86,7 +98,6 @@ render((
         onEditQuery={onEditQuery}
         onEditVariables={onEditVariables}
         onEditOperationName={onEditOperationName}
-        editorTheme="solarized light"
       />
     </div>
 ), document.getElementById('contents'));
