@@ -36,7 +36,7 @@
     "testonly": "babel-node ./node_modules/.bin/_mocha $npm_package_options_mocha"
   },
   "lint-staged": {
-    "*.js": [
+    "src/*.js": [ 
       "prettier --jsx-bracket-same-line--single-quote --trailing-comma-all --write",
       "git add"
     ]

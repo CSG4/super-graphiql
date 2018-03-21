@@ -118,15 +118,19 @@ var PathEditor = (exports.PathEditor = (function(_React$Component) {
     {
       key: "render",
       value: function render() {
+        var _this2 = this;
+
         return _react2.default.createElement(
           "div",
-          {
-            className: "path-editor"
-          },
+          { className: "path-editor" },
           "Path:",
           _react2.default.createElement("input", {
             className: "path-input",
-            placeholder: "http://localhost:8000/"
+            defaultValue: this.props.path,
+            onChange: function onChange(e) {
+              _this2.props.onEdit(e.target.value);
+            },
+            placeholder: "Enter server routes here"
           })
         );
       }
@@ -137,13 +141,6 @@ var PathEditor = (exports.PathEditor = (function(_React$Component) {
 })(_react2.default.Component));
 
 PathEditor.propTypes = {
-  schema: _propTypes2.default.instanceOf(_graphql.GraphQLSchema),
-  value: _propTypes2.default.string,
-  onEdit: _propTypes2.default.func,
-  readOnly: _propTypes2.default.bool,
-  onHintInformationRender: _propTypes2.default.func,
-  onClickReference: _propTypes2.default.func,
-  onPrettifyQuery: _propTypes2.default.func,
-  onRunQuery: _propTypes2.default.func,
-  editorTheme: _propTypes2.default.string
+  path: _propTypes2.default.string,
+  onEdit: _propTypes2.default.func
 };

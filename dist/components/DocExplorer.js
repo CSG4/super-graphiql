@@ -116,7 +116,7 @@ function _inherits(subClass, superClass) {
 
 var initialNav = {
   name: "Schema",
-  title: "Documentation Explorer"
+  title: "Schema Explorer"
 };
 
 /**
@@ -196,7 +196,9 @@ var DocExplorer = (exports.DocExplorer = (function(_React$Component) {
           content = _react2.default.createElement(
             "div",
             { className: "error-container" },
-            "No Schema Available"
+            "No Schema Available",
+            _react2.default.createElement("br", null),
+            "(Enter Route in Path field)"
           );
         } else if (navItem.search) {
           content = _react2.default.createElement(_SearchResults2.default, {

@@ -98,6 +98,7 @@ body {
      -moz-user-select: none;
       -ms-user-select: none;
           user-select: none;
+  position: relative;
 }
 
 .graphiql-container .toolbar {
@@ -240,9 +241,7 @@ body {
   color: #555;
   cursor: text;
   display: inline-block;
-  -webkit-box-flex: 1;
-      -ms-flex: 1;
-          flex: 1;
+/*  flex: 1;*/
   margin: 0 25px;
   padding: 5px 11px 7px;
   position: relative;
@@ -255,7 +254,7 @@ body {
 .graphiql-container .path-input {
   margin: 0 5px;
   padding: 0px 11px;
-  width: 485px;
+  width: 385px;
 }
 
 .graphiql-container .path-input:focus {
@@ -364,6 +363,11 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 150px;
+}
+
+.toolbar-button.schema-button {
+  position: absolute;
+  right: 0;
 }
 
 .graphiql-container .toolbar-button:active {
