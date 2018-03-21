@@ -25,6 +25,7 @@ const AUTO_COMPLETE_AFTER_KEY = /^[a-zA-Z0-9_@(]$/;
 
 export class PathEditor extends React.Component {
   static propTypes = {
+    path: PropTypes.string,
     onEdit: PropTypes.func
   };
   constructor(props) {
@@ -36,10 +37,11 @@ export class PathEditor extends React.Component {
         Path:
         <input
           className="path-input"
+          defaultValue={this.props.path}
           onChange={e => {
             this.props.onEdit(e.target.value);
           }}
-          placeholder="http://localhost:8000/graphql"
+          placeholder="Enter server routes here"
         />
       </div>
     );

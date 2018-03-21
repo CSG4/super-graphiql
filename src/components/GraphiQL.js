@@ -56,6 +56,7 @@ export class GraphiQL extends React.Component {
       setItem: PropTypes.func,
       removeItem: PropTypes.func
     }),
+    defaultPath: PropTypes.string,
     defaultQuery: PropTypes.string,
     onEditQuery: PropTypes.func,
     onEditVariables: PropTypes.func,
@@ -87,6 +88,15 @@ export class GraphiQL extends React.Component {
             ? props.defaultQuery
             : defaultQuery;
 
+    // Determine the initial path to fetch schema from.
+    // Determine the initial schema?
+    const path =
+      props.path !== undefined
+        ? props.path
+        : this._storage.get("path") !== null
+          ? this._storage.get("path")
+          : props.defaultPath !== undefined ? props.defaultPath : defaultPath;
+
     // Get the initial query facts.
     const queryFacts = getQueryFacts(props.schema, query);
 
@@ -108,8 +118,7 @@ export class GraphiQL extends React.Component {
 
     // Initialize state
     this.state = {
-      // NEED TO UPDATE
-      path: null,
+      path,
       schema: props.schema,
       query,
       variables,
@@ -144,6 +153,7 @@ export class GraphiQL extends React.Component {
     // Only fetch schema via introspection if a schema has not been
     // provided, including if `null` was provided.
     if (this.state.schema === undefined) {
+      console.log(this.state.path);
       this._fetchSchema();
     }
 
@@ -234,6 +244,7 @@ export class GraphiQL extends React.Component {
   // that when the component is remounted, it will use the last used values.
   componentWillUnmount() {
     this._storage.set("query", this.state.query);
+    this._storage.set("path", this.state.path);
     this._storage.set("variables", this.state.variables);
     this._storage.set("operationName", this.state.operationName);
     this._storage.set("editorFlex", this.state.editorFlex);
@@ -343,7 +354,7 @@ export class GraphiQL extends React.Component {
                 title="Edit Request Headers"
                 label="Headers"
               />
-              <PathEditor onEdit={this.handleEditPath} />
+              <PathEditor onEdit={this.handleEditPath} path={this.state.path} />
               <ExecuteButton
                 isRunning={Boolean(this.state.subscription)}
                 onRun={this.handleRunQuery}
@@ -518,7 +529,6 @@ export class GraphiQL extends React.Component {
   _fetchSchema() {
     const fetcher = this.props.fetcher;
     const serverPath = this.state.path;
-
     const fetch = observableToPromise(
       fetcher({ query: introspectionQuery }, serverPath)
     );
@@ -556,7 +566,7 @@ export class GraphiQL extends React.Component {
         // If a schema was provided while this fetch was underway, then
         // satisfy the race condition by respecting the already
         // provided schema.
-        if (this.state.schema !== undefined) {
+        if (this.state.schema !== undefined && this.state.schema !== null) {
           return;
         }
 
@@ -648,13 +658,6 @@ export class GraphiQL extends React.Component {
   handleClickReference = reference => {
     this.setState({ docExplorerOpen: true }, () => {
       this.docExplorerComponent.showDocForReference(reference);
-    });
-  };
-
-  getServerPath = serverPath => {
-    this.setState({ path: serverPath }, () => {
-      this.docExplorerComponent.reset();
-      this._fetchSchema();
     });
   };
 
@@ -1093,6 +1096,8 @@ const defaultQuery = `# Welcome to GraphiQL
 #
 
 `;
+
+const defaultPath = "/graphql";
 
 // Duck-type promise detection.
 function isPromise(value) {

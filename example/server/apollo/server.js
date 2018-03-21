@@ -40,7 +40,12 @@ mongoose.connection.once("open", () => {
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-
+app.use((req, res) => {
+  res.header({
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Request-Headers": "Content-Type"
+  });
+});
 app.use("/*/graphiql.css", (req, res) => {
   res.sendFile(path.join(__dirname, "./../../../graphiql.css"));
 });
@@ -96,14 +101,16 @@ app.use(
 app.get("/get", (req, res) => {
   let { query } = req.query;
   graphql(schema, query).then(response => {
-    res.send(response);
+    res.header("Access-Control-Allow-Origin", "*");
+    res.json(response);
   });
 });
 
 // A post request to retrieve the resutl of a query using HTTP, via specifying the query in a json in the body of the message
 app.use("/graphql", (req, res) => {
+  console.log(req.body);
   graphql(schema, req.body.query.toString()).then(response => {
-    res.send(response);
+    res.json(response);
   });
 });
 
