@@ -45,6 +45,8 @@ const DEFAULT_DOC_EXPLORER_WIDTH = 350;
  */
 export class GraphiQL extends React.Component {
   static propTypes = {
+    queriesQuantity: PropTypes.array,
+    // resultsQuantity: PropTypes.array,
     fetcher: PropTypes.func.isRequired,
     schema: PropTypes.instanceOf(GraphQLSchema),
     query: PropTypes.string,
@@ -56,6 +58,7 @@ export class GraphiQL extends React.Component {
       setItem: PropTypes.func,
       removeItem: PropTypes.func
     }),
+    defaultPath: PropTypes.string,
     defaultQuery: PropTypes.string,
     onEditQuery: PropTypes.func,
     onEditVariables: PropTypes.func,
@@ -87,6 +90,15 @@ export class GraphiQL extends React.Component {
             ? props.defaultQuery
             : defaultQuery;
 
+    // Determine the initial path to fetch schema from.
+    // Determine the initial schema?
+    const path =
+      props.path !== undefined
+        ? props.path
+        : this._storage.get("path") !== null
+          ? this._storage.get("path")
+          : props.defaultPath !== undefined ? props.defaultPath : defaultPath;
+
     // Get the initial query facts.
     const queryFacts = getQueryFacts(props.schema, query);
 
@@ -108,9 +120,9 @@ export class GraphiQL extends React.Component {
 
     // Initialize state
     this.state = {
-      // NEED TO UPDATE
-      path: null,
+      path,
       schema: props.schema,
+      queriesQuantity: [0],
       query,
       variables,
       operationName,
@@ -130,7 +142,7 @@ export class GraphiQL extends React.Component {
     };
 
     // Ensure only the last executed editor query is rendered.
-    this._editorQueryID = 0;
+    this._editorQueryID = this.state.queriesQuantity.length - 1; // 0;
 
     // Subscribe to the browser window closing, treating it as an unmount.
     if (typeof window === "object") {
@@ -144,6 +156,7 @@ export class GraphiQL extends React.Component {
     // Only fetch schema via introspection if a schema has not been
     // provided, including if `null` was provided.
     if (this.state.schema === undefined) {
+      console.log(this.state.path);
       this._fetchSchema();
     }
 
@@ -234,6 +247,7 @@ export class GraphiQL extends React.Component {
   // that when the component is remounted, it will use the last used values.
   componentWillUnmount() {
     this._storage.set("query", this.state.query);
+    this._storage.set("path", this.state.path);
     this._storage.set("variables", this.state.variables);
     this._storage.set("operationName", this.state.operationName);
     this._storage.set("editorFlex", this.state.editorFlex);
@@ -256,16 +270,26 @@ export class GraphiQL extends React.Component {
     ) || (
       <GraphiQL.Toolbar>
         <ToolbarButton
+          onClick={this.handlePrettifyQuery}
+          title="Prettify Query (Shift-Ctrl-P)"
+          label="Prettify"
+        />
+        <ToolbarButton
+          onClick={this.handleNewQueryBox}
+          title="Add a new query to the execution stack"
+          label="Add Query"
+        />
+        <ToolbarButton
           onClick={this.handleToggleHistory}
           title="Show History"
           label="History"
         />
-        <ToolbarButton
+        {/*<ToolbarButton
           // className="docExplorerShow"
           onClick={this.handleToggleDocs}
           title="Show Schema Documentation"
           label="Schema"
-        />
+        />*/}
       </GraphiQL.Toolbar>
     );
 
@@ -332,6 +356,12 @@ export class GraphiQL extends React.Component {
                  {"Docs"}
               </button>
              )} */}
+              <ToolbarButton
+                // className="docExplorerShow"
+                onClick={this.handleToggleDocs}
+                title="Show Schema Documentation"
+                label="Schema"
+              />
             </div>
           </div>
           <div className="topBarWrap">
@@ -343,17 +373,12 @@ export class GraphiQL extends React.Component {
                 title="Edit Request Headers"
                 label="Headers"
               />
-              <PathEditor onEdit={this.handleEditPath} />
+              <PathEditor onEdit={this.handleEditPath} path={this.state.path} />
               <ExecuteButton
                 isRunning={Boolean(this.state.subscription)}
                 onRun={this.handleRunQuery}
                 onStop={this.handleStopQuery}
                 operations={this.state.operations}
-              />
-              <ToolbarButton
-                onClick={this.handlePrettifyQuery}
-                title="Prettify Query (Shift-Ctrl-P)"
-                label="Prettify"
               />
             </div>
           </div>
@@ -366,19 +391,25 @@ export class GraphiQL extends React.Component {
             onMouseDown={this.handleResizeStart}
           >
             <div className="queryWrap" style={queryWrapStyle}>
-              <QueryEditor
-                ref={n => {
-                  this.queryEditorComponent = n;
-                }}
-                schema={this.state.schema}
-                value={this.state.query}
-                onEdit={this.handleEditQuery}
-                onHintInformationRender={this.handleHintInformationRender}
-                onClickReference={this.handleClickReference}
-                onPrettifyQuery={this.handlePrettifyQuery}
-                onRunQuery={this.handleEditorRunQuery}
-                editorTheme={this.props.editorTheme}
-              />
+              {/* Render queries boxes */}
+              {this.state.queriesQuantity.map((query, index) => (
+                <QueryEditor
+                  lastEditor={this.state.queriesQuantity.length - 1}
+                  key={index}
+                  editorId={index}
+                  ref={n => {
+                    this.queryEditorComponent = n;
+                  }}
+                  schema={this.state.schema}
+                  onEdit={this.handleEditQuery}
+                  onHintInformationRender={this.handleHintInformationRender}
+                  onClickReference={this.handleClickReference}
+                  onPrettifyQuery={this.handlePrettifyQuery}
+                  onRunQuery={this.handleEditorRunQuery}
+                  editorTheme={this.props.editorTheme}
+                />
+              ))}
+
               <div className="variable-editor" style={variableStyle}>
                 <div
                   className="variable-editor-title"
@@ -518,7 +549,6 @@ export class GraphiQL extends React.Component {
   _fetchSchema() {
     const fetcher = this.props.fetcher;
     const serverPath = this.state.path;
-
     const fetch = observableToPromise(
       fetcher({ query: introspectionQuery }, serverPath)
     );
@@ -556,7 +586,7 @@ export class GraphiQL extends React.Component {
         // If a schema was provided while this fetch was underway, then
         // satisfy the race condition by respecting the already
         // provided schema.
-        if (this.state.schema !== undefined) {
+        if (this.state.schema !== undefined && this.state.schema !== null) {
           return;
         }
 
@@ -648,13 +678,6 @@ export class GraphiQL extends React.Component {
   handleClickReference = reference => {
     this.setState({ docExplorerOpen: true }, () => {
       this.docExplorerComponent.showDocForReference(reference);
-    });
-  };
-
-  getServerPath = serverPath => {
-    this.setState({ path: serverPath }, () => {
-      this.docExplorerComponent.reset();
-      this._fetchSchema();
     });
   };
 
@@ -758,6 +781,14 @@ export class GraphiQL extends React.Component {
 
     this.handleRunQuery(operationName);
   }
+
+  // Account the number of CodeMirror instances open.
+  handleNewQueryBox = () => {
+    this._editorQueryID = this.state.queriesQuantity.length;
+    const queriesNum = [...this.state.queriesQuantity];
+    queriesNum.push(queriesNum.length);
+    this.setState({ queriesQuantity: queriesNum });
+  };
 
   handlePrettifyQuery = () => {
     const editor = this.getQueryEditor();
@@ -1093,6 +1124,8 @@ const defaultQuery = `# Welcome to GraphiQL
 #
 
 `;
+
+const defaultPath = "/graphql";
 
 // Duck-type promise detection.
 function isPromise(value) {
