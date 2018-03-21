@@ -5,7 +5,6 @@ const Subject = require("./../Models/subjectModel");
 const { PubSub } = require("graphql-subscriptions");
 const pubsub = new PubSub();
 
-// WHAT IS THE PURPOSE OF DECLARING THIS CONST TO A STRING???
 const STUDENT_ADDED_TOPIC = "newStudent";
 const SUBJECT_ADDED_TOPIC = "newSubject";
 

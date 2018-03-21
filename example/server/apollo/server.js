@@ -80,6 +80,7 @@ app.use("/removeSubject", subjectController.rmSubject);
 // **** Note this file says ****
 // TODO: in the future, build the GraphiQL app on the server, so it does not
 // depend on any CDN and can be run offline.
+// a GH repo trying this: https://github.com/digitalnatives/graphiql-server
 
 app.use(
   "/graphiql",
