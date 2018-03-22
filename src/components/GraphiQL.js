@@ -45,9 +45,11 @@ const DEFAULT_DOC_EXPLORER_WIDTH = 350;
  */
 export class GraphiQL extends React.Component {
   static propTypes = {
+    queryList: PropTypes.array,
     fetcher: PropTypes.func.isRequired,
     schema: PropTypes.instanceOf(GraphQLSchema),
     query: PropTypes.string,
+    path: PropTypes.string,
     variables: PropTypes.string,
     operationName: PropTypes.string,
     response: PropTypes.string,
@@ -120,6 +122,7 @@ export class GraphiQL extends React.Component {
     this.state = {
       path,
       schema: props.schema,
+      queryList: [{ id: 0, render: true }],
       query,
       variables,
       operationName,
@@ -138,8 +141,10 @@ export class GraphiQL extends React.Component {
       ...queryFacts
     };
 
+    this.handleDeleteQueryBox = this.handleDeleteQueryBox.bind(this);
+
     // Ensure only the last executed editor query is rendered.
-    this._editorQueryID = 0;
+    this._editorQueryID = this.state.queryList.length - 1; // 0;
 
     // Subscribe to the browser window closing, treating it as an unmount.
     if (typeof window === "object") {
@@ -153,7 +158,6 @@ export class GraphiQL extends React.Component {
     // Only fetch schema via introspection if a schema has not been
     // provided, including if `null` was provided.
     if (this.state.schema === undefined) {
-      // console.log(this.state.path);
       this._fetchSchema();
     }
 
@@ -267,22 +271,29 @@ export class GraphiQL extends React.Component {
     ) || (
       <GraphiQL.Toolbar>
         <ToolbarButton
+          onClick={this.handlePrettifyQuery}
+          title="Prettify Query (Shift-Ctrl-P)"
+          label="Prettify"
+        />
+        <ToolbarButton
+          onClick={this.handleNewQueryBox}
+          title="Add a new query to the execution stack"
+          label="Add Query"
+        />
+        <ToolbarButton
+          onClick={this.handleDeleteAll}
+          title="Removes all queries from the execution stack"
+          label="Delete All"
+        />
+        <ToolbarButton
           onClick={this.handleToggleHistory}
           title="Show History"
           label="History"
-        />
-        <ToolbarButton
-          // className="docExplorerShow"
-          onClick={this.handleToggleDocs}
-          title="Show Schema Documentation"
-          label="Schema"
         />
       </GraphiQL.Toolbar>
     );
 
     const footer = find(children, child => child.type === GraphiQL.Footer);
-
-    /////////////////////////// Styles
 
     const queryWrapStyle = {
       WebkitFlex: this.state.editorFlex,
@@ -343,10 +354,22 @@ export class GraphiQL extends React.Component {
                  {"Docs"}
               </button>
              )} */}
+              <ToolbarButton
+                // className="docExplorerShow"
+                onClick={this.handleToggleDocs}
+                title="Show Schema Documentation"
+                label="Schema"
+              />
             </div>
           </div>
           <div className="topBarWrap">
             <div className="topBar">
+              <ExecuteButton
+                isRunning={Boolean(this.state.subscription)}
+                onRun={this.handleRunQuery}
+                onStop={this.handleStopQuery}
+                operations={this.state.operations}
+              />
               {toolbar}
               <ToolbarButton
                 // NEED TO WRITE
@@ -355,17 +378,6 @@ export class GraphiQL extends React.Component {
                 label="Headers"
               />
               <PathEditor onEdit={this.handleEditPath} path={this.state.path} />
-              <ExecuteButton
-                isRunning={Boolean(this.state.subscription)}
-                onRun={this.handleRunQuery}
-                onStop={this.handleStopQuery}
-                operations={this.state.operations}
-              />
-              <ToolbarButton
-                onClick={this.handlePrettifyQuery}
-                title="Prettify Query (Shift-Ctrl-P)"
-                label="Prettify"
-              />
             </div>
           </div>
           <div
@@ -377,19 +389,29 @@ export class GraphiQL extends React.Component {
             onMouseDown={this.handleResizeStart}
           >
             <div className="queryWrap" style={queryWrapStyle}>
-              <QueryEditor
-                ref={n => {
-                  this.queryEditorComponent = n;
-                }}
-                schema={this.state.schema}
-                value={this.state.query}
-                onEdit={this.handleEditQuery}
-                onHintInformationRender={this.handleHintInformationRender}
-                onClickReference={this.handleClickReference}
-                onPrettifyQuery={this.handlePrettifyQuery}
-                onRunQuery={this.handleEditorRunQuery}
-                editorTheme={this.props.editorTheme}
-              />
+              {/* Render queries boxes */}
+              {this.state.queryList.map(
+                (query, index) =>
+                  !query.render ? null : (
+                    <QueryEditor
+                      // lastEditor={this.state.queryList.length - 1}
+                      key={index}
+                      editorId={index}
+                      ref={n => {
+                        this.queryEditorComponent = n;
+                      }}
+                      schema={this.state.schema}
+                      onEdit={this.handleEditQuery}
+                      onHintInformationRender={this.handleHintInformationRender}
+                      onClickReference={this.handleClickReference}
+                      onPrettifyQuery={this.handlePrettifyQuery}
+                      onClickDeleteButton={this.handleDeleteQueryBox}
+                      onRunQuery={this.handleEditorRunQuery}
+                      editorTheme={this.props.editorTheme}
+                    />
+                  )
+              )}
+
               <div className="variable-editor" style={variableStyle}>
                 <div
                   className="variable-editor-title"
@@ -761,6 +783,28 @@ export class GraphiQL extends React.Component {
 
     this.handleRunQuery(operationName);
   }
+
+  handleNewQueryBox = () => {
+    this._editorQueryID = this.state.queryList.length;
+    const queriesNum = [...this.state.queryList];
+    queriesNum.push({ id: queriesNum.length, render: true });
+    this.setState({ queryList: queriesNum });
+  };
+
+  handleDeleteQueryBox = e => {
+    const queriesNum = [...this.state.queryList];
+    for (let i = 0; i < queriesNum.length; i += 1) {
+      if (queriesNum[i].id == e.target.id) {
+        queriesNum[i].render = false;
+        break;
+      }
+    }
+    this.setState({ queryList: queriesNum });
+  };
+
+  handleDeleteAll = () => {
+    this.setState({ queryList: [{ id: 0, render: true }] });
+  };
 
   handlePrettifyQuery = () => {
     const editor = this.getQueryEditor();

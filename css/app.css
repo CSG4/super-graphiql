@@ -68,6 +68,7 @@ body {
   overflow-y: visible;
   padding: 7px 14px 6px;
   user-select: none;
+  position: relative;
 }
 
 .graphiql-container .toolbar {
@@ -162,9 +163,18 @@ body {
 }
 
 .graphiql-container div .query-editor {
+  border-style: solid;
+  border-color: rgb(193, 193, 193);
+  border-width: 1px;
   flex: 1;
   position: relative;
 }
+
+.graphiql-container .delete-query {
+  position: relative;
+  z-index: 1000;
+}
+
 
 .graphiql-container div .path-editor {
   background: #fdfdfd;
@@ -177,7 +187,7 @@ body {
   color: #555;
   cursor: text;
   display: inline-block;
-  flex: 1;
+/*  flex: 1;*/
   margin: 0 25px;
   padding: 5px 11px 7px;
   position: relative;
@@ -190,7 +200,7 @@ body {
 .graphiql-container .path-input {
   margin: 0 5px;
   padding: 0px 11px;
-  width: 485px;
+  width: 385px;
 }
 
 .graphiql-container .path-input:focus {
@@ -282,6 +292,11 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 150px;
+}
+
+.toolbar-button.schema-button {
+  position: absolute;
+  right: 0;
 }
 
 .graphiql-container .toolbar-button:active {
