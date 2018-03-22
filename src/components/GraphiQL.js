@@ -120,10 +120,14 @@ export class GraphiQL extends React.Component {
 
     const storedQueryList = this._storage.get("queryList");
     // filter by only returning query objects that have a value of query text
+    // const prevQuery = storedQueryList
+    //   ? JSON.parse(storedQueryList).filter((queryObj, index) => {
+    //       if (queryObj.value !== "" && index !== 0) return queryObj;
+    //     })
+    //   : [{ id: 0, render: true, value: "" }];
+
     const prevQuery = storedQueryList
-      ? JSON.parse(storedQueryList).filter((queryObj, index) => {
-          if (queryObj.value !== "" && index !== 0) return queryObj;
-        })
+      ? JSON.parse(storedQueryList)
       : [{ id: 0, render: true, value: "" }];
 
     // Initialize state
@@ -152,7 +156,7 @@ export class GraphiQL extends React.Component {
     this.handleDeleteQueryBox = this.handleDeleteQueryBox.bind(this);
 
     // Ensure only the last executed editor query is rendered.
-    this._editorQueryID = 0;
+    this._editorQueryID = this.state.queryList.length - 1; // 0;
 
     // Subscribe to the browser window closing, treating it as an unmount.
     if (typeof window === "object") {
@@ -795,6 +799,7 @@ export class GraphiQL extends React.Component {
   }
 
   handleNewQueryBox = () => {
+    this._editorQueryID = this.state.queryList.length;
     const queriesNum = [...this.state.queryList];
     queriesNum.push({ id: queriesNum.length, render: true, value: "" });
     this.setState({ queryList: queriesNum });
@@ -829,7 +834,9 @@ export class GraphiQL extends React.Component {
       this.state.operations,
       this.state.schema
     );
+
     const queryListCopy = [...this.state.queryList];
+    console.log("queryList before update", queryListCopy);
     // find object in query list with id of editor ID and update value
     const queryList = queryListCopy.map(queryObj => {
       if (queryObj.id === editorID) {
@@ -838,8 +845,10 @@ export class GraphiQL extends React.Component {
       return queryObj;
     });
 
+    console.log("queryList after update", queryList);
+
     this.setState({
-      // query: value,
+      //query: value,
       queryList,
       ...queryFacts
     });
