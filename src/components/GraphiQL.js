@@ -119,10 +119,10 @@ export class GraphiQL extends React.Component {
           );
 
     const storedQueryList = this._storage.get("queryList");
-    const prevQuery = storedQueryList ? storedQueryList.split(",") : [""];
-
-    console.log("prevQuery", prevQuery);
-    console.log("prevQuery length", prevQuery.length);
+    // only return non-empty strings with filter
+    const prevQuery = storedQueryList
+      ? JSON.parse(storedQueryList).filter(String)
+      : [""];
 
     // Initialize state
     this.state = {
@@ -252,9 +252,9 @@ export class GraphiQL extends React.Component {
   // When the component is about to unmount, store any persistable state, such
   // that when the component is remounted, it will use the last used values.
   componentWillUnmount() {
-    // this should set "query" to the queryList
-    this._storage.set("query", this.state.query);
-    this._storage.set("queryList", this.state.queryList);
+    const queryList = JSON.stringify(this.state.queryList);
+    //this._storage.set("query", this.state.query);
+    this._storage.set("queryList", queryList);
     this._storage.set("path", this.state.path);
     this._storage.set("variables", this.state.variables);
     this._storage.set("operationName", this.state.operationName);
@@ -400,7 +400,6 @@ export class GraphiQL extends React.Component {
           >
             <div className="queryWrap" style={queryWrapStyle}>
               {/* Render queries boxes */}
-              {console.log("queryList length", this.state.queryList.length)}
               {this.state.queryList.map((query, index) => (
                 <QueryEditor
                   lastEditor={this.state.queryList.length - 1}
@@ -796,9 +795,9 @@ export class GraphiQL extends React.Component {
   // Account the number of CodeMirror instances open.
   handleNewQueryBox = () => {
     this._editorQueryID = this.state.queryList.length;
-    const queriesNum = [...this.state.queryList];
-    queriesNum.push(queriesNum.length);
-    this.setState({ queryList: queriesNum });
+    const queries = [...this.state.queryList];
+    queries.push("");
+    this.setState({ queryList: queries });
   };
 
   handlePrettifyQuery = () => {
@@ -813,10 +812,8 @@ export class GraphiQL extends React.Component {
       this.state.operations,
       this.state.schema
     );
-    console.log("editorID", editorID);
     const queryList = [...this.state.queryList];
     queryList[editorID] = value;
-    //console.log('queryList', queryList)
     this.setState({
       query: value,
       queryList,
