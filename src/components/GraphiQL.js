@@ -153,7 +153,7 @@ export class GraphiQL extends React.Component {
     // Only fetch schema via introspection if a schema has not been
     // provided, including if `null` was provided.
     if (this.state.schema === undefined) {
-      console.log(this.state.path);
+      // console.log(this.state.path);
       this._fetchSchema();
     }
 
@@ -1097,7 +1097,7 @@ const defaultQuery = `# Welcome to GraphiQL
 
 `;
 
-const defaultPath = "/graphql";
+const defaultPath = "/graphql"; //
 
 // Duck-type promise detection.
 function isPromise(value) {
