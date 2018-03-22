@@ -708,7 +708,6 @@ export class GraphiQL extends React.Component {
     // the current query from the editor.
     const serverPath = this.state.path;
     const editedQuery = this.autoCompleteLeafs() || this.state.query;
-    console.log("handleRunQuery", editedQuery);
     const variables = this.state.variables;
     let operationName = this.state.operationName;
 
@@ -819,7 +818,6 @@ export class GraphiQL extends React.Component {
       queryList,
       ...queryFacts
     });
-    console.log("this.state.queryList", this.state.queryList);
     if (this.props.onEditQuery) {
       return this.props.onEditQuery(value);
     }
