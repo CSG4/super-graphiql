@@ -1188,7 +1188,7 @@ const defaultQuery = `# Welcome to GraphiQL
 
 `;
 
-const defaultPath = "/graphql";
+const defaultPath = "/graphql"; //
 
 // Duck-type promise detection.
 function isPromise(value) {
