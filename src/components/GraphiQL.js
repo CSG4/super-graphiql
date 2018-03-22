@@ -799,7 +799,13 @@ export class GraphiQL extends React.Component {
   }
 
   handleNewQueryBox = () => {
-    if (this.state.queryList[this.state.queryList.length - 1].value) {
+    let renderAndEmpty = false;
+    for (let i = 0; i < this.state.queryList.length; i += 1) {
+      if (this.state.queryList[i].render && !this.state.queryList[i].value) {
+        renderAndEmpty = true;
+      }
+    }
+    if (!renderAndEmpty) {
       this._editorQueryID = this.state.queryList.length;
       const queriesNum = [...this.state.queryList];
       queriesNum.push({ id: queriesNum.length, render: true, value: "" });
@@ -808,15 +814,25 @@ export class GraphiQL extends React.Component {
   };
 
   handleDeleteQueryBox = e => {
-    const queriesNum = [...this.state.queryList];
-    for (let i = 0; i < queriesNum.length; i += 1) {
-      if (queriesNum[i].id == e.target.id) {
-        queriesNum[i].render = false;
-        //queriesNum.splice(i, 1);
-        break;
+    // temp solution that doesn't allow you to delete the last code mirror editor (because it will throw error)
+    let renders = 0;
+    for (let i = 0; i < this.state.queryList.length; i += 1) {
+      if (this.state.queryList[i].render) {
+        renders += 1;
       }
     }
-    this.setState({ queryList: queriesNum });
+
+    if (renders > 1) {
+      const queriesNum = [...this.state.queryList];
+      for (let i = 0; i < queriesNum.length; i += 1) {
+        if (queriesNum[i].id == e.target.id) {
+          queriesNum[i].render = false;
+          //queriesNum.splice(i, 1);
+          break;
+        }
+      }
+      this.setState({ queryList: queriesNum });
+    }
   };
 
   handleDeleteAll = () => {
