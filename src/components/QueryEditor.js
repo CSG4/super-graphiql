@@ -38,6 +38,7 @@ export class QueryEditor extends React.Component {
     readOnly: PropTypes.bool,
     onHintInformationRender: PropTypes.func,
     onClickReference: PropTypes.func,
+    onClickDeleteButton: PropTypes.func,
     onPrettifyQuery: PropTypes.func,
     onRunQuery: PropTypes.func,
     editorTheme: PropTypes.string
@@ -194,7 +195,15 @@ export class QueryEditor extends React.Component {
         ref={node => {
           this._node = node;
         }}
-      />
+      >
+        <button
+          className="delete-query"
+          id={this.props.editorId}
+          onClick={this.props.onClickDeleteButton}
+        >
+          {"x"}
+        </button>
+      </div>
     );
   }
 
