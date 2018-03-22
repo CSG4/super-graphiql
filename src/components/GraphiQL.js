@@ -714,7 +714,9 @@ export class GraphiQL extends React.Component {
     // in case autoCompletion fails (the function returns undefined),
     // the current query from the editor.
     const serverPath = this.state.path;
-    const editedQuery = this.autoCompleteLeafs() || this.state.query;
+    const editedQuery =
+      this.autoCompleteLeafs() ||
+      this.state.queryList[this.state.queryList.length - 1].value; // temp fix to run query in last box
     const variables = this.state.variables;
     let operationName = this.state.operationName;
 
