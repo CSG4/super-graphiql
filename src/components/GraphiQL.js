@@ -799,11 +799,12 @@ export class GraphiQL extends React.Component {
   }
 
   handleNewQueryBox = () => {
-    this._editorQueryID = this.state.queryList.length;
-    const queriesNum = [...this.state.queryList];
-    queriesNum.push({ id: queriesNum.length, render: true, value: "" });
-    this.setState({ queryList: queriesNum });
-    //this._editorQueryID += 1
+    if (this.state.queryList[this.state.queryList.length - 1].value) {
+      this._editorQueryID = this.state.queryList.length;
+      const queriesNum = [...this.state.queryList];
+      queriesNum.push({ id: queriesNum.length, render: true, value: "" });
+      this.setState({ queryList: queriesNum });
+    }
   };
 
   handleDeleteQueryBox = e => {
