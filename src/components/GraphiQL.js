@@ -119,9 +119,11 @@ export class GraphiQL extends React.Component {
           );
 
     const storedQueryList = this._storage.get("queryList");
-    // only return non-empty strings with filter
+    // filter by only returning query objects that have a value of query text
     const prevQuery = storedQueryList
-      ? JSON.parse(storedQueryList).filter(String)
+      ? JSON.parse(storedQueryList).filter((queryObj, index) => {
+          if (queryObj.value !== "" && index !== 0) return queryObj;
+        })
       : [{ id: 0, render: true, value: "" }];
 
     // Initialize state
@@ -150,7 +152,7 @@ export class GraphiQL extends React.Component {
     this.handleDeleteQueryBox = this.handleDeleteQueryBox.bind(this);
 
     // Ensure only the last executed editor query is rendered.
-    this._editorQueryID = this.state.queryList.length - 1; // 0;
+    this._editorQueryID = 0;
 
     // Subscribe to the browser window closing, treating it as an unmount.
     if (typeof window === "object") {
@@ -403,7 +405,7 @@ export class GraphiQL extends React.Component {
                   !queryObj.render ? null : (
                     <QueryEditor
                       key={index}
-                      editorId={index}
+                      editorId={queryObj.id}
                       value={queryObj.value}
                       ref={n => {
                         this.queryEditorComponent = n;
@@ -793,10 +795,10 @@ export class GraphiQL extends React.Component {
   }
 
   handleNewQueryBox = () => {
-    this._editorQueryID = this.state.queryList.length;
     const queriesNum = [...this.state.queryList];
     queriesNum.push({ id: queriesNum.length, render: true, value: "" });
     this.setState({ queryList: queriesNum });
+    //this._editorQueryID += 1
   };
 
   handleDeleteQueryBox = e => {
@@ -804,6 +806,7 @@ export class GraphiQL extends React.Component {
     for (let i = 0; i < queriesNum.length; i += 1) {
       if (queriesNum[i].id == e.target.id) {
         queriesNum[i].render = false;
+        //queriesNum.splice(i, 1);
         break;
       }
     }
@@ -811,7 +814,7 @@ export class GraphiQL extends React.Component {
   };
 
   handleDeleteAll = () => {
-    this.setState({ queryList: [{ id: 0, render: true }] });
+    this.setState({ queryList: [{ id: 0, render: true, value: "" }] });
   };
 
   handlePrettifyQuery = () => {
@@ -826,10 +829,17 @@ export class GraphiQL extends React.Component {
       this.state.operations,
       this.state.schema
     );
-    const queryList = [...this.state.queryList];
-    queryList[editorID] = value;
+    const queryListCopy = [...this.state.queryList];
+    // find object in query list with id of editor ID and update value
+    const queryList = queryListCopy.map(queryObj => {
+      if (queryObj.id === editorID) {
+        queryObj.value = value;
+      }
+      return queryObj;
+    });
+
     this.setState({
-      query: value,
+      // query: value,
       queryList,
       ...queryFacts
     });
