@@ -118,11 +118,23 @@ export class GraphiQL extends React.Component {
             queryFacts && queryFacts.operations
           );
 
+    const storedQueryList = this._storage.get("queryList");
+    // filter by only returning query objects that have a value of query text
+    // const prevQuery = storedQueryList
+    //   ? JSON.parse(storedQueryList).filter((queryObj, index) => {
+    //       if (queryObj.value !== "" && index !== 0) return queryObj;
+    //     })
+    //   : [{ id: 0, render: true, value: "" }];
+
+    const prevQuery = storedQueryList
+      ? JSON.parse(storedQueryList)
+      : [{ id: 0, render: true, value: "" }];
+
     // Initialize state
     this.state = {
       path,
       schema: props.schema,
-      queryList: [{ id: 0, render: true }],
+      queryList: prevQuery,
       query,
       variables,
       operationName,
@@ -247,7 +259,9 @@ export class GraphiQL extends React.Component {
   // When the component is about to unmount, store any persistable state, such
   // that when the component is remounted, it will use the last used values.
   componentWillUnmount() {
-    this._storage.set("query", this.state.query);
+    const queryList = JSON.stringify(this.state.queryList);
+    //this._storage.set("query", this.state.query);
+    this._storage.set("queryList", queryList);
     this._storage.set("path", this.state.path);
     this._storage.set("variables", this.state.variables);
     this._storage.set("operationName", this.state.operationName);
@@ -391,12 +405,12 @@ export class GraphiQL extends React.Component {
             <div className="queryWrap" style={queryWrapStyle}>
               {/* Render queries boxes */}
               {this.state.queryList.map(
-                (query, index) =>
-                  !query.render ? null : (
+                (queryObj, index) =>
+                  !queryObj.render ? null : (
                     <QueryEditor
-                      // lastEditor={this.state.queryList.length - 1}
                       key={index}
-                      editorId={index}
+                      editorId={queryObj.id}
+                      value={queryObj.value}
                       ref={n => {
                         this.queryEditorComponent = n;
                       }}
@@ -700,7 +714,9 @@ export class GraphiQL extends React.Component {
     // in case autoCompletion fails (the function returns undefined),
     // the current query from the editor.
     const serverPath = this.state.path;
-    const editedQuery = this.autoCompleteLeafs() || this.state.query;
+    const editedQuery =
+      this.autoCompleteLeafs() ||
+      this.state.queryList[this.state.queryList.length - 1].value; // temp fix to run query in last box
     const variables = this.state.variables;
     let operationName = this.state.operationName;
 
@@ -785,25 +801,44 @@ export class GraphiQL extends React.Component {
   }
 
   handleNewQueryBox = () => {
-    this._editorQueryID = this.state.queryList.length;
-    const queriesNum = [...this.state.queryList];
-    queriesNum.push({ id: queriesNum.length, render: true });
-    this.setState({ queryList: queriesNum });
+    let renderAndEmpty = false;
+    for (let i = 0; i < this.state.queryList.length; i += 1) {
+      if (this.state.queryList[i].render && !this.state.queryList[i].value) {
+        renderAndEmpty = true;
+      }
+    }
+    if (!renderAndEmpty) {
+      this._editorQueryID = this.state.queryList.length;
+      const queriesNum = [...this.state.queryList];
+      queriesNum.push({ id: queriesNum.length, render: true, value: "" });
+      this.setState({ queryList: queriesNum });
+    }
   };
 
   handleDeleteQueryBox = e => {
-    const queriesNum = [...this.state.queryList];
-    for (let i = 0; i < queriesNum.length; i += 1) {
-      if (queriesNum[i].id == e.target.id) {
-        queriesNum[i].render = false;
-        break;
+    // temp solution that doesn't allow you to delete the last code mirror editor (because it will throw error)
+    let renders = 0;
+    for (let i = 0; i < this.state.queryList.length; i += 1) {
+      if (this.state.queryList[i].render) {
+        renders += 1;
       }
     }
-    this.setState({ queryList: queriesNum });
+
+    if (renders > 1) {
+      const queriesNum = [...this.state.queryList];
+      for (let i = 0; i < queriesNum.length; i += 1) {
+        if (queriesNum[i].id == e.target.id) {
+          queriesNum[i].render = false;
+          //queriesNum.splice(i, 1);
+          break;
+        }
+      }
+      this.setState({ queryList: queriesNum });
+    }
   };
 
   handleDeleteAll = () => {
-    this.setState({ queryList: [{ id: 0, render: true }] });
+    this.setState({ queryList: [{ id: 0, render: true, value: "" }] });
   };
 
   handlePrettifyQuery = () => {
@@ -811,15 +846,26 @@ export class GraphiQL extends React.Component {
     editor.setValue(print(parse(editor.getValue())));
   };
 
-  handleEditQuery = debounce(100, value => {
+  handleEditQuery = debounce(100, (value, editorID) => {
     const queryFacts = this._updateQueryFacts(
       value,
       this.state.operationName,
       this.state.operations,
       this.state.schema
     );
+
+    const queryListCopy = [...this.state.queryList];
+    // find object in query list with id of editor ID and update value
+    const queryList = queryListCopy.map(queryObj => {
+      if (queryObj.id === editorID) {
+        queryObj.value = value;
+      }
+      return queryObj;
+    });
+
     this.setState({
-      query: value,
+      //query: value,
+      queryList,
       ...queryFacts
     });
     if (this.props.onEditQuery) {

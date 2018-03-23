@@ -219,11 +219,20 @@ body {
 }
 
 .graphiql-container div .query-editor {
+  border-style: solid;
+  border-color: rgb(193, 193, 193);
+  border-width: 1px;
   -webkit-box-flex: 1;
       -ms-flex: 1;
           flex: 1;
   position: relative;
 }
+
+.graphiql-container .delete-query {
+  position: relative;
+  z-index: 1000;
+}
+
 
 .graphiql-container div .path-editor {
   background: #fdfdfd;
