@@ -233,6 +233,10 @@ body {
   z-index: 1000;
 }
 
+.graphiql-container .run-query-check {
+  position: relative;
+  z-index: 1000;
+}
 
 .graphiql-container div .path-editor {
   background: #fdfdfd;

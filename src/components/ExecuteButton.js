@@ -84,7 +84,7 @@ export class ExecuteButton extends React.Component {
           className="execute-button"
           onMouseDown={onMouseDown}
           onClick={onClick}
-          title="Execute Query (Ctrl-Enter)"
+          title="Execute Selected Queries (Ctrl-Enter)"
         >
           <svg width="34" height="34">
             {pathJSX}

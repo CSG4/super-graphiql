@@ -36,6 +36,7 @@ export class QueryEditor extends React.Component {
     value: PropTypes.string,
     onEdit: PropTypes.func,
     readOnly: PropTypes.bool,
+    onCheckToRun: PropTypes.func,
     onHintInformationRender: PropTypes.func,
     onClickReference: PropTypes.func,
     onClickDeleteButton: PropTypes.func,
@@ -202,6 +203,14 @@ export class QueryEditor extends React.Component {
         >
           {"x"}
         </button>
+        <input
+          className="run-query-check"
+          id={this.props.editorId}
+          type="checkbox"
+          title="Check me for running this query"
+          // defaultChecked
+          onChange={this.props.onCheckToRun}
+        />
       </div>
     );
   }
