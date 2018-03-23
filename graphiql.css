@@ -233,6 +233,12 @@ body {
   z-index: 1000;
 }
 
+.graphiql-container .run-query-check {
+  position: relative;
+  z-index: 1000;
+  display: block;
+  margin-top: 10px;
+}
 
 .graphiql-container div .path-editor {
   background: #fdfdfd;
@@ -342,6 +348,7 @@ body {
   background-color: #eeeeee;
   border-color: #e0e0e0;
   cursor: col-resize;
+  width: 40px;
 }
 
 .graphiql-container .result-window .CodeMirror-foldgutter,
@@ -811,7 +818,7 @@ div.CodeMirror-lint-tooltip > * + * {
 .CodeMirror-linenumber {
   color: #999;
   min-width: 20px;
-  padding: 0 3px 0 5px;
+  padding: 0 3px 0 15px;
   text-align: right;
   white-space: nowrap;
 }
