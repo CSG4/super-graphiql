@@ -80,6 +80,7 @@ function graphQLFetcher(graphQLParams, path) {
       return allResponses;
     })
   } else {
+    // Handles initial Introspection Query
     return new Promise((resolve, reject) => {
       fetchRequest(graphQLParams, path).then((response) => {
         resolve(response);

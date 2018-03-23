@@ -604,7 +604,6 @@ export class GraphiQL extends React.Component {
         // satisfy the race condition by respecting the already
         // provided schema.
         if (this.state.schema !== undefined && this.state.schema !== null) {
-          _;
           return;
         }
 
