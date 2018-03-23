@@ -103,15 +103,15 @@ function fetchRequest(graphQLParams, path) {
     credentials: 'include', // Always send user credentials (cookies, basic http auth, etc..), even for cross-origin calls.
     // mode: 'no-cors'
     }).then(function (response) {
-      // console.log('response 1', new Promise((resolve, reject) => { resolve(response.text()) }));
-      resolve(response.text());
-    }).then(function (responseBody) {
-      try {
-        resolve(JSON.parse(responseBody));
-      } catch (error) {
-        resolve(responseBody);
-      }
-    });
+      resolve(response.json()); // was once response.text() idk why though
+    })
+    // .then(function (responseBody) {
+    //   try {
+    //     resolve(JSON.parse(responseBody));
+    //   } catch (error) {
+    //     resolve(responseBody);
+    //   }
+    // });
   });
 }
 

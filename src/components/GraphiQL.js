@@ -604,6 +604,7 @@ export class GraphiQL extends React.Component {
         // satisfy the race condition by respecting the already
         // provided schema.
         if (this.state.schema !== undefined && this.state.schema !== null) {
+          _;
           return;
         }
 
@@ -747,21 +748,16 @@ export class GraphiQL extends React.Component {
         // operationName,
         editedQueryList,
         result => {
-          const old_key = "data";
-          const parsedResults = result.map((str, index) => {
-            let parsed = JSON.parse(str);
-            Object.defineProperty(
-              parsed,
-              "dataSet" + index,
-              Object.getOwnPropertyDescriptor(parsed, old_key)
-            );
-            delete parsed[old_key];
-            return parsed;
+          const cleanResults = result.map((resultObj, index) => {
+            resultObj["dataSet" + index] = resultObj.data;
+            delete resultObj["data"];
+            return resultObj;
           });
+
           if (queryID === this._editorQueryID) {
             this.setState({
               isWaitingForResponse: false,
-              response: JSON.stringify(parsedResults, null, 2)
+              response: JSON.stringify(cleanResults, null, 2)
             });
           }
         }
