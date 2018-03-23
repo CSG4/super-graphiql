@@ -56,7 +56,6 @@ function updateURL() {
 // use fetch, and could instead implement graphQLFetcher however you like,
 // as long as it returns a Promise or Observable.
 function graphQLFetcher(graphQLParams, path) {
-  let sPath = path || '/graphql'
   // let queryString = '?' + Object.keys(graphQLParams).filter(function (key) {
   //   return Boolean(graphQLParams[key]);
   // }).map(function (key) {
@@ -64,9 +63,36 @@ function graphQLFetcher(graphQLParams, path) {
   //     encodeURIComponent(graphQLParams[key]);
   // }).join('&');
 
+  if (Array.isArray(graphQLParams)) {
+    const promises = [];
+
+    graphQLParams.forEach((queryObj) => {
+      let promise = new Promise((resolve, reject) => {
+        fetchRequest(queryObj, path).then(response => {
+          resolve(response)
+        });
+      })
+      promises.push(promise);
+    })
+
+    return Promise.all(promises).then((allResponses) => {
+      return allResponses;
+    })
+  } else {
+    // Handles initial Introspection Query
+    return new Promise((resolve, reject) => {
+      fetchRequest(graphQLParams, path).then((response) => {
+        resolve(response);
+      });
+    });
+  }
+}
+
+function fetchRequest(graphQLParams, path) {
   // This example expects a GraphQL server at the path /graphql.
   // Change this to point wherever you host your GraphQL server.
-  return fetch(path, {
+  return new Promise((resolve, reject) => {
+    fetch(path, {
     method: 'post',
     headers: {
       'Content-Type': 'application/json',
@@ -76,15 +102,16 @@ function graphQLFetcher(graphQLParams, path) {
     
     credentials: 'include', // Always send user credentials (cookies, basic http auth, etc..), even for cross-origin calls.
     // mode: 'no-cors'
-  }).then(function (response) {
-    // console.log('response 1', new Promise((resolve, reject) => { resolve(response.text()) }));
-    return response.text();
-  }).then(function (responseBody) {
-    try {
-      return JSON.parse(responseBody);
-    } catch (error) {
-      return responseBody;
-    }
+    }).then(function (response) {
+      resolve(response.json()); // was once response.text() idk why though
+    })
+    // .then(function (responseBody) {
+    //   try {
+    //     resolve(JSON.parse(responseBody));
+    //   } catch (error) {
+    //     resolve(responseBody);
+    //   }
+    // });
   });
 }
 
