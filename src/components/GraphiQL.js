@@ -855,7 +855,6 @@ export class GraphiQL extends React.Component {
     );
 
     const queryListCopy = [...this.state.queryList];
-    console.log("queryList before update", queryListCopy);
     // find object in query list with id of editor ID and update value
     const queryList = queryListCopy.map(queryObj => {
       if (queryObj.id === editorID) {
@@ -863,8 +862,6 @@ export class GraphiQL extends React.Component {
       }
       return queryObj;
     });
-
-    console.log("queryList after update", queryList);
 
     this.setState({
       //query: value,
