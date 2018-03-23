@@ -118,17 +118,18 @@ export class GraphiQL extends React.Component {
             queryFacts && queryFacts.operations
           );
 
+    // Determine the initial queries to render (if there are queries in local storage)
     const storedQueryList = this._storage.get("queryList");
-    // filter by only returning query objects that have a value of query text
-    // const prevQuery = storedQueryList
-    //   ? JSON.parse(storedQueryList).filter((queryObj, index) => {
-    //       if (queryObj.value !== "" && index !== 0) return queryObj;
-    //     })
-    //   : [{ id: 0, render: true, value: "" }];
-
+    const emptyQuery = {
+      id: 0,
+      render: true,
+      query: "",
+      variables,
+      operationName
+    };
     const prevQuery = storedQueryList
       ? JSON.parse(storedQueryList)
-      : [{ id: 0, render: true, value: "" }];
+      : [emptyQuery];
 
     // Initialize state
     this.state = {
@@ -410,7 +411,7 @@ export class GraphiQL extends React.Component {
                     <QueryEditor
                       key={index}
                       editorId={queryObj.id}
-                      value={queryObj.value}
+                      value={queryObj.query}
                       ref={n => {
                         this.queryEditorComponent = n;
                       }}
@@ -630,30 +631,23 @@ export class GraphiQL extends React.Component {
       });
   }
 
-  _fetchQuery(query, variables, operationName, cb) {
+  _fetchQuery(queries, cb) {
     const fetcher = this.props.fetcher;
     const serverPath = this.state.path;
-    let jsonVariables = null;
+    // let jsonVariables = null;
 
-    try {
-      jsonVariables =
-        variables && variables.trim() !== "" ? JSON.parse(variables) : null;
-    } catch (error) {
-      throw new Error(`Variables are invalid JSON: ${error.message}.`);
-    }
+    // try {
+    //   jsonVariables =
+    //     variables && variables.trim() !== "" ? JSON.parse(variables) : null;
+    // } catch (error) {
+    //   throw new Error(`Variables are invalid JSON: ${error.message}.`);
+    // }
 
-    if (typeof jsonVariables !== "object") {
-      throw new Error("Variables are not a JSON object.");
-    }
+    // if (typeof jsonVariables !== "object") {
+    //   throw new Error("Variables are not a JSON object.");
+    // }
 
-    const fetch = fetcher(
-      {
-        query,
-        variables: jsonVariables,
-        operationName
-      },
-      serverPath
-    );
+    const fetch = fetcher(queries, serverPath);
 
     if (isPromise(fetch)) {
       // If fetcher returned a Promise, then call the callback when the promise
@@ -716,7 +710,19 @@ export class GraphiQL extends React.Component {
     const serverPath = this.state.path;
     const editedQuery =
       this.autoCompleteLeafs() ||
-      this.state.queryList[this.state.queryList.length - 1].value; // temp fix to run query in last box
+      this.state.queryList[this.state.queryList.length - 1].query; // temp fix to run query in last box
+
+    // create a new array of query Objects with only props we need, if render is true
+    const editedQueryList = this.state.queryList.map(queryObj => {
+      if (queryObj.render) {
+        return {
+          query: queryObj.query,
+          variables: undefined,
+          operationName: undefined
+        };
+      }
+    });
+
     const variables = this.state.variables;
     let operationName = this.state.operationName;
 
@@ -736,14 +742,26 @@ export class GraphiQL extends React.Component {
 
       // _fetchQuery may return a subscription.
       const subscription = this._fetchQuery(
-        editedQuery,
-        variables,
-        operationName,
+        // editedQuery,
+        // variables,
+        // operationName,
+        editedQueryList,
         result => {
+          const old_key = "data";
+          const parsedResults = result.map((str, index) => {
+            let parsed = JSON.parse(str);
+            Object.defineProperty(
+              parsed,
+              "dataSet" + index,
+              Object.getOwnPropertyDescriptor(parsed, old_key)
+            );
+            delete parsed[old_key];
+            return parsed;
+          });
           if (queryID === this._editorQueryID) {
             this.setState({
               isWaitingForResponse: false,
-              response: JSON.stringify(result, null, 2)
+              response: JSON.stringify(parsedResults, null, 2)
             });
           }
         }
@@ -803,14 +821,14 @@ export class GraphiQL extends React.Component {
   handleNewQueryBox = () => {
     let renderAndEmpty = false;
     for (let i = 0; i < this.state.queryList.length; i += 1) {
-      if (this.state.queryList[i].render && !this.state.queryList[i].value) {
+      if (this.state.queryList[i].render && !this.state.queryList[i].query) {
         renderAndEmpty = true;
       }
     }
     if (!renderAndEmpty) {
       this._editorQueryID = this.state.queryList.length;
       const queriesNum = [...this.state.queryList];
-      queriesNum.push({ id: queriesNum.length, render: true, value: "" });
+      queriesNum.push({ id: queriesNum.length, render: true, query: "" });
       this.setState({ queryList: queriesNum });
     }
   };
@@ -838,7 +856,7 @@ export class GraphiQL extends React.Component {
   };
 
   handleDeleteAll = () => {
-    this.setState({ queryList: [{ id: 0, render: true, value: "" }] });
+    this.setState({ queryList: [{ id: 0, render: true, query: "" }] });
   };
 
   handlePrettifyQuery = () => {
@@ -855,10 +873,10 @@ export class GraphiQL extends React.Component {
     );
 
     const queryListCopy = [...this.state.queryList];
-    // find object in query list with id of editor ID and update value
+    // find object in query list with id of editor ID and update query value
     const queryList = queryListCopy.map(queryObj => {
       if (queryObj.id === editorID) {
-        queryObj.value = value;
+        queryObj.query = value;
       }
       return queryObj;
     });
