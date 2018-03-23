@@ -46,7 +46,6 @@ export class QueryEditor extends React.Component {
 
   constructor(props) {
     super();
-    console.log("query editor", props);
 
     // Keep a cached version of the value, this cache will be updated when the
     // editor is updated, which can later be used to protect the editor from
