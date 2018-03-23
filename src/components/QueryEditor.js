@@ -76,7 +76,7 @@ export class QueryEditor extends React.Component {
     require("codemirror-graphql/mode"); // specify language
 
     this.editor = CodeMirror(this._node, {
-      value: "",
+      value: this.cachedValue,
       lineNumbers: true,
       tabSize: 2,
       mode: "graphql",
@@ -231,7 +231,7 @@ export class QueryEditor extends React.Component {
     if (!this.ignoreChangeEvent) {
       this.cachedValue = this.editor.getValue();
       if (this.props.onEdit) {
-        this.props.onEdit(this.cachedValue);
+        this.props.onEdit(this.cachedValue, this.props.editorId);
       }
     }
   };
