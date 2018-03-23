@@ -154,6 +154,7 @@ export class GraphiQL extends React.Component {
     };
 
     this.handleDeleteQueryBox = this.handleDeleteQueryBox.bind(this);
+    this.handleCheckQueryToRun = this.handleCheckQueryToRun.bind(this);
 
     // Ensure only the last executed editor query is rendered.
     this._editorQueryID = this.state.queryList.length - 1; // 0;
@@ -172,6 +173,9 @@ export class GraphiQL extends React.Component {
     if (this.state.schema === undefined) {
       this._fetchSchema();
     }
+
+    // Stores the IDs of the queries checked to run.
+    this.queriesToRun = [];
 
     // Utility for keeping CodeMirror correctly sized.
     this.codeMirrorSizer = new CodeMirrorSizer();
@@ -419,6 +423,7 @@ export class GraphiQL extends React.Component {
                       onHintInformationRender={this.handleHintInformationRender}
                       onClickReference={this.handleClickReference}
                       onPrettifyQuery={this.handlePrettifyQuery}
+                      onCheckToRun={this.handleCheckQueryToRun}
                       onClickDeleteButton={this.handleDeleteQueryBox}
                       onRunQuery={this.handleEditorRunQuery}
                       editorTheme={this.props.editorTheme}
@@ -815,6 +820,18 @@ export class GraphiQL extends React.Component {
     }
   };
 
+  handleCheckQueryToRun = e => {
+    if (e.target.checked === true) {
+      this.queriesToRun.push(e.target.id);
+    } else {
+      this.queriesToRun.splice(this.queriesToRun.indexOf(e.target.id), 1);
+    }
+    this.queriesToRun.sort((a, b) => {
+      return a - b;
+    });
+    console.log(this.queriesToRun);
+  };
+
   handleDeleteQueryBox = e => {
     // temp solution that doesn't allow you to delete the last code mirror editor (because it will throw error)
     let renders = 0;
@@ -829,15 +846,19 @@ export class GraphiQL extends React.Component {
       for (let i = 0; i < queriesNum.length; i += 1) {
         if (queriesNum[i].id == e.target.id) {
           queriesNum[i].render = false;
-          //queriesNum.splice(i, 1);
           break;
         }
       }
+      this.queriesToRun.splice(this.queriesToRun.indexOf(e.target.id), 1);
+      this.queriesToRun.sort((a, b) => {
+        return a - b;
+      });
       this.setState({ queryList: queriesNum });
     }
   };
 
   handleDeleteAll = () => {
+    this.queriesToRun = [];
     this.setState({ queryList: [{ id: 0, render: true, value: "" }] });
   };
 
