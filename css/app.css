@@ -178,6 +178,8 @@ body {
 .graphiql-container .run-query-check {
   position: relative;
   z-index: 1000;
+  display: block;
+  margin-top: 10px;
 }
 
 .graphiql-container div .path-editor {
@@ -271,6 +273,7 @@ body {
   background-color: #eeeeee;
   border-color: #e0e0e0;
   cursor: col-resize;
+  width: 40px;
 }
 
 .graphiql-container .result-window .CodeMirror-foldgutter,

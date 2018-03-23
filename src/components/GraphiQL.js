@@ -724,7 +724,10 @@ export class GraphiQL extends React.Component {
     // create a new array of query Objects with only props we need, if render is true
     const editedQueryList = this.state.queryList.filter(queryObj => {
       // CHECK IF EDITOR ID IS IN THE ARRAY OF SELECTED IDs
-      if (queryObj.render) {
+      if (
+        queryObj.render &&
+        this.queriesToRun.indexOf(queryObj.id.toString()) >= 0
+      ) {
         return {
           query: queryObj.query,
           variables: undefined,
@@ -732,8 +735,6 @@ export class GraphiQL extends React.Component {
         };
       }
     });
-
-    console.log("edited list", editedQueryList);
 
     const variables = this.state.variables;
     let operationName = this.state.operationName;
@@ -835,7 +836,13 @@ export class GraphiQL extends React.Component {
     if (!renderAndEmpty) {
       this._editorQueryID = this.state.queryList.length;
       const queriesNum = [...this.state.queryList];
-      queriesNum.push({ id: queriesNum.length, render: true, query: "" });
+      queriesNum.push({
+        id: queriesNum.length,
+        render: true,
+        query: "",
+        variables: undefined,
+        operationName: undefined
+      });
       this.setState({ queryList: queriesNum });
     }
   };
@@ -849,7 +856,6 @@ export class GraphiQL extends React.Component {
     this.queriesToRun.sort((a, b) => {
       return a - b;
     });
-    console.log(this.queriesToRun);
   };
 
   handleDeleteQueryBox = e => {
@@ -878,7 +884,17 @@ export class GraphiQL extends React.Component {
   };
 
   handleDeleteAll = () => {
-    this.setState({ queryList: [{ id: 0, render: true, query: "" }] });
+    this.setState({
+      queryList: [
+        {
+          id: 0,
+          render: true,
+          query: "",
+          variables: undefined,
+          operationName: undefined
+        }
+      ]
+    });
     this.queriesToRun = [];
   };
 
