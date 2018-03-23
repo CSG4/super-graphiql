@@ -56,7 +56,6 @@ function updateURL() {
 // use fetch, and could instead implement graphQLFetcher however you like,
 // as long as it returns a Promise or Observable.
 function graphQLFetcher(graphQLParams, path) {
-  let sPath = path || '/graphql'
   // let queryString = '?' + Object.keys(graphQLParams).filter(function (key) {
   //   return Boolean(graphQLParams[key]);
   // }).map(function (key) {

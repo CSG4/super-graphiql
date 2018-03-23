@@ -50,8 +50,6 @@ export class ResultViewer extends React.Component {
         "info",
         "graphql-results",
         (token, options, cm, pos) => {
-          console.log("token", token);
-          console.log("options", options);
           const Tooltip = this.props.ResultsTooltip;
           ReactDOM.render(<Tooltip pos={pos} />, tooltipDiv);
           return tooltipDiv;

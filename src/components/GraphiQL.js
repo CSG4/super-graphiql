@@ -708,12 +708,17 @@ export class GraphiQL extends React.Component {
     // in case autoCompletion fails (the function returns undefined),
     // the current query from the editor.
     const serverPath = this.state.path;
-    const editedQuery =
-      this.autoCompleteLeafs() ||
-      this.state.queryList[this.state.queryList.length - 1].query; // temp fix to run query in last box
+    // NOT USING THIS, UPDATED TO EDITED QUERY LIST
+    // const editedQuery =
+    //   this.autoCompleteLeafs() ||
+    //   this.state.queryList[this.state.queryList.length - 1].query; // temp fix to run query in last box
+
+    // *** IMPORTANT ***
+    // WE NEED TO RUN QUERIES THROUGH this.autoCompleteLeafs()
 
     // create a new array of query Objects with only props we need, if render is true
     const editedQueryList = this.state.queryList.map(queryObj => {
+      // CHECK IF EDITOR ID IS IN THE ARRAY OF SELECTED IDs
       if (queryObj.render) {
         return {
           query: queryObj.query,
