@@ -59,7 +59,6 @@ app.use("/graphql", (req, res) => {
   }
 
   graphql(queryObj).then(response => {
-    console.log('response', response)
     res.send(response);
   });
 });

@@ -65,12 +65,12 @@ function graphQLFetcher(graphQLParams, path, variables) {
 
   if (Array.isArray(graphQLParams)) {
     const promises = [];
-    console.log('vars', variables)
+
     graphQLParams.forEach((queryObj) => {
-      queryObj['variables'] = variables;
-      console.log('queryobj', queryObj)
+      let cleanQueryObj = { query: queryObj.query, operationName: queryObj.operationName, variables: variables};
+
       let promise = new Promise((resolve, reject) => {
-        fetchRequest(queryObj, path).then(response => {
+        fetchRequest(cleanQueryObj, path).then(response => {
           resolve(response)
         });
       })
@@ -105,7 +105,7 @@ function fetchRequest(graphQLParams, path) {
     credentials: 'include', // Always send user credentials (cookies, basic http auth, etc..), even for cross-origin calls.
     // mode: 'no-cors'
     }).then(function (response) {
-      return response.text(); // was once response.text() idk why though
+      return response.text();
     })
     .then(function (responseBody) {
       try {

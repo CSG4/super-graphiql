@@ -721,20 +721,12 @@ export class GraphiQL extends React.Component {
     // *** IMPORTANT ***
     // WE NEED TO RUN QUERIES THROUGH this.autoCompleteLeafs()
 
-    // create a new array of query Objects with only props we need, if render is true
-    const editedQueryList = this.state.queryList.filter(queryObj => {
-      // CHECK IF EDITOR ID IS IN THE ARRAY OF SELECTED IDs
-      if (
+    // filter out query editors that are not checked
+    const editedQueryList = this.state.queryList.filter(
+      queryObj =>
         queryObj.render &&
         this.queriesToRun.indexOf(queryObj.id.toString()) >= 0
-      ) {
-        return {
-          query: queryObj.query,
-          variables: undefined,
-          operationName: undefined
-        };
-      }
-    });
+    );
 
     const variables = this.state.variables;
     let operationName = this.state.operationName;
