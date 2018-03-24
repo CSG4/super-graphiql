@@ -826,7 +826,7 @@ export class GraphiQL extends React.Component {
     this.handleRunQuery(operationName);
   }
 
-  handleNewQueryBox = () => {
+  handleNewQueryBox = (query = "") => {
     let renderAndEmpty = false;
     for (let i = 0; i < this.state.queryList.length; i += 1) {
       if (this.state.queryList[i].render && !this.state.queryList[i].query) {
@@ -839,7 +839,7 @@ export class GraphiQL extends React.Component {
       queriesNum.push({
         id: queriesNum.length,
         render: true,
-        query: "",
+        query,
         variables: undefined,
         operationName: undefined
       });
@@ -1014,6 +1014,7 @@ export class GraphiQL extends React.Component {
   };
 
   handleSelectHistoryQuery = (query, variables, operationName) => {
+    this.handleNewQueryBox(query);
     this.handleEditQuery(query);
     this.handleEditVariables(variables);
     this.handleEditOperationName(operationName);
