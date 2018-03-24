@@ -49,7 +49,17 @@ app.get("/get", (req, res) => {
 
 // A post request to retrieve the resutl of a query using HTTP, via specifying the query in a json in the body of the message
 app.use("/graphql", (req, res) => {
-  graphql(schema, req.body.query.toString()).then(response => {
+  let queryObj = {
+    schema, 
+    source: req.body.query.toString()
+  }
+
+  if (req.body.variables) {
+    queryObj['variableValues'] = JSON.parse(req.body.variables);
+  }
+
+  graphql(queryObj).then(response => {
+    console.log('response', response)
     res.send(response);
   });
 });
