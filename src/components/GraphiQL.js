@@ -124,7 +124,7 @@ export class GraphiQL extends React.Component {
       id: 0,
       render: true,
       query: "",
-      variables,
+      //      variables,
       operationName
     };
     const prevQuery = storedQueryList
@@ -636,23 +636,23 @@ export class GraphiQL extends React.Component {
       });
   }
 
-  _fetchQuery(queries, cb) {
+  _fetchQuery(queries, variables, cb) {
     const fetcher = this.props.fetcher;
     const serverPath = this.state.path;
-    // let jsonVariables = null;
+    let jsonVariables = null;
 
-    // try {
-    //   jsonVariables =
-    //     variables && variables.trim() !== "" ? JSON.parse(variables) : null;
-    // } catch (error) {
-    //   throw new Error(`Variables are invalid JSON: ${error.message}.`);
-    // }
+    try {
+      jsonVariables =
+        variables && variables.trim() !== "" ? JSON.parse(variables) : null;
+    } catch (error) {
+      throw new Error(`Variables are invalid JSON: ${error.message}.`);
+    }
 
-    // if (typeof jsonVariables !== "object") {
-    //   throw new Error("Variables are not a JSON object.");
-    // }
+    if (typeof jsonVariables !== "object") {
+      throw new Error("Variables are not a JSON object.");
+    }
 
-    const fetch = fetcher(queries, serverPath);
+    const fetch = fetcher(queries, serverPath, variables);
 
     if (isPromise(fetch)) {
       // If fetcher returned a Promise, then call the callback when the promise
@@ -721,20 +721,12 @@ export class GraphiQL extends React.Component {
     // *** IMPORTANT ***
     // WE NEED TO RUN QUERIES THROUGH this.autoCompleteLeafs()
 
-    // create a new array of query Objects with only props we need, if render is true
-    const editedQueryList = this.state.queryList.filter(queryObj => {
-      // CHECK IF EDITOR ID IS IN THE ARRAY OF SELECTED IDs
-      if (
+    // filter out query editors that are not checked
+    const editedQueryList = this.state.queryList.filter(
+      queryObj =>
         queryObj.render &&
         this.queriesToRun.indexOf(queryObj.id.toString()) >= 0
-      ) {
-        return {
-          query: queryObj.query,
-          variables: undefined,
-          operationName: undefined
-        };
-      }
-    });
+    );
 
     const variables = this.state.variables;
     let operationName = this.state.operationName;
@@ -755,10 +747,9 @@ export class GraphiQL extends React.Component {
 
       // _fetchQuery may return a subscription.
       const subscription = this._fetchQuery(
-        // editedQuery,
-        // variables,
-        // operationName,
         editedQueryList,
+        variables,
+        // operationName
         result => {
           const cleanResults = result.map((resultObj, index) => {
             resultObj["dataSet" + index] = resultObj.data;
@@ -840,7 +831,6 @@ export class GraphiQL extends React.Component {
         id: queriesNum.length,
         render: true,
         query,
-        variables: undefined,
         operationName: undefined
       });
       this.setState({ queryList: queriesNum });
@@ -890,7 +880,6 @@ export class GraphiQL extends React.Component {
           id: 0,
           render: true,
           query: "",
-          variables: undefined,
           operationName: undefined
         }
       ]

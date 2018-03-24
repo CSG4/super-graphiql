@@ -55,7 +55,7 @@ function updateURL() {
 // Defines a GraphQL fetcher using the fetch API. You're not required to
 // use fetch, and could instead implement graphQLFetcher however you like,
 // as long as it returns a Promise or Observable.
-function graphQLFetcher(graphQLParams, path) {
+function graphQLFetcher(graphQLParams, path, variables) {
   // let queryString = '?' + Object.keys(graphQLParams).filter(function (key) {
   //   return Boolean(graphQLParams[key]);
   // }).map(function (key) {
@@ -67,8 +67,10 @@ function graphQLFetcher(graphQLParams, path) {
     const promises = [];
 
     graphQLParams.forEach((queryObj) => {
+      let cleanQueryObj = { query: queryObj.query, operationName: queryObj.operationName, variables: variables};
+
       let promise = new Promise((resolve, reject) => {
-        fetchRequest(queryObj, path).then(response => {
+        fetchRequest(cleanQueryObj, path).then(response => {
           resolve(response)
         });
       })
@@ -103,15 +105,15 @@ function fetchRequest(graphQLParams, path) {
     credentials: 'include', // Always send user credentials (cookies, basic http auth, etc..), even for cross-origin calls.
     // mode: 'no-cors'
     }).then(function (response) {
-      resolve(response.json()); // was once response.text() idk why though
+      return response.text();
     })
-    // .then(function (responseBody) {
-    //   try {
-    //     resolve(JSON.parse(responseBody));
-    //   } catch (error) {
-    //     resolve(responseBody);
-    //   }
-    // });
+    .then(function (responseBody) {
+      try {
+        resolve(JSON.parse(responseBody));
+      } catch (error) {
+        resolve(responseBody);
+      }
+    });
   });
 }
 
