@@ -423,6 +423,7 @@ export class GraphiQL extends React.Component {
                       onEdit={this.handleEditQuery}
                       onHintInformationRender={this.handleHintInformationRender}
                       onClickReference={this.handleClickReference}
+                      // onAddQuery={this.handleSelectHistoryQuery}
                       onPrettifyQuery={this.handlePrettifyQuery}
                       onCheckToRun={this.handleCheckQueryToRun}
                       onClickDeleteButton={this.handleDeleteQueryBox}
@@ -813,7 +814,6 @@ export class GraphiQL extends React.Component {
         }
       }
     }
-
     this.handleRunQuery(operationName);
   }
 
@@ -821,9 +821,20 @@ export class GraphiQL extends React.Component {
     let renderAndEmpty = false;
     for (let i = 0; i < this.state.queryList.length; i += 1) {
       if (this.state.queryList[i].render && !this.state.queryList[i].query) {
-        renderAndEmpty = true;
+        renderAndEmpty = true; // would hit this flag if there was no value in the query editor
       }
     }
+
+    if (!!query && renderAndEmpty) {
+      let queryListCopy = [...this.state.queryList];
+      for (let i = 0; i < queryListCopy.length; i += 1) {
+        if (queryListCopy[i].render && queryListCopy[i].query === "") {
+          queryListCopy[i].query = query;
+        }
+      }
+      this.setState({ queryList: queryListCopy });
+    }
+    // and would not enter into this if statement's code block
     if (!renderAndEmpty) {
       this._editorQueryID = this.state.queryList.length;
       const queriesNum = [...this.state.queryList];
