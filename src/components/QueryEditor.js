@@ -43,6 +43,7 @@ export class QueryEditor extends React.Component {
     onPrettifyQuery: PropTypes.func,
     onRunQuery: PropTypes.func,
     editorTheme: PropTypes.string
+    // onAddQuery: PropTypes.func
   };
 
   constructor(props) {

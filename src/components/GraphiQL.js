@@ -423,6 +423,7 @@ export class GraphiQL extends React.Component {
                       onEdit={this.handleEditQuery}
                       onHintInformationRender={this.handleHintInformationRender}
                       onClickReference={this.handleClickReference}
+                      // onAddQuery={this.handleSelectHistoryQuery}
                       onPrettifyQuery={this.handlePrettifyQuery}
                       onCheckToRun={this.handleCheckQueryToRun}
                       onClickDeleteButton={this.handleDeleteQueryBox}
@@ -822,24 +823,34 @@ export class GraphiQL extends React.Component {
         }
       }
     }
-
     this.handleRunQuery(operationName);
   }
 
-  handleNewQueryBox = () => {
-    let renderAndEmpty = false;
+  handleNewQueryBox = (query = "") => {
+    let flag = false;
     for (let i = 0; i < this.state.queryList.length; i += 1) {
       if (this.state.queryList[i].render && !this.state.queryList[i].query) {
-        renderAndEmpty = true;
+        flag = true; // would hit this flag if there was no value in the query editor
       }
     }
-    if (!renderAndEmpty) {
+
+    if (query.length > 1 && flag) {
+      let queryListCopy = [...this.state.queryList];
+      for (let i = 0; i < queryListCopy.length; i += 1) {
+        if (queryListCopy[i].render && queryListCopy[i].query === "") {
+          queryListCopy[i].query = query;
+        }
+      }
+      this.setState({ queryList: queryListCopy });
+    }
+    // and would not enter into this if statement's code block
+    if (!flag) {
       this._editorQueryID = this.state.queryList.length;
       const queriesNum = [...this.state.queryList];
       queriesNum.push({
         id: queriesNum.length,
         render: true,
-        query: "",
+        query,
         variables: undefined,
         operationName: undefined
       });
@@ -1014,6 +1025,9 @@ export class GraphiQL extends React.Component {
   };
 
   handleSelectHistoryQuery = (query, variables, operationName) => {
+    console.log(query);
+    console.log(this.state.queryList);
+    this.handleNewQueryBox(query);
     this.handleEditQuery(query);
     this.handleEditVariables(variables);
     this.handleEditOperationName(operationName);
