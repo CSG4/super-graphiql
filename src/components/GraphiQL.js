@@ -1025,8 +1025,6 @@ export class GraphiQL extends React.Component {
   };
 
   handleSelectHistoryQuery = (query, variables, operationName) => {
-    console.log(query);
-    console.log(this.state.queryList);
     this.handleNewQueryBox(query);
     this.handleEditQuery(query);
     this.handleEditVariables(variables);
