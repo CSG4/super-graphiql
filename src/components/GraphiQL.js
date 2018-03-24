@@ -827,14 +827,14 @@ export class GraphiQL extends React.Component {
   }
 
   handleNewQueryBox = (query = "") => {
-    let flag = false;
+    let renderAndEmpty = false;
     for (let i = 0; i < this.state.queryList.length; i += 1) {
       if (this.state.queryList[i].render && !this.state.queryList[i].query) {
-        flag = true; // would hit this flag if there was no value in the query editor
+        renderAndEmpty = true; // would hit this flag if there was no value in the query editor
       }
     }
 
-    if (query.length > 1 && flag) {
+    if (!!query && renderAndEmpty) {
       let queryListCopy = [...this.state.queryList];
       for (let i = 0; i < queryListCopy.length; i += 1) {
         if (queryListCopy[i].render && queryListCopy[i].query === "") {
@@ -844,7 +844,7 @@ export class GraphiQL extends React.Component {
       this.setState({ queryList: queryListCopy });
     }
     // and would not enter into this if statement's code block
-    if (!flag) {
+    if (!renderAndEmpty) {
       this._editorQueryID = this.state.queryList.length;
       const queriesNum = [...this.state.queryList];
       queriesNum.push({
