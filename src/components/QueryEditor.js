@@ -200,7 +200,9 @@ export class QueryEditor extends React.Component {
         <button
           className="delete-query"
           id={this.props.editorId}
-          onClick={this.props.onClickDeleteButton}
+          onClick={() => {
+            this.props.onClickDeleteButton(this.props.editorId);
+          }}
         >
           {"x"}
         </button>
