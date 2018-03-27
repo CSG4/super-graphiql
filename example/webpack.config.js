@@ -39,12 +39,11 @@ module.exports = {
     ]
   },
   plugins: [
-    extractCSS
-    // new OptimizeCssAssetsPlugin({
-    //   assetNameRegExp: /\.optimize\.css$/g,
-    //   cssProcessor: require('cssnano'),
-    //   cssProcessorOptions: { discardComments: { removeAll: true } },
-    //   canPrint: true
-    // })
+    extractCSS,
+    new OptimizeCssAssetsPlugin({
+      cssProcessor: require("cssnano"),
+      cssProcessorOptions: { discardComments: { removeAll: true } },
+      canPrint: true
+    })
   ]
 };
