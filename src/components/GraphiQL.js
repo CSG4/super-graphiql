@@ -74,6 +74,7 @@ export class GraphiQL extends React.Component {
     super(props);
     // Ensure props are correct
     if (typeof props.fetcher !== "function") {
+      console.log(typeof props.fetcher);
       throw new TypeError("GraphiQL requires a fetcher function.");
     }
 
@@ -124,6 +125,7 @@ export class GraphiQL extends React.Component {
       id: 0,
       render: true,
       query: "",
+      checked: true,
       //      variables,
       operationName
     };
@@ -174,9 +176,6 @@ export class GraphiQL extends React.Component {
     if (this.state.schema === undefined) {
       this._fetchSchema();
     }
-
-    // Stores the IDs of the queries checked to run.
-    this.queriesToRun = [];
 
     // Utility for keeping CodeMirror correctly sized.
     this.codeMirrorSizer = new CodeMirrorSizer();
@@ -265,7 +264,7 @@ export class GraphiQL extends React.Component {
   // that when the component is remounted, it will use the last used values.
   componentWillUnmount() {
     const queryList = JSON.stringify(this.state.queryList);
-    //this._storage.set("query", this.state.query);
+    // this._storage.set("query", this.state.query);
     this._storage.set("queryList", queryList);
     this._storage.set("path", this.state.path);
     this._storage.set("variables", this.state.variables);
@@ -408,7 +407,6 @@ export class GraphiQL extends React.Component {
             onMouseDown={this.handleResizeStart}
           >
             <div className="queryWrap" style={queryWrapStyle}>
-              {/* Render queries boxes */}
               {this.state.queryList.map(
                 (queryObj, index) =>
                   !queryObj.render ? null : (
@@ -416,6 +414,7 @@ export class GraphiQL extends React.Component {
                       key={index}
                       editorId={queryObj.id}
                       value={queryObj.query}
+                      checked={queryObj.checked}
                       ref={n => {
                         this.queryEditorComponent = n;
                       }}
@@ -724,9 +723,7 @@ export class GraphiQL extends React.Component {
 
     // filter out query editors that are not checked
     const editedQueryList = this.state.queryList.filter(
-      queryObj =>
-        queryObj.render &&
-        this.queriesToRun.indexOf(queryObj.id.toString()) >= 0
+      queryObj => queryObj.checked && queryObj.query.trim()
     );
 
     const variables = this.state.variables;
@@ -830,6 +827,7 @@ export class GraphiQL extends React.Component {
       for (let i = 0; i < queryListCopy.length; i += 1) {
         if (queryListCopy[i].render && queryListCopy[i].query === "") {
           queryListCopy[i].query = query;
+          queryListCopy[i].checked = true;
         }
       }
       this.setState({ queryList: queryListCopy });
@@ -842,6 +840,7 @@ export class GraphiQL extends React.Component {
         id: queriesNum.length,
         render: true,
         query,
+        checked: true,
         operationName: undefined
       });
       this.setState({ queryList: queriesNum });
@@ -849,14 +848,17 @@ export class GraphiQL extends React.Component {
   };
 
   handleCheckQueryToRun = e => {
-    if (e.target.checked === true) {
-      this.queriesToRun.push(e.target.id);
-    } else {
-      this.queriesToRun.splice(this.queriesToRun.indexOf(e.target.id), 1);
+    const queriesNum = [...this.state.queryList];
+    for (let i = 0; i < queriesNum.length; i += 1) {
+      if (queriesNum[i].id.toString() === e.target.id.substring(9)) {
+        if (e.target.checked === true) {
+          queriesNum[i].checked = true;
+        } else {
+          queriesNum[i].checked = false;
+        }
+      }
     }
-    this.queriesToRun.sort((a, b) => {
-      return a - b;
-    });
+    this.setState({ queryList: queriesNum });
   };
 
   handleDeleteQueryBox = e => {
@@ -871,15 +873,11 @@ export class GraphiQL extends React.Component {
     if (renders > 1) {
       const queriesNum = [...this.state.queryList];
       for (let i = 0; i < queriesNum.length; i += 1) {
-        if (queriesNum[i].id == e.target.id) {
+        if (queriesNum[i].id.toString() === e.target.id.substring(9)) {
           queriesNum[i].render = false;
-          break;
+          queriesNum[i].checked = false;
         }
       }
-      this.queriesToRun.splice(this.queriesToRun.indexOf(e.target.id), 1);
-      this.queriesToRun.sort((a, b) => {
-        return a - b;
-      });
       this.setState({ queryList: queriesNum });
     }
   };
@@ -891,11 +889,11 @@ export class GraphiQL extends React.Component {
           id: 0,
           render: true,
           query: "",
+          checked: true,
           operationName: undefined
         }
       ]
     });
-    this.queriesToRun = [];
   };
 
   handlePrettifyQuery = () => {
