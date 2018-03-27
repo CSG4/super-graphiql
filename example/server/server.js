@@ -35,7 +35,7 @@ app.use("/removeSubject", subjectController.rmSubject);
 
 //------ Original GraphiQL implementation can be seen at route /graphql ------//
 
-app.use("/graphql", graphqlHTTP({ schema, graphiql: true }));
+app.use("/graphiql", graphqlHTTP({ schema, graphiql: true }));
 
 //------ To test your GraphQL schema/server using Postman ------//
 
@@ -48,8 +48,17 @@ app.get("/get", (req, res) => {
 });
 
 // A post request to retrieve the resutl of a query using HTTP, via specifying the query in a json in the body of the message
-app.use("/post", (req, res) => {
-  graphql(schema, req.body.query.toString()).then(response => {
+app.use("/graphql", (req, res) => {
+  let queryObj = {
+    schema, 
+    source: req.body.query.toString()
+  }
+
+  if (req.body.variables) {
+    queryObj['variableValues'] = JSON.parse(req.body.variables);
+  }
+
+  graphql(queryObj).then(response => {
     res.send(response);
   });
 });

@@ -32,14 +32,18 @@ const AUTO_COMPLETE_AFTER_KEY = /^[a-zA-Z0-9_@(]$/;
 export class QueryEditor extends React.Component {
   static propTypes = {
     schema: PropTypes.instanceOf(GraphQLSchema),
+    editorId: PropTypes.number,
     value: PropTypes.string,
     onEdit: PropTypes.func,
     readOnly: PropTypes.bool,
+    onCheckToRun: PropTypes.func,
     onHintInformationRender: PropTypes.func,
     onClickReference: PropTypes.func,
+    onClickDeleteButton: PropTypes.func,
     onPrettifyQuery: PropTypes.func,
     onRunQuery: PropTypes.func,
     editorTheme: PropTypes.string
+    // onAddQuery: PropTypes.func
   };
 
   constructor(props) {
@@ -71,10 +75,10 @@ export class QueryEditor extends React.Component {
     require("codemirror-graphql/lint");
     require("codemirror-graphql/info");
     require("codemirror-graphql/jump");
-    require("codemirror-graphql/mode");
+    require("codemirror-graphql/mode"); // specify language
 
     this.editor = CodeMirror(this._node, {
-      value: this.props.value || "",
+      value: this.cachedValue,
       lineNumbers: true,
       tabSize: 2,
       mode: "graphql",
@@ -144,6 +148,13 @@ export class QueryEditor extends React.Component {
     this.editor.on("keyup", this._onKeyUp);
     this.editor.on("hasCompletion", this._onHasCompletion);
     this.editor.on("beforeChange", this._onBeforeChange);
+    this.editor.on("cursorActivity", this._onEdit);
+
+    // Set the focus (mouse cursor) to the newest CodeMirror instance
+    this.textAreas = document.getElementsByTagName("textarea");
+    if (this.textAreas[this.props.editorId] !== undefined) {
+      this.textAreas[this.props.editorId].focus();
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -181,10 +192,27 @@ export class QueryEditor extends React.Component {
     return (
       <div
         className="query-editor"
+        id={this.props.editorId}
         ref={node => {
           this._node = node;
         }}
-      />
+      >
+        <button
+          className="delete-query"
+          id={this.props.editorId}
+          onClick={this.props.onClickDeleteButton}
+        >
+          {"x"}
+        </button>
+        <input
+          className="run-query-check"
+          id={this.props.editorId}
+          type="checkbox"
+          title="Check me for running this query"
+          // defaultChecked
+          onChange={this.props.onCheckToRun}
+        />
+      </div>
     );
   }
 
@@ -213,7 +241,7 @@ export class QueryEditor extends React.Component {
     if (!this.ignoreChangeEvent) {
       this.cachedValue = this.editor.getValue();
       if (this.props.onEdit) {
-        this.props.onEdit(this.cachedValue);
+        this.props.onEdit(this.cachedValue, this.props.editorId);
       }
     }
   };

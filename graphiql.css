@@ -37,7 +37,7 @@ body {
   /* height: 100%; */
   margin: 0;
   overflow: hidden;
-  /* width: 100%; */
+  width: 100%;
 }
 
 .graphiql-container .editorWrap {
@@ -98,6 +98,7 @@ body {
      -moz-user-select: none;
       -ms-user-select: none;
           user-select: none;
+  position: relative;
 }
 
 .graphiql-container .toolbar {
@@ -218,10 +219,61 @@ body {
 }
 
 .graphiql-container div .query-editor {
+  border-style: solid;
+  border-color: rgb(193, 193, 193);
+  border-width: 1px;
   -webkit-box-flex: 1;
       -ms-flex: 1;
           flex: 1;
   position: relative;
+}
+
+.graphiql-container .delete-query {
+  position: relative;
+  z-index: 1000;
+}
+
+.graphiql-container .run-query-check {
+  position: relative;
+  z-index: 1000;
+  display: block;
+  margin-top: 10px;
+}
+
+.graphiql-container div .path-editor {
+  background: #fdfdfd;
+  background: -webkit-gradient(linear, left top, left bottom, from(#f9f9f9), to(#ececec));
+  background: linear-gradient(#f9f9f9, #ececec);
+  border-radius: 3px;
+  -webkit-box-shadow:
+  inset 0 0 0 1px rgba(0,0,0,0.20),
+  0 1px 0 rgba(255,255,255, 0.7),
+  inset 0 1px #fff;
+          box-shadow:
+  inset 0 0 0 1px rgba(0,0,0,0.20),
+  0 1px 0 rgba(255,255,255, 0.7),
+  inset 0 1px #fff;
+  color: #555;
+  cursor: text;
+  display: inline-block;
+/*  flex: 1;*/
+  margin: 0 25px;
+  padding: 5px 11px 7px;
+  position: relative;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 550px;
+}
+
+.graphiql-container .path-input {
+  margin: 0 5px;
+  padding: 0px 11px;
+  width: 385px;
+}
+
+.graphiql-container .path-input:focus {
+  outline: 0;
 }
 
 .graphiql-container .variable-editor {
@@ -296,6 +348,7 @@ body {
   background-color: #eeeeee;
   border-color: #e0e0e0;
   cursor: col-resize;
+  width: 40px;
 }
 
 .graphiql-container .result-window .CodeMirror-foldgutter,
@@ -320,12 +373,17 @@ body {
   color: #555;
   cursor: pointer;
   display: inline-block;
-  margin: 0 5px;
-  padding: 3px 11px 5px;
+  margin: 0 7px;
+  padding: 5px 11px 7px;
   text-decoration: none;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 150px;
+}
+
+.toolbar-button.schema-button {
+  position: absolute;
+  right: 0;
 }
 
 .graphiql-container .toolbar-button:active {
@@ -371,7 +429,7 @@ body {
 
 .graphiql-container .execute-button-wrap {
   height: 34px;
-  margin: 0 14px 0 28px;
+  /* margin: 0 14px 0 28px; */
   position: relative;
 }
 
@@ -727,8 +785,7 @@ div.CodeMirror-lint-tooltip > * + * {
 /* Type */
 .cm-atom {
   color: #CA9800;
-}
-/* BASICS */
+}/* BASICS */
 
 .CodeMirror {
   /* Set height, width, borders, and global font properties here */
@@ -761,7 +818,7 @@ div.CodeMirror-lint-tooltip > * + * {
 .CodeMirror-linenumber {
   color: #999;
   min-width: 20px;
-  padding: 0 3px 0 5px;
+  padding: 0 3px 0 15px;
   text-align: right;
   white-space: nowrap;
 }
