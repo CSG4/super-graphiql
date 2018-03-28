@@ -34,6 +34,7 @@ export class QueryEditor extends React.Component {
     schema: PropTypes.instanceOf(GraphQLSchema),
     editorId: PropTypes.number,
     value: PropTypes.string,
+    checked: PropTypes.bool,
     onEdit: PropTypes.func,
     readOnly: PropTypes.bool,
     onCheckToRun: PropTypes.func,
@@ -150,11 +151,13 @@ export class QueryEditor extends React.Component {
     this.editor.on("beforeChange", this._onBeforeChange);
     this.editor.on("cursorActivity", this._onEdit);
 
-    // Set the focus (mouse cursor) to the newest CodeMirror instance
-    this.textAreas = document.getElementsByTagName("textarea");
-    if (this.textAreas[this.props.editorId] !== undefined) {
-      this.textAreas[this.props.editorId].focus();
+    if (!this.props.checked) {
+      document.getElementById(
+        "checkbox_" + this.props.editorId
+      ).checked = false;
     }
+
+    this.setFocus();
   }
 
   componentDidUpdate(prevProps) {
@@ -182,6 +185,8 @@ export class QueryEditor extends React.Component {
   }
 
   componentWillUnmount() {
+    this.setFocus(1);
+
     this.editor.off("change", this._onEdit);
     this.editor.off("keyup", this._onKeyUp);
     this.editor.off("hasCompletion", this._onHasCompletion);
@@ -200,20 +205,33 @@ export class QueryEditor extends React.Component {
         <button
           className="delete-query"
           id={this.props.editorId}
-          onClick={this.props.onClickDeleteButton}
+          onClick={() => {
+            this.props.onClickDeleteButton(this.props.editorId);
+          }}
         >
           {"x"}
         </button>
         <input
           className="run-query-check"
-          id={this.props.editorId}
+          id={"checkbox_" + this.props.editorId}
           type="checkbox"
           title="Check me for running this query"
-          // defaultChecked
-          onChange={this.props.onCheckToRun}
+          defaultChecked
+          onChange={e => {
+            this.props.onCheckToRun(this.props.editorId, e.target.checked);
+          }}
         />
       </div>
     );
+  }
+
+  setFocus(action) {
+    const textAreas = document.getElementsByTagName("textarea");
+    if (textAreas.length === 1 || action === 1) {
+      textAreas[0].focus();
+    } else if (textAreas[textAreas.length - 3] !== undefined) {
+      textAreas[textAreas.length - 3].focus();
+    }
   }
 
   /**

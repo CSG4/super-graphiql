@@ -1,11 +1,3 @@
-/**
- *  Copyright (c) Facebook, Inc.
- *  All rights reserved.
- *
- *  This source code is licensed under the license found in the
- *  LICENSE file in the root directory of this source tree.
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import ReactDOM from "react-dom";
@@ -74,6 +66,7 @@ export class GraphiQL extends React.Component {
     super(props);
     // Ensure props are correct
     if (typeof props.fetcher !== "function") {
+      console.log(typeof props.fetcher);
       throw new TypeError("GraphiQL requires a fetcher function.");
     }
 
@@ -122,9 +115,8 @@ export class GraphiQL extends React.Component {
     const storedQueryList = this._storage.get("queryList");
     const emptyQuery = {
       id: 0,
-      render: true,
       query: "",
-      //      variables,
+      checked: true,
       operationName
     };
     const prevQuery = storedQueryList
@@ -154,9 +146,6 @@ export class GraphiQL extends React.Component {
       ...queryFacts
     };
 
-    this.handleDeleteQueryBox = this.handleDeleteQueryBox.bind(this);
-    this.handleCheckQueryToRun = this.handleCheckQueryToRun.bind(this);
-
     // Ensure only the last executed editor query is rendered.
     this._editorQueryID = this.state.queryList.length - 1; // 0;
 
@@ -174,9 +163,6 @@ export class GraphiQL extends React.Component {
     if (this.state.schema === undefined) {
       this._fetchSchema();
     }
-
-    // Stores the IDs of the queries checked to run.
-    this.queriesToRun = [];
 
     // Utility for keeping CodeMirror correctly sized.
     this.codeMirrorSizer = new CodeMirrorSizer();
@@ -265,7 +251,7 @@ export class GraphiQL extends React.Component {
   // that when the component is remounted, it will use the last used values.
   componentWillUnmount() {
     const queryList = JSON.stringify(this.state.queryList);
-    //this._storage.set("query", this.state.query);
+    // this._storage.set("query", this.state.query);
     this._storage.set("queryList", queryList);
     this._storage.set("path", this.state.path);
     this._storage.set("variables", this.state.variables);
@@ -359,22 +345,7 @@ export class GraphiQL extends React.Component {
           <div className="topBarWrap">
             <div className="topBar">
               {logo}
-              {/* {!this.state.docExplorerOpen && ( */}
-              {/* <ToolbarButton
-                // className="docExplorerShow"
-                onClick={this.handleToggleDocs}
-                title="Show Schema Documentation"
-                label="Schema"
-              /> */}
-              {/* <button
-                 className="docExplorerShow"
-                 onClick={this.handleToggleDocs}
-               >
-                 {"Docs"}
-              </button>
-             )} */}
               <ToolbarButton
-                // className="docExplorerShow"
                 onClick={this.handleToggleDocs}
                 title="Show Schema Documentation"
                 label="Schema"
@@ -408,30 +379,27 @@ export class GraphiQL extends React.Component {
             onMouseDown={this.handleResizeStart}
           >
             <div className="queryWrap" style={queryWrapStyle}>
-              {/* Render queries boxes */}
-              {this.state.queryList.map(
-                (queryObj, index) =>
-                  !queryObj.render ? null : (
-                    <QueryEditor
-                      key={index}
-                      editorId={queryObj.id}
-                      value={queryObj.query}
-                      ref={n => {
-                        this.queryEditorComponent = n;
-                      }}
-                      schema={this.state.schema}
-                      onEdit={this.handleEditQuery}
-                      onHintInformationRender={this.handleHintInformationRender}
-                      onClickReference={this.handleClickReference}
-                      // onAddQuery={this.handleSelectHistoryQuery}
-                      onPrettifyQuery={this.handlePrettifyQuery}
-                      onCheckToRun={this.handleCheckQueryToRun}
-                      onClickDeleteButton={this.handleDeleteQueryBox}
-                      onRunQuery={this.handleEditorRunQuery}
-                      editorTheme={this.props.editorTheme}
-                    />
-                  )
-              )}
+              {this.state.queryList.map((queryObj, index) => (
+                <QueryEditor
+                  key={index}
+                  editorId={queryObj.id}
+                  value={queryObj.query}
+                  checked={queryObj.checked}
+                  ref={n => {
+                    this.queryEditorComponent = n;
+                  }}
+                  schema={this.state.schema}
+                  onEdit={this.handleEditQuery}
+                  onHintInformationRender={this.handleHintInformationRender}
+                  onClickReference={this.handleClickReference}
+                  // onAddQuery={this.handleSelectHistoryQuery}
+                  onPrettifyQuery={this.handlePrettifyQuery}
+                  onCheckToRun={this.handleCheckQueryToRun}
+                  onClickDeleteButton={this.handleDeleteQueryBox}
+                  onRunQuery={this.handleEditorRunQuery}
+                  editorTheme={this.props.editorTheme}
+                />
+              ))}
 
               <div className="variable-editor" style={variableStyle}>
                 <div
@@ -724,9 +692,7 @@ export class GraphiQL extends React.Component {
 
     // filter out query editors that are not checked
     const editedQueryList = this.state.queryList.filter(
-      queryObj =>
-        queryObj.render &&
-        this.queriesToRun.indexOf(queryObj.id.toString()) >= 0
+      queryObj => queryObj.checked && queryObj.query.trim()
     );
 
     const variables = this.state.variables;
@@ -818,69 +784,72 @@ export class GraphiQL extends React.Component {
   }
 
   handleNewQueryBox = (query = "") => {
-    let renderAndEmpty = false;
-    for (let i = 0; i < this.state.queryList.length; i += 1) {
-      if (this.state.queryList[i].render && !this.state.queryList[i].query) {
-        renderAndEmpty = true; // would hit this flag if there was no value in the query editor
+    //Check if one of the boxes are already empty, return the index of the first empty box; stays -1 if none are empty
+    let emptyIdx = null;
+
+    for (let i = 0; i < this.state.queryList.length; i++) {
+      if (!this.state.queryList[i].query) {
+        emptyIdx = i;
+        break;
       }
     }
 
-    if (!!query && renderAndEmpty) {
-      let queryListCopy = [...this.state.queryList];
-      for (let i = 0; i < queryListCopy.length; i += 1) {
-        if (queryListCopy[i].render && queryListCopy[i].query === "") {
-          queryListCopy[i].query = query;
-        }
-      }
-      this.setState({ queryList: queryListCopy });
-    }
-    // and would not enter into this if statement's code block
-    if (!renderAndEmpty) {
+    if (!!query && emptyIdx !== null)
+      this.setState((prevState, props) => {
+        prevState.queryList[emptyIdx].query = query;
+        return {
+          queryList: prevState.queryList
+        };
+      });
+
+    // if there are no empty boxes, add one
+    if (emptyIdx === null) {
+      // _editorQueryID is currently being used for History, planning to refactor this.
       this._editorQueryID = this.state.queryList.length;
-      const queriesNum = [...this.state.queryList];
-      queriesNum.push({
-        id: queriesNum.length,
-        render: true,
-        query,
-        operationName: undefined
+      this.setState((prevState, props) => {
+        // generate psuedo random id
+        let uniqid = Math.floor(Math.random() * Date.now());
+        prevState.queryList.push({
+          id: uniqid,
+          query,
+          checked: true,
+          operationName: undefined
+        });
+        return {
+          queryList: prevState.queryList
+        };
       });
-      this.setState({ queryList: queriesNum });
     }
   };
 
-  handleCheckQueryToRun = e => {
-    if (e.target.checked === true) {
-      this.queriesToRun.push(e.target.id);
-    } else {
-      this.queriesToRun.splice(this.queriesToRun.indexOf(e.target.id), 1);
+  handleCheckQueryToRun = (id, isChecked) => {
+    for (let i = 0; i < this.state.queryList.length; i++) {
+      if (this.state.queryList[i].id === id) {
+        this.setState((prevState, props) => {
+          // find the query with the same id as the button
+          prevState.queryList[i].checked = isChecked;
+          return {
+            queryList: prevState.queryList
+          };
+        });
+        break;
+      }
     }
-    this.queriesToRun.sort((a, b) => {
-      return a - b;
-    });
   };
 
-  handleDeleteQueryBox = e => {
-    // temp solution that doesn't allow you to delete the last code mirror editor (because it will throw error)
-    let renders = 0;
-    for (let i = 0; i < this.state.queryList.length; i += 1) {
-      if (this.state.queryList[i].render) {
-        renders += 1;
-      }
-    }
-
-    if (renders > 1) {
-      const queriesNum = [...this.state.queryList];
-      for (let i = 0; i < queriesNum.length; i += 1) {
-        if (queriesNum[i].id == e.target.id) {
-          queriesNum[i].render = false;
-          break;
-        }
-      }
-      this.queriesToRun.splice(this.queriesToRun.indexOf(e.target.id), 1);
-      this.queriesToRun.sort((a, b) => {
-        return a - b;
+  handleDeleteQueryBox = id => {
+    //check the > 1 queries in the query list state
+    if (this.state.queryList.length > 1) {
+      this.setState((prevState, props) => {
+        //filter the item out of the QueryList and store to a temp item
+        prevState.queryList = prevState.queryList.filter(
+          query => query.id !== id
+        );
+        //reset the state
+        this.setState({
+          queryList: prevState.queryList
+        });
       });
-      this.setState({ queryList: queriesNum });
     }
   };
 
@@ -888,14 +857,13 @@ export class GraphiQL extends React.Component {
     this.setState({
       queryList: [
         {
-          id: 0,
-          render: true,
+          id: Math.floor(Math.random() * Date.now()),
           query: "",
+          checked: true,
           operationName: undefined
         }
       ]
     });
-    this.queriesToRun = [];
   };
 
   handlePrettifyQuery = () => {
