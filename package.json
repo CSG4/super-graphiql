@@ -1,8 +1,10 @@
 {
   "name": "super-graphiql",
   "version": "0.0.1",
-  "description": "<h1 align=\"center\">Super GraphiQL</h1> <p align=\"center\">Super-GraphiQL is a powerful yet simple GUI designed for testing your GraphQL API.</p>",
+  "description": "Super-GraphiQL is a powerful yet simple GUI designed for testing your GraphQL API",
   "main": "dist/index.js",
+  "unpkg": "dist/index.js",
+  "module": "dist/index.js",
   "files": [
     "dist",
     "graphiql.js",
@@ -122,8 +124,9 @@
     "type": "git",
     "url": "git+https://github.com/mlafontant/super-graphiql.git"
   },
-  "author": "",
+  "author": "Albert, Angela, Eduardo, Marissa <superGraphicalTeam@gmail.com>",
   "license": "MIT",
+  "keywords": ["graphql", "graphiql", "super graphiql, gui, ide"],
   "bugs": {
     "url": "https://github.com/mlafontant/super-graphiql/issues"
   },
