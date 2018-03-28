@@ -1,9 +1,15 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
+const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const extractSCSS = new ExtractTextPlugin({
+  filename: "app.bundle.css"
+});
 
 module.exports = {
-  entry: "./example/client/App.jsx",
+  // mode: "development",
+  entry: ["./example/client/App.jsx", "./styles/styles.scss"],
   devtool: "inline-source-map",
   devServer: {
     contentBase: "./dist/",
@@ -25,7 +31,30 @@ module.exports = {
           }
         }
       },
-      { test: /\.flow$/, loader: "ignore-loader" }
+      { test: /\.flow$/, loader: "ignore-loader" },
+      {
+        test: /\.scss$/,
+        use: extractSCSS.extract({
+            use: [{
+                loader: "css-loader", options: {
+                  sourceMap: true
+                }
+            }, {
+                loader: "sass-loader", options: {
+                  sourceMap: true
+                }
+            }],
+            fallback: "style-loader"
+        })
+      }
     ]
-  }
+  },
+  plugins: [
+    extractSCSS,
+    new OptimizeCssAssetsPlugin({
+      cssProcessor: require("cssnano"),
+      cssProcessorOptions: { discardComments: { removeAll: true } },
+      canPrint: true
+    })
+  ]
 };
