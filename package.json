@@ -1,17 +1,17 @@
 {
   "name": "super-graphiql",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Super-GraphiQL is a powerful yet simple GUI designed for testing your GraphQL API",
   "main": "dist/index.js",
-  "unpkg": "dist/index.js",
-  "module": "dist/index.js",
+  "unpkg": "graphiql.min.js",
   "files": [
     "dist",
     "graphiql.js",
     "graphiql.min.js",
     "graphiql.css",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "umd"
   ],
   "browserify-shim": {
     "react": "global:React",

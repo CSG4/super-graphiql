@@ -59,4 +59,5 @@ typings/
 
 dist/
 example/dist/
+umd/
 
