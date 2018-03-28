@@ -170,18 +170,6 @@ body {
   position: relative;
 }
 
-.graphiql-container .delete-query {
-  position: relative;
-  z-index: 1000;
-}
-
-.graphiql-container .run-query-check {
-  position: relative;
-  z-index: 1000;
-  display: block;
-  margin-top: 10px;
-}
-
 .graphiql-container div .path-editor {
   background: #fdfdfd;
   background: linear-gradient(#f9f9f9, #ececec);
@@ -232,6 +220,7 @@ body {
   padding: 6px 0 8px 43px;
   text-transform: lowercase;
   user-select: none;
+  z-index: 3;
 }
 
 .graphiql-container .codemirrorWrap {

@@ -1,5 +1,16 @@
-.title {
-	span {
-		color: blue;
+.query-editor-top-actions {
+	display: flex;
+	padding: 5px;
+	border-bottom: 1px solid #ddd;
+}
+
+.delete-query {
+	margin-left: auto;
+}
+
+.graphiql-container .query-editor {
+	.CodeMirror {
+		position: relative;
+		height: auto;
 	}
 }

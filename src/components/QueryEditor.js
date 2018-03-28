@@ -202,25 +202,27 @@ export class QueryEditor extends React.Component {
           this._node = node;
         }}
       >
-        <button
-          className="delete-query"
-          id={this.props.editorId}
-          onClick={() => {
-            this.props.onClickDeleteButton(this.props.editorId);
-          }}
-        >
-          {"x"}
-        </button>
-        <input
-          className="run-query-check"
-          id={"checkbox_" + this.props.editorId}
-          type="checkbox"
-          title="Check me for running this query"
-          defaultChecked
-          onChange={e => {
-            this.props.onCheckToRun(this.props.editorId, e.target.checked);
-          }}
-        />
+        <div className="query-editor-top-actions">
+          <input
+            className="run-query-check"
+            id={"checkbox_" + this.props.editorId}
+            type="checkbox"
+            title="Check me for running this query"
+            defaultChecked
+            onChange={e => {
+              this.props.onCheckToRun(this.props.editorId, e.target.checked);
+            }}
+          />
+          <button
+            className="delete-query"
+            id={this.props.editorId}
+            onClick={() => {
+              this.props.onClickDeleteButton(this.props.editorId);
+            }}
+          >
+            {"x"}
+          </button>
+        </div>
       </div>
     );
   }
