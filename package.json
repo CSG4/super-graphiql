@@ -39,7 +39,9 @@
     "src/**/*.js": [
       "prettier --jsx-bracket-same-line--single-quote --trailing-comma-all --write",
       "git add"
-    ]
+    ],
+    "styles/**/*.css": ["stylelint", "git add"],
+    "styles/**/*.scss": ["stylelint --syntax=scss", "git add"]
   },
   "dependencies": {
     "codemirror": "^5.26.0",
@@ -95,6 +97,7 @@
     "lint-staged": "^4.0.0",
     "mocha": "^5.0.1",
     "mongoose": "^5.0.10",
+    "node-sass": "^4.8.3",
     "nodemon": "^1.17.1",
     "optimize-css-assets-webpack-plugin": "^4.0.0",
     "prettier": "^1.4.4",
@@ -102,6 +105,7 @@
     "react": "^15.6.0",
     "react-dom": "^15.6.0",
     "react-test-renderer": "15.6.1",
+    "sass-loader": "^6.0.7",
     "style-loader": "^0.20.3",
     "subscriptions-transport-ws": "^0.9.6",
     "uglify-js": "^3.0.20",

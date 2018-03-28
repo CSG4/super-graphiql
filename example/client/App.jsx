@@ -2,7 +2,6 @@ import React from 'react';
 import { render } from 'react-dom';
 import { GraphiQL } from './../../src/components/GraphiQL';
 import fetch from 'isomorphic-fetch';
-import styles from './../../graphiql.css';
 
 let search = window.location.search;
 let parameters = {};
