@@ -785,12 +785,16 @@ export class GraphiQL extends React.Component {
 
   handleNewQueryBox = (query = "") => {
     //Check if one of the boxes are already empty, return the index of the first empty box; stays -1 if none are empty
-    let emptyIdx;
-    this.state.queryList.forEach((box, i) => {
-      emptyIdx = !box.query ? i : emptyIdx;
-    });
+    let emptyIdx = null;
 
-    if (!!query && emptyIdx !== undefined)
+    for (let i = 0; i < this.state.queryList.length; i++) {
+      if (!this.state.queryList[i].query) {
+        emptyIdx = i;
+        break;
+      }
+    }
+
+    if (!!query && emptyIdx !== null)
       this.setState((prevState, props) => {
         prevState.queryList[emptyIdx].query = query;
         return {
@@ -799,7 +803,7 @@ export class GraphiQL extends React.Component {
       });
 
     // if there are no empty boxes, add one
-    if (emptyIdx === undefined) {
+    if (emptyIdx === null) {
       // _editorQueryID is currently being used for History, planning to refactor this.
       this._editorQueryID = this.state.queryList.length;
       this.setState((prevState, props) => {
@@ -819,19 +823,17 @@ export class GraphiQL extends React.Component {
   };
 
   handleCheckQueryToRun = (id, isChecked) => {
-    let idX;
-    prevState.queryList.forEach((box, i) => {
-      idX = box.id === id ? i : null;
-    });
-
-    if (idX) {
-      setState((prevState, props) => {
-        // find the query with the same id as the button
-        prevState.queryList[idX].checked = isChecked;
-        return {
-          queryList: prevState
-        };
-      });
+    for (let i = 0; i < this.state.queryList.length; i++) {
+      if (this.state.queryList[i].id === id) {
+        this.setState((prevState, props) => {
+          // find the query with the same id as the button
+          prevState.queryList[i].checked = isChecked;
+          return {
+            queryList: prevState.queryList
+          };
+        });
+        break;
+      }
     }
   };
 
