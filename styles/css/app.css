@@ -29,7 +29,6 @@ body {
   display: flex;
   flex-direction: row;
   height: 100vh;
-  /* height: 100%; */
   margin: 0;
   overflow: hidden;
   width: 100%;
@@ -162,13 +161,13 @@ body {
   padding: 18px 16px 15px 12px;
 }
 
-.graphiql-container div .query-editor {
+/*.graphiql-container div .query-editor {
   border-style: solid;
   border-color: rgb(193, 193, 193);
   border-width: 1px;
   flex: 1;
   position: relative;
-}
+}*/
 
 .graphiql-container div .path-editor {
   background: #fdfdfd;

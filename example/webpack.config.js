@@ -36,13 +36,20 @@ module.exports = {
         test: /\.scss$/,
         use: extractSCSS.extract({
             use: [{
-                loader: "css-loader", options: {
-                  sourceMap: true
-                }
+              loader: "css-loader", options: {
+                sourceMap: true,
+                importLoaders: 1
+              }
             }, {
-                loader: "sass-loader", options: {
-                  sourceMap: true
-                }
+              loader: 'postcss-loader', options: {
+                sourceMap: true,
+                ident: 'postcss',
+                plugins: () => [ require('autoprefixer')() ]
+              }
+            },{
+              loader: "sass-loader", options: {
+                sourceMap: true
+              }
             }],
             fallback: "style-loader"
         })
@@ -50,11 +57,11 @@ module.exports = {
     ]
   },
   plugins: [
-    extractSCSS,
-    new OptimizeCssAssetsPlugin({
-      cssProcessor: require("cssnano"),
-      cssProcessorOptions: { discardComments: { removeAll: true } },
-      canPrint: true
-    })
+    extractSCSS
+    // new OptimizeCssAssetsPlugin({
+    //   cssProcessor: require("cssnano"),
+    //   cssProcessorOptions: { discardComments: { removeAll: true } },
+    //   canPrint: true
+    // })
   ]
 };

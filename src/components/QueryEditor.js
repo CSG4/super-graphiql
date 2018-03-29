@@ -43,8 +43,8 @@ export class QueryEditor extends React.Component {
     onClickDeleteButton: PropTypes.func,
     onPrettifyQuery: PropTypes.func,
     onRunQuery: PropTypes.func,
-    editorTheme: PropTypes.string
-    // onAddQuery: PropTypes.func
+    editorTheme: PropTypes.string,
+    onAddNewQueryEditor: PropTypes.func
   };
 
   constructor(props) {
@@ -214,7 +214,8 @@ export class QueryEditor extends React.Component {
             }}
           />
           <button
-            className="delete-query"
+            title="Delete"
+            className="action-button delete-query"
             id={this.props.editorId}
             onClick={() => {
               this.props.onClickDeleteButton(this.props.editorId);
@@ -223,6 +224,15 @@ export class QueryEditor extends React.Component {
             {"x"}
           </button>
         </div>
+        <button
+          title="Add"
+          className="action-button add-query"
+          onClick={() => {
+            this.props.onAddNewQueryEditor();
+          }}
+        >
+          {"+"}
+        </button>
       </div>
     );
   }

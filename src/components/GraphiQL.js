@@ -379,27 +379,30 @@ export class GraphiQL extends React.Component {
             onMouseDown={this.handleResizeStart}
           >
             <div className="queryWrap" style={queryWrapStyle}>
-              {this.state.queryList.map((queryObj, index) => (
-                <QueryEditor
-                  key={index}
-                  editorId={queryObj.id}
-                  value={queryObj.query}
-                  checked={queryObj.checked}
-                  ref={n => {
-                    this.queryEditorComponent = n;
-                  }}
-                  schema={this.state.schema}
-                  onEdit={this.handleEditQuery}
-                  onHintInformationRender={this.handleHintInformationRender}
-                  onClickReference={this.handleClickReference}
-                  // onAddQuery={this.handleSelectHistoryQuery}
-                  onPrettifyQuery={this.handlePrettifyQuery}
-                  onCheckToRun={this.handleCheckQueryToRun}
-                  onClickDeleteButton={this.handleDeleteQueryBox}
-                  onRunQuery={this.handleEditorRunQuery}
-                  editorTheme={this.props.editorTheme}
-                />
-              ))}
+              <div className="queryEditorsWrap">
+                {this.state.queryList.map((queryObj, index) => (
+                  <QueryEditor
+                    key={index}
+                    editorId={queryObj.id}
+                    value={queryObj.query}
+                    checked={queryObj.checked}
+                    ref={n => {
+                      this.queryEditorComponent = n;
+                    }}
+                    schema={this.state.schema}
+                    onEdit={this.handleEditQuery}
+                    onHintInformationRender={this.handleHintInformationRender}
+                    onClickReference={this.handleClickReference}
+                    // onAddQuery={this.handleSelectHistoryQuery}
+                    onPrettifyQuery={this.handlePrettifyQuery}
+                    onCheckToRun={this.handleCheckQueryToRun}
+                    onClickDeleteButton={this.handleDeleteQueryBox}
+                    onRunQuery={this.handleEditorRunQuery}
+                    editorTheme={this.props.editorTheme}
+                    onAddNewQueryEditor={this.handleNewQueryBox}
+                  />
+                ))}
+              </div>
 
               <div className="variable-editor" style={variableStyle}>
                 <div

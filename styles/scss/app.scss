@@ -1,16 +1,73 @@
+.queryEditorsWrap {
+	height: 100vh;
+	overflow: scroll;
+}
+
+.graphiql-container {
+	.query-editor {
+		border-top: 1px solid rgb(193, 193, 193); 
+		margin-bottom: 10px; 
+		flex: 1;
+		position: relative;
+
+		&:first-of-type {
+			border: none;
+		}
+
+		&:last-of-type {
+			.add-query {
+				display: block;
+			}
+		}
+
+		.CodeMirror {
+			position: relative;
+			height: auto;
+		} 
+		.CodeMirror-gutters {
+			border: none;
+			background-color: transparent;
+		}
+	}
+
+}
+
 .query-editor-top-actions {
 	display: flex;
 	padding: 5px;
 	border-bottom: 1px solid #ddd;
+	cursor: pointer;
+	// position: sticky; NOT WORKING :(
+
+	&:hover {
+		.delete-query  {
+			display: block;
+		}
+	}
+}
+
+.action-button {
+	cursor: pointer;
+	border: none;
+	
+	&:active, 
+	&:hover, 
+	&:focus {
+		outline: 0;
+		color: red;
+	}
 }
 
 .delete-query {
+	display: none;
 	margin-left: auto;
+
 }
 
-.graphiql-container .query-editor {
-	.CodeMirror {
-		position: relative;
-		height: auto;
-	}
+.add-query {
+	display: none;
+	position: absolute;
+	bottom: 0;
+	right: 5px;
+	z-index: 1;
 }
