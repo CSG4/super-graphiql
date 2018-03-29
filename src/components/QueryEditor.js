@@ -195,34 +195,43 @@ export class QueryEditor extends React.Component {
 
   render() {
     return (
-      <div
-        className="query-editor"
-        id={this.props.editorId}
-        ref={node => {
-          this._node = node;
-        }}
-      >
-        <div className="query-editor-top-actions">
-          <input
-            className="run-query-check"
-            id={"checkbox_" + this.props.editorId}
-            type="checkbox"
-            title="Check me for running this query"
-            defaultChecked
-            onChange={e => {
-              this.props.onCheckToRun(this.props.editorId, e.target.checked);
-            }}
-          />
-          <button
-            title="Delete"
-            className="action-button delete-query"
-            id={this.props.editorId}
-            onClick={() => {
-              this.props.onClickDeleteButton(this.props.editorId);
-            }}
-          >
-            {"x"}
-          </button>
+      <div className="query-editor-container">
+        <div
+          className="query-editor"
+          id={this.props.editorId}
+          ref={node => {
+            this._node = node;
+          }}
+        >
+          <div className="query-editor-top-actions">
+            <label className="checkbox-container">
+              <input
+                type="checkbox"
+                defaultChecked
+                className="run-query-check"
+                id={"checkbox_" + this.props.editorId}
+                value="select"
+                title="Select"
+                onChange={e => {
+                  this.props.onCheckToRun(
+                    this.props.editorId,
+                    e.target.checked
+                  );
+                }}
+              />
+              <span className="checkmark" />
+            </label>
+            <button
+              title="Delete"
+              className="action-button delete-query"
+              id={this.props.editorId}
+              onClick={() => {
+                this.props.onClickDeleteButton(this.props.editorId);
+              }}
+            >
+              <i className="fa fa-trash" aria-hidden="true" />
+            </button>
+          </div>
         </div>
         <button
           title="Add"
@@ -231,7 +240,7 @@ export class QueryEditor extends React.Component {
             this.props.onAddNewQueryEditor();
           }}
         >
-          {"+"}
+          <i className="fa fa-plus" aria-hidden="true" />
         </button>
       </div>
     );
