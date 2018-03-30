@@ -178,7 +178,6 @@ export class VariableEditor extends React.Component {
    * Public API for retrieving the DOM client height for this component.
    */
   getClientHeight() {
-    console.log("getClientHeight");
     return this._node && this._node.clientHeight;
   }
 

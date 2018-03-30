@@ -41,6 +41,7 @@
 	padding: 5px;
 	border-bottom: 1px solid #ddd;
 	cursor: pointer;
+	min-height: 20px;
 	// position: sticky; NOT WORKING because overflow:hidden on parents :(
 
 	&:hover {
@@ -103,7 +104,7 @@
 			border-width: 0 2.5px 2.5px 0;
 			border-radius: 1px;
 			transform: rotate(45deg);
-			transition: all .3s ease;
+			transition: all .3s linear;
 		}
 	}
 }
@@ -150,12 +151,12 @@
 	.fa-trash {
 		opacity: 0;
 		font-size: 19px;
-		transition: opacity 2s ease;
+		transition: opacity 2s linear;
 	}
 }
 
 .add-query {
 	display: none;
 	margin-right: 5px;
-	transition: color 2s ease;
+	transition: color 2s linear;
 }
