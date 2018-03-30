@@ -1,5 +1,54 @@
-.title {
-	span {
-		color: blue;
-	}
+
+.graphiql-container .topBarWrap {
+  display: flex;
+  flex-direction: row;
+}
+
+.graphiql-container .topBar {
+  align-items: center;
+  background: linear-gradient(#f7f7f7, #e2e2e2);
+  border-bottom: 1px solid #d0d0d0;
+  cursor: default;
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  height: 34px;
+  overflow-y: visible;
+  padding: 7px 14px 6px;
+  position: relative;
+  user-select: none;
+}
+
+.graphiql-container .title {
+  margin: 0 auto;
+  font-size: 18px;
+}
+
+.graphiql-container .title em {
+  font-family: georgia;
+  font-size: 19px;
+}
+
+.graphiql-container .toolbarWrap {
+  display: flex;
+  flex-direction: row;
+}
+.graphiql-container .toolbar {
+  align-items: center;
+  background: linear-gradient(#f7f7f7, #e2e2e2);
+  border-bottom: 1px solid #d0d0d0;
+  cursor: default;
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  height: 34px;
+  overflow-y: visible;
+  padding: 7px 14px 6px;
+  user-select: none;
+  position: relative;
+}
+
+.graphiql-container .toolbar {
+  overflow-x: visible;
+  display: flex;
 }
