@@ -157,6 +157,7 @@ export class QueryEditor extends React.Component {
       ).checked = false;
     }
 
+    this.manageHintsBox();
     this.setFocus();
   }
 
@@ -231,6 +232,28 @@ export class QueryEditor extends React.Component {
       textAreas[0].focus();
     } else if (textAreas[textAreas.length - 3] !== undefined) {
       textAreas[textAreas.length - 3].focus();
+    }
+  }
+
+  manageHintsBox() {
+    const currentEditor = document.getElementById(this.props.editorId);
+    if (currentEditor) {
+      currentEditor.addEventListener("click", () => {
+        if (
+          this.props.value.trim() &&
+          this.editor.getCursor().ch === this.props.value.length
+        ) {
+          this.editor.execCommand("autocomplete");
+        }
+      });
+      currentEditor.addEventListener("focusout", () => {
+        const openHints = document.getElementsByClassName("CodeMirror-hints");
+        if (openHints[0]) {
+          setTimeout(() => {
+            if (openHints[0]) openHints[0].remove();
+          }, 200);
+        }
+      });
     }
   }
 
