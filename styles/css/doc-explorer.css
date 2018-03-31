@@ -253,7 +253,7 @@
   font-size: 14px;
   outline: none;
   padding: 6px 24px 8px 20px;
-  width: 100%;
+  /* width: 100%; */
 }
 
 .graphiql-container .error-container {

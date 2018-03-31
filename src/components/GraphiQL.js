@@ -13,7 +13,7 @@ import { QueryEditor } from "./QueryEditor";
 import { VariableEditor } from "./VariableEditor";
 import { ResultViewer } from "./ResultViewer";
 import { DocExplorer } from "./DocExplorer";
-import { QueryHistory } from "./QueryHistory";
+import { HistoryExplorer } from "./HistoryExplorer";
 import CodeMirrorSizer from "../utility/CodeMirrorSizer";
 import StorageAPI from "../utility/StorageAPI";
 import getQueryFacts from "../utility/getQueryFacts";
@@ -146,8 +146,8 @@ export class GraphiQL extends React.Component {
       ...queryFacts
     };
 
-    // Ensure only the last executed editor query is rendered.
-    this._editorQueryID = this.state.queryList.length - 1; // 0;
+    // Reset execution / run counter to 0
+    this._runCounter = 0;
 
     // Subscribe to the browser window closing, treating it as an unmount.
     if (typeof window === "object") {
@@ -266,19 +266,16 @@ export class GraphiQL extends React.Component {
   render() {
     const children = React.Children.toArray(this.props.children);
 
-    const logo = find(children, child => child.type === GraphiQL.Logo) || (
-      <GraphiQL.Logo />
-    );
-
     const toolbar = find(
       children,
       child => child.type === GraphiQL.Toolbar
     ) || (
       <GraphiQL.Toolbar>
-        <ToolbarButton
-          onClick={this.handlePrettifyQuery}
-          title="Prettify Query (Shift-Ctrl-P)"
-          label="Prettify"
+        <ExecuteButton
+          isRunning={Boolean(this.state.subscription)}
+          onRun={this.handleRunQuery}
+          onStop={this.handleStopQuery}
+          operations={this.state.operations}
         />
         <ToolbarButton
           onClick={this.handleNewQueryBox}
@@ -289,11 +286,6 @@ export class GraphiQL extends React.Component {
           onClick={this.handleDeleteAll}
           title="Removes all queries from the execution stack"
           label="Delete All"
-        />
-        <ToolbarButton
-          onClick={this.handleToggleHistory}
-          title="Show History"
-          label="History"
         />
       </GraphiQL.Toolbar>
     );
@@ -316,7 +308,7 @@ export class GraphiQL extends React.Component {
     // Whether the panel displays or not
     const historyPaneStyle = {
       display: this.state.historyPaneOpen ? "block" : "none",
-      width: "230px",
+      width: "300px",
       zIndex: "7"
     };
 
@@ -328,23 +320,27 @@ export class GraphiQL extends React.Component {
     return (
       <div className="graphiql-container">
         <div className="historyPaneWrap" style={historyPaneStyle}>
-          <QueryHistory
-            operationName={this.state.operationName}
-            query={this.state.query}
+          <HistoryExplorer
+            runID={this._runCounter}
+            queryList={this.state.queryList}
             variables={this.state.variables}
             onSelectQuery={this.handleSelectHistoryQuery}
             storage={this._storage}
-            queryID={this._editorQueryID}
           >
             <div className="docExplorerHide" onClick={this.handleToggleHistory}>
               {"\u2715"}
             </div>
-          </QueryHistory>
+          </HistoryExplorer>
         </div>
         <div className="editorWrap">
           <div className="topBarWrap">
             <div className="topBar">
-              {logo}
+              <ToolbarButton
+                onClick={this.handleToggleHistory}
+                title="Show Schema Documentation"
+                label="History"
+              />
+              <GraphiQL.Logo />
               <ToolbarButton
                 onClick={this.handleToggleDocs}
                 title="Show Schema Documentation"
@@ -352,23 +348,8 @@ export class GraphiQL extends React.Component {
               />
             </div>
           </div>
-          <div className="topBarWrap">
-            <div className="topBar">
-              <ExecuteButton
-                isRunning={Boolean(this.state.subscription)}
-                onRun={this.handleRunQuery}
-                onStop={this.handleStopQuery}
-                operations={this.state.operations}
-              />
-              {toolbar}
-              <ToolbarButton
-                // NEED TO WRITE
-                onClick={this.handleToggleHeaders}
-                title="Edit Request Headers"
-                label="Headers"
-              />
-              <PathEditor onEdit={this.handleEditPath} path={this.state.path} />
-            </div>
+          <div className="toolbarWrap">
+            <div className="toolbar">{toolbar}</div>
           </div>
           <div
             ref={n => {
@@ -379,27 +360,30 @@ export class GraphiQL extends React.Component {
             onMouseDown={this.handleResizeStart}
           >
             <div className="queryWrap" style={queryWrapStyle}>
-              {this.state.queryList.map((queryObj, index) => (
-                <QueryEditor
-                  key={index}
-                  editorId={queryObj.id}
-                  value={queryObj.query}
-                  checked={queryObj.checked}
-                  ref={n => {
-                    this.queryEditorComponent = n;
-                  }}
-                  schema={this.state.schema}
-                  onEdit={this.handleEditQuery}
-                  onHintInformationRender={this.handleHintInformationRender}
-                  onClickReference={this.handleClickReference}
-                  // onAddQuery={this.handleSelectHistoryQuery}
-                  onPrettifyQuery={this.handlePrettifyQuery}
-                  onCheckToRun={this.handleCheckQueryToRun}
-                  onClickDeleteButton={this.handleDeleteQueryBox}
-                  onRunQuery={this.handleEditorRunQuery}
-                  editorTheme={this.props.editorTheme}
-                />
-              ))}
+              <div className="queryEditorsWrap">
+                {this.state.queryList.map((queryObj, index) => (
+                  <QueryEditor
+                    key={index}
+                    editorId={queryObj.id}
+                    value={queryObj.query}
+                    checked={queryObj.checked}
+                    ref={n => {
+                      this.queryEditorComponent = n;
+                    }}
+                    schema={this.state.schema}
+                    onEdit={this.handleEditQuery}
+                    onHintInformationRender={this.handleHintInformationRender}
+                    onClickReference={this.handleClickReference}
+                    // onAddQuery={this.handleSelectHistoryQuery}
+                    onPrettifyQuery={this.handlePrettifyQuery}
+                    onCheckToRun={this.handleCheckQueryToRun}
+                    onClickDeleteButton={this.handleDeleteQueryBox}
+                    onRunQuery={this.handleEditorRunQuery}
+                    editorTheme={this.props.editorTheme}
+                    onAddNewQueryEditor={this.handleNewQueryBox}
+                  />
+                ))}
+              </div>
 
               <div className="variable-editor" style={variableStyle}>
                 <div
@@ -675,8 +659,8 @@ export class GraphiQL extends React.Component {
   });
 
   handleRunQuery = selectedOperationName => {
-    this._editorQueryID++;
-    const queryID = this._editorQueryID;
+    this._runCounter++;
+    const runID = this._runCounter;
 
     // Use the edited query after autoCompleteLeafs() runs or,
     // in case autoCompletion fails (the function returns undefined),
@@ -724,7 +708,7 @@ export class GraphiQL extends React.Component {
             return resultObj;
           });
 
-          if (queryID === this._editorQueryID) {
+          if (runID === this._runCounter) {
             this.setState({
               isWaitingForResponse: false,
               response: JSON.stringify(cleanResults, null, 2)
@@ -804,8 +788,6 @@ export class GraphiQL extends React.Component {
 
     // if there are no empty boxes, add one
     if (emptyIdx === null) {
-      // _editorQueryID is currently being used for History, planning to refactor this.
-      this._editorQueryID = this.state.queryList.length;
       this.setState((prevState, props) => {
         // generate psuedo random id
         let uniqid = Math.floor(Math.random() * Date.now());
@@ -1141,13 +1123,11 @@ export class GraphiQL extends React.Component {
 GraphiQL.Logo = function GraphiQLLogo(props) {
   return (
     <div className="title">
-      {props.children || (
-        <span>
-          {"Super Graph"}
-          <em>{"i"}</em>
-          {"QL"}
-        </span>
-      )}
+      <span>
+        {"Super Graph"}
+        <em>{"i"}</em>
+        {"QL"}
+      </span>
     </div>
   );
 };
