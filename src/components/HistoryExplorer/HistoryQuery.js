@@ -11,77 +11,81 @@ import PropTypes from "prop-types";
 
 export default class HistoryQuery extends React.Component {
   static propTypes = {
-    favorite: PropTypes.bool,
+    pinned: PropTypes.bool,
     favoriteSize: PropTypes.number,
-    handleToggleFavorite: PropTypes.func,
+    handleTogglePinned: PropTypes.func,
     operationName: PropTypes.string,
     onSelect: PropTypes.func,
-    query: PropTypes.string,
-    variables: PropTypes.string
+    query: PropTypes.string
   };
 
   constructor(props) {
     super(props);
-    const starVisibility = this.props.favorite ? "visible" : "hidden";
-    this.state = { starVisibility };
+    const visibility = this.props.pinned ? "visible" : "hidden";
+    this.state = { visibility };
   }
 
   render() {
-    if (this.props.favorite && this.state.starVisibility === "hidden") {
-      this.setState({ starVisibility: "visible" });
+    if (this.props.pinned && this.state.visibility === "hidden") {
+      this.setState({ visibility: "visible" });
     }
-    const starStyles = {
-      float: "right",
-      visibility: this.state.starVisibility
+    const bmStyles = {
+      float: "left",
+      marginLeft: "7px",
+      visibility: this.state.visibility
     };
+
+    const binStyles = {
+      float: "right",
+      marginLeft: "7px",
+      visibility: this.state.visibility
+    };
+
     const displayName =
       this.props.operationName ||
       this.props.query
         .split("\n")
         .filter(line => line.indexOf("#") !== 0)
         .join("");
-    const starIcon = this.props.favorite ? "\u2605" : "\u2606";
+    const bookmark = this.props.pinned ? "fa fa-bookmark" : "fa fa-bookmark-o";
     return (
-      <p
+      <div
+        className="history-query"
         onClick={this.handleClick.bind(this)}
         onMouseEnter={this.handleMouseEnter.bind(this)}
         onMouseLeave={this.handleMouseLeave.bind(this)}
       >
-        <span>{displayName}</span>
-        <span onClick={this.handleStarClick.bind(this)} style={starStyles}>
-          {starIcon}
+        <span onClick={this.handlePinClick.bind(this)} style={bmStyles}>
+          <i className={bookmark} aria-hidden="true" />
         </span>
-      </p>
+        <span>{displayName}</span>
+      </div>
     );
   }
 
   handleMouseEnter() {
-    if (!this.props.favorite) {
-      this.setState({ starVisibility: "visible" });
+    if (!this.props.pinned) {
+      this.setState({ visibility: "visible" });
     }
   }
 
   handleMouseLeave() {
-    if (!this.props.favorite) {
-      this.setState({ starVisibility: "hidden" });
+    if (!this.props.pinned) {
+      this.setState({ visibility: "hidden" });
     }
   }
 
   handleClick() {
-    this.props.onSelect(
-      this.props.query,
-      this.props.variables,
-      this.props.operationName
-    );
+    this.props.onSelect(this.props.query, this.props.operationName);
   }
 
-  handleStarClick(e) {
+  handlePinClick(e) {
     e.stopPropagation();
-    this.props.handleToggleFavorite(
+    this.props.handleTogglePinned(
       this.props.query,
       this.props.variables,
       this.props.operationName,
-      this.props.favorite
+      this.props.pinned
     );
   }
 }

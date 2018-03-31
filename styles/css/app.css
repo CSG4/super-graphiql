@@ -41,7 +41,7 @@ body {
   overflow-x: hidden;
 }
 
-.graphiql-container .title {
+/* .graphiql-container .title {
   font-size: 18px;
 }
 
@@ -53,9 +53,9 @@ body {
 .graphiql-container .topBarWrap {
   display: flex;
   flex-direction: row;
-}
+} */
 
-.graphiql-container .topBar {
+/* .graphiql-container .topBar {
   align-items: center;
   background: linear-gradient(#f7f7f7, #e2e2e2);
   border-bottom: 1px solid #d0d0d0;
@@ -68,15 +68,14 @@ body {
   padding: 7px 14px 6px;
   user-select: none;
   position: relative;
-}
+} */
 
-.graphiql-container .toolbar {
+/* .graphiql-container .toolbar {
   overflow-x: visible;
   display: flex;
-}
+} */
 
-.graphiql-container .docExplorerShow,
-.graphiql-container .historyShow {
+.graphiql-container .docExplorerShow {
   background: linear-gradient(#f7f7f7, #e2e2e2);
   border-radius: 0;
   border-bottom: 1px solid #d0d0d0;
@@ -94,10 +93,10 @@ body {
   border-left: 1px solid rgba(0, 0, 0, 0.2);
 }
 
-.graphiql-container .historyShow {
+/* .graphiql-container .historyShow {
   border-right: 1px solid rgba(0, 0, 0, 0.2);
   border-left: 0;
-}
+} */
 
 .graphiql-container .docExplorerShow:before {
   border-left: 2px solid #3B5998;
@@ -131,18 +130,17 @@ body {
   position: relative;
 }
 
-.graphiql-container .docExplorerWrap,
-.graphiql-container .historyPaneWrap {
+.graphiql-container .docExplorerWrap {
   background: white;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
   position: relative;
   z-index: 3;
 }
-
+/* 
 .graphiql-container .historyPaneWrap {
   min-width: 230px;
   z-index: 5;
-}
+} */
 
 .graphiql-container .docExplorerResizer {
   cursor: col-resize;
@@ -421,9 +419,7 @@ body {
 .graphiql-container .toolbar-menu-items > li:hover,
 .graphiql-container .toolbar-select-options > li.hover,
 .graphiql-container .toolbar-select-options > li:active,
-.graphiql-container .toolbar-select-options > li:hover,
-.graphiql-container .history-contents > p:hover,
-.graphiql-container .history-contents > p:active {
+.graphiql-container .toolbar-select-options > li:hover {
   background: #e10098;
   color: #fff;
 }
