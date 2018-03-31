@@ -49,9 +49,6 @@ export class GraphiQL extends React.Component {
       removeItem: PropTypes.func
     }),
     defaultQuery: PropTypes.string,
-    onEditQuery: PropTypes.func,
-    onEditVariables: PropTypes.func,
-    onEditOperationName: PropTypes.func,
     onToggleDocs: PropTypes.func,
     getDefaultFieldNames: PropTypes.func,
     editorTheme: PropTypes.string,
@@ -63,7 +60,6 @@ export class GraphiQL extends React.Component {
     super(props);
     // Ensure props are correct
     if (typeof props.fetcher !== "function") {
-      console.log(typeof props.fetcher);
       throw new TypeError("GraphiQL requires a fetcher function.");
     }
 
@@ -72,32 +68,22 @@ export class GraphiQL extends React.Component {
 
     // Determine the initial query to display.
     const query =
-      props.query !== undefined
-        ? props.query
-        : this._storage.get("query") !== null
-          ? this._storage.get("query")
-          : props.defaultQuery !== undefined
-            ? props.defaultQuery
-            : defaultQuery;
+      this._storage.get("query") !== null
+        ? this._storage.get("query")
+        : props.defaultQuery !== undefined ? props.defaultQuery : defaultQuery;
 
     // Get the initial query facts.
     const queryFacts = getQueryFacts(props.schema, query);
 
     // Determine the initial variables to display.
-    const variables =
-      props.variables !== undefined
-        ? props.variables
-        : this._storage.get("variables");
+    const variables = this._storage.get("variables");
 
     // Determine the initial operationName to use.
-    const operationName =
-      props.operationName !== undefined
-        ? props.operationName
-        : getSelectedOperationName(
-            null,
-            this._storage.get("operationName"),
-            queryFacts && queryFacts.operations
-          );
+    const operationName = getSelectedOperationName(
+      null,
+      this._storage.get("operationName"),
+      queryFacts && queryFacts.operations
+    );
 
     // Determine the initial queries to render (if there are queries in local storage)
     const storedQueryList = this._storage.get("queryList");
@@ -178,24 +164,6 @@ export class GraphiQL extends React.Component {
     }
     if (nextProps.response !== undefined) {
       nextResponse = nextProps.response;
-    }
-    if (
-      nextSchema !== this.state.schema ||
-      nextQuery !== this.state.query ||
-      nextOperationName !== this.state.operationName
-    ) {
-      const updatedQueryAttributes = this._updateQueryFacts(
-        nextQuery,
-        nextOperationName,
-        this.state.operations,
-        nextSchema
-      );
-
-      if (updatedQueryAttributes !== undefined) {
-        nextOperationName = updatedQueryAttributes.operationName;
-
-        this.setState(updatedQueryAttributes);
-      }
     }
 
     // If schema is not supplied via props and the fetcher changed, then
@@ -505,7 +473,7 @@ export class GraphiQL extends React.Component {
   // Private methods
 
   _fetchSchema() {
-    const fetcher = this.props.fetcher;
+    const fetcher = this._multiFetcher(this.props.fetcher);
     const fetch = observableToPromise(fetcher({ query: introspectionQuery }));
     if (!isPromise(fetch)) {
       this.setState({
@@ -567,7 +535,7 @@ export class GraphiQL extends React.Component {
   }
 
   _fetchQuery(queries, variables, cb) {
-    const fetcher = this.props.fetcher;
+    const fetcher = this._multiFetcher(this.props.fetcher);
     let jsonVariables = null;
 
     try {
@@ -619,6 +587,40 @@ export class GraphiQL extends React.Component {
     }
   }
 
+  _multiFetcher = fetcher => {
+    return function(graphQLParams, variables) {
+      if (Array.isArray(graphQLParams)) {
+        const promises = [];
+
+        graphQLParams.forEach(queryObj => {
+          let cleanQueryObj = {
+            query: queryObj.query,
+            operationName: queryObj.operationName,
+            variables: variables
+          };
+
+          let promise = new Promise((resolve, reject) => {
+            fetcher(cleanQueryObj).then(response => {
+              resolve(response);
+            });
+          });
+          promises.push(promise);
+        });
+
+        return Promise.all(promises).then(allResponses => {
+          return allResponses;
+        });
+      } else {
+        // Handles initial Introspection Query
+        return new Promise((resolve, reject) => {
+          fetcher(graphQLParams).then(response => {
+            resolve(response);
+          });
+        });
+      }
+    };
+  };
+
   handleClickReference = reference => {
     this.setState({ docExplorerOpen: true }, () => {
       this.docExplorerComponent.showDocForReference(reference);
@@ -652,7 +654,6 @@ export class GraphiQL extends React.Component {
     // operation name, then report that it changed.
     if (selectedOperationName && selectedOperationName !== operationName) {
       operationName = selectedOperationName;
-      this.handleEditOperationName(operationName);
     }
 
     try {
@@ -841,9 +842,6 @@ export class GraphiQL extends React.Component {
       queryList,
       ...queryFacts
     });
-    if (this.props.onEditQuery) {
-      return this.props.onEditQuery(value);
-    }
   });
 
   _updateQueryFacts = (query, operationName, prevOperations, schema) => {
@@ -857,11 +855,6 @@ export class GraphiQL extends React.Component {
       );
 
       // Report changing of operationName if it changed.
-      const onEditOperationName = this.props.onEditOperationName;
-      if (onEditOperationName && operationName !== updatedOperationName) {
-        onEditOperationName(updatedOperationName);
-      }
-
       return {
         operationName: updatedOperationName,
         ...queryFacts
@@ -871,16 +864,6 @@ export class GraphiQL extends React.Component {
 
   handleEditVariables = value => {
     this.setState({ variables: value });
-    if (this.props.onEditVariables) {
-      this.props.onEditVariables(value);
-    }
-  };
-
-  handleEditOperationName = operationName => {
-    const onEditOperationName = this.props.onEditOperationName;
-    if (onEditOperationName) {
-      onEditOperationName(operationName);
-    }
   };
 
   handleHintInformationRender = elem => {
@@ -929,11 +912,10 @@ export class GraphiQL extends React.Component {
     this.setState({ historyPaneOpen: !this.state.historyPaneOpen });
   };
 
-  handleSelectHistoryQuery = (query, variables, operationName) => {
+  handleSelectHistoryQuery = (query, variables) => {
     this.handleNewQueryBox(query);
     this.handleEditQuery(query);
     this.handleEditVariables(variables);
-    this.handleEditOperationName(operationName);
   };
 
   handleResizeStart = downEvent => {

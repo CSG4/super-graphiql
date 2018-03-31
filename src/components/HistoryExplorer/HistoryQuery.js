@@ -76,7 +76,7 @@ export default class HistoryQuery extends React.Component {
   }
 
   handleClick() {
-    this.props.onSelect(this.props.query, this.props.operationName);
+    this.props.onSelect(this.props.query, this.props.variables);
   }
 
   handlePinClick(e) {
