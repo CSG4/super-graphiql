@@ -8,7 +8,6 @@ import { ToolbarButton } from "./ToolbarButton";
 import { ToolbarGroup } from "./ToolbarGroup";
 import { ToolbarMenu, ToolbarMenuItem } from "./ToolbarMenu";
 import { ToolbarSelect, ToolbarSelectOption } from "./ToolbarSelect";
-import { PathEditor } from "./PathEditor";
 import { QueryEditor } from "./QueryEditor";
 import { VariableEditor } from "./VariableEditor";
 import { ResultViewer } from "./ResultViewer";
@@ -41,7 +40,6 @@ export class GraphiQL extends React.Component {
     fetcher: PropTypes.func.isRequired,
     schema: PropTypes.instanceOf(GraphQLSchema),
     query: PropTypes.string,
-    path: PropTypes.string,
     variables: PropTypes.string,
     operationName: PropTypes.string,
     response: PropTypes.string,
@@ -50,7 +48,6 @@ export class GraphiQL extends React.Component {
       setItem: PropTypes.func,
       removeItem: PropTypes.func
     }),
-    defaultPath: PropTypes.string,
     defaultQuery: PropTypes.string,
     onEditQuery: PropTypes.func,
     onEditVariables: PropTypes.func,
@@ -82,15 +79,6 @@ export class GraphiQL extends React.Component {
           : props.defaultQuery !== undefined
             ? props.defaultQuery
             : defaultQuery;
-
-    // Determine the initial path to fetch schema from.
-    // Determine the initial schema?
-    const path =
-      props.path !== undefined
-        ? props.path
-        : this._storage.get("path") !== null
-          ? this._storage.get("path")
-          : props.defaultPath !== undefined ? props.defaultPath : defaultPath;
 
     // Get the initial query facts.
     const queryFacts = getQueryFacts(props.schema, query);
@@ -125,7 +113,6 @@ export class GraphiQL extends React.Component {
 
     // Initialize state
     this.state = {
-      path,
       schema: props.schema,
       queryList: prevQuery,
       query,
@@ -253,7 +240,6 @@ export class GraphiQL extends React.Component {
     const queryList = JSON.stringify(this.state.queryList);
     // this._storage.set("query", this.state.query);
     this._storage.set("queryList", queryList);
-    this._storage.set("path", this.state.path);
     this._storage.set("variables", this.state.variables);
     this._storage.set("operationName", this.state.operationName);
     this._storage.set("editorFlex", this.state.editorFlex);
@@ -520,10 +506,7 @@ export class GraphiQL extends React.Component {
 
   _fetchSchema() {
     const fetcher = this.props.fetcher;
-    const serverPath = this.state.path;
-    const fetch = observableToPromise(
-      fetcher({ query: introspectionQuery }, serverPath)
-    );
+    const fetch = observableToPromise(fetcher({ query: introspectionQuery }));
     if (!isPromise(fetch)) {
       this.setState({
         response: "Fetcher did not return a Promise for introspection."
@@ -540,12 +523,9 @@ export class GraphiQL extends React.Component {
         // Try the stock introspection query first, falling back on the
         // sans-subscriptions query for services which do not yet support it.
         const fetch2 = observableToPromise(
-          fetcher(
-            {
-              query: introspectionQuerySansSubscriptions
-            },
-            serverPath
-          )
+          fetcher({
+            query: introspectionQuerySansSubscriptions
+          })
         );
         if (!isPromise(fetch)) {
           throw new Error(
@@ -588,7 +568,6 @@ export class GraphiQL extends React.Component {
 
   _fetchQuery(queries, variables, cb) {
     const fetcher = this.props.fetcher;
-    const serverPath = this.state.path;
     let jsonVariables = null;
 
     try {
@@ -602,7 +581,7 @@ export class GraphiQL extends React.Component {
       throw new Error("Variables are not a JSON object.");
     }
 
-    const fetch = fetcher(queries, serverPath, variables);
+    const fetch = fetcher(queries, variables);
 
     if (isPromise(fetch)) {
       // If fetcher returned a Promise, then call the callback when the promise
@@ -646,15 +625,6 @@ export class GraphiQL extends React.Component {
     });
   };
 
-  // Path is updated as user types input
-
-  handleEditPath = debounce(100, serverPath => {
-    this.setState({ path: serverPath }, () => {
-      this.docExplorerComponent.reset();
-      this._fetchSchema();
-    });
-  });
-
   handleRunQuery = selectedOperationName => {
     this._runCounter++;
     const runID = this._runCounter;
@@ -662,7 +632,6 @@ export class GraphiQL extends React.Component {
     // Use the edited query after autoCompleteLeafs() runs or,
     // in case autoCompletion fails (the function returns undefined),
     // the current query from the editor.
-    const serverPath = this.state.path;
     // NOT USING THIS, UPDATED TO EDITED QUERY LIST
     // const editedQuery =
     //   this.autoCompleteLeafs() ||
@@ -1189,8 +1158,6 @@ const defaultQuery = `# Welcome to GraphiQL
 #
 
 `;
-
-const defaultPath = "/graphql"; //
 
 // Duck-type promise detection.
 function isPromise(value) {

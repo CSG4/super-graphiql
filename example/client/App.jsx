@@ -55,14 +55,7 @@ function updateURL() {
 // Defines a GraphQL fetcher using the fetch API. You're not required to
 // use fetch, and could instead implement graphQLFetcher however you like,
 // as long as it returns a Promise or Observable.
-function graphQLFetcher(graphQLParams, path, variables) {
-  // let queryString = '?' + Object.keys(graphQLParams).filter(function (key) {
-  //   return Boolean(graphQLParams[key]);
-  // }).map(function (key) {
-  //   return encodeURIComponent(key) + '=' +
-  //     encodeURIComponent(graphQLParams[key]);
-  // }).join('&');
-
+function graphQLFetcher(graphQLParams, variables) {
   if (Array.isArray(graphQLParams)) {
     const promises = [];
 
@@ -70,7 +63,7 @@ function graphQLFetcher(graphQLParams, path, variables) {
       let cleanQueryObj = { query: queryObj.query, operationName: queryObj.operationName, variables: variables};
 
       let promise = new Promise((resolve, reject) => {
-        fetchRequest(cleanQueryObj, path).then(response => {
+        fetchRequest(cleanQueryObj).then(response => {
           resolve(response)
         });
       })
@@ -83,18 +76,18 @@ function graphQLFetcher(graphQLParams, path, variables) {
   } else {
     // Handles initial Introspection Query
     return new Promise((resolve, reject) => {
-      fetchRequest(graphQLParams, path).then((response) => {
+      fetchRequest(graphQLParams).then((response) => {
         resolve(response);
       });
     });
   }
 }
 
-function fetchRequest(graphQLParams, path) {
+function fetchRequest(graphQLParams) {
   // This example expects a GraphQL server at the path /graphql.
   // Change this to point wherever you host your GraphQL server.
   return new Promise((resolve, reject) => {
-    fetch(path, {
+    fetch('/graphql', {
     method: 'post',
     headers: {
       'Content-Type': 'application/json',
