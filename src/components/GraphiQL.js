@@ -724,10 +724,16 @@ export class GraphiQL extends React.Component {
             return resultObj;
           });
 
-          if (queryID === this._editorQueryID) {
+          if (queryID === this._editorQueryID && cleanResults.length !== 0) {
+            console.log(cleanResults);
             this.setState({
               isWaitingForResponse: false,
               response: JSON.stringify(cleanResults, null, 2)
+            });
+          } else {
+            this.setState({
+              isWaitingForResponse: false,
+              response: "This is not a valid query"
             });
           }
         }

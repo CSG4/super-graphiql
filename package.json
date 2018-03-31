@@ -2,7 +2,7 @@
   "name": "super-graphiql",
   "version": "0.0.3",
   "description": "Super-GraphiQL is a powerful yet simple GUI designed for testing your GraphQL API",
-  "main": "dist/index.js",
+  "main": "src/index.js",
   "unpkg": "graphiql.min.js",
   "files": [
     "dist",
@@ -26,7 +26,8 @@
     "apollo": "nodemon ./example/server/apollo/server.js",
     "webpack": "webpack -w --config ./example/webpack.config.js --mode development",
     "webpackdev": "webpack-dev-server -w --config ./example/webpack.config.js --mode development",
-    "build": "bash ./resources/build.sh",
+    "build:main": "bash ./resources/build.sh",
+    "build:umd":"webpack --output-filename index.umd.js",
     "check": "flow check",
     "dev": "babel-node test/server.js",
     "lint": "eslint src",
@@ -126,7 +127,11 @@
   },
   "author": "Albert, Angela, Eduardo, Marissa <superGraphicalTeam@gmail.com>",
   "license": "MIT",
-  "keywords": ["graphql", "graphiql", "super graphiql, gui, ide"],
+  "keywords": [
+    "graphql",
+    "graphiql",
+    "super graphiql, gui, ide"
+  ],
   "bugs": {
     "url": "https://github.com/mlafontant/super-graphiql/issues"
   },
