@@ -55,35 +55,7 @@ function updateURL() {
 // Defines a GraphQL fetcher using the fetch API. You're not required to
 // use fetch, and could instead implement graphQLFetcher however you like,
 // as long as it returns a Promise or Observable.
-function graphQLFetcher(graphQLParams, variables) {
-  if (Array.isArray(graphQLParams)) {
-    const promises = [];
-
-    graphQLParams.forEach((queryObj) => {
-      let cleanQueryObj = { query: queryObj.query, operationName: queryObj.operationName, variables: variables};
-
-      let promise = new Promise((resolve, reject) => {
-        fetchRequest(cleanQueryObj).then(response => {
-          resolve(response)
-        });
-      })
-      promises.push(promise);
-    })
-
-    return Promise.all(promises).then((allResponses) => {
-      return allResponses;
-    })
-  } else {
-    // Handles initial Introspection Query
-    return new Promise((resolve, reject) => {
-      fetchRequest(graphQLParams).then((response) => {
-        resolve(response);
-      });
-    });
-  }
-}
-
-function fetchRequest(graphQLParams) {
+function graphQLFetcher(graphQLParams) {
   // This example expects a GraphQL server at the path /graphql.
   // Change this to point wherever you host your GraphQL server.
   return new Promise((resolve, reject) => {
@@ -95,8 +67,7 @@ function fetchRequest(graphQLParams) {
     },
     body: JSON.stringify(graphQLParams),
     
-    credentials: 'include', // Always send user credentials (cookies, basic http auth, etc..), even for cross-origin calls.
-    // mode: 'no-cors'
+    credentials: 'include', 
     }).then(function (response) {
       return response.text();
     })
@@ -114,12 +85,6 @@ render((
     <div>
       <GraphiQL
         fetcher={graphQLFetcher}
-        query= {parameters.query}
-        variables={parameters.variables}
-        operationName={parameters.operationName}
-        onEditQuery={onEditQuery}
-        onEditVariables={onEditVariables}
-        onEditOperationName={onEditOperationName}
       />
     </div>
 ), document.getElementById('contents'));
