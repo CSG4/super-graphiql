@@ -14,7 +14,7 @@ const queriesToSave = (nextProps, currProps, lastQuerySaved) => {
     try {
       query = print(parse(entry.query));
     } catch (e) {
-      query = "na";
+      query = "";
     }
 
     const cleanEntry = {
