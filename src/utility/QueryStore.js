@@ -18,17 +18,6 @@ export default class QueryStore {
             : true
           : false
     );
-
-    //   if(x.query === item.query) {
-    //     if (!!x.variables && !!item.variables) {
-    //       if (x.variables === item.variables)
-    //         return true;
-    //     } else {
-    //       return true;
-    //     }
-    //   }
-    //   return false;
-    // });
   }
 
   delete(item) {
