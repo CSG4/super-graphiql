@@ -1,3 +1,165 @@
+.queryEditorsWrap {
+	height: 100vh;
+	overflow: scroll;
+}
+
+.query-editor-container {
+	border-top: 2px solid rgb(193, 193, 193); 
+	//display: flex;
+
+	&:first-of-type {
+		border: none;
+	}
+
+	&:last-of-type {
+		.add-query {
+			display: block;
+		}
+	}
+}
+
+// need to specify to graphiql-container to override css 
+.graphiql-container { 
+	.query-editor {
+		flex: 1;
+		position: relative;
+
+		.CodeMirror {
+			position: relative;
+			height: auto;
+		} 
+		.CodeMirror-gutters {
+			border: none;
+			background-color: transparent;
+		}
+	}
+
+}
+
+.query-editor-top-actions {
+	display: flex;
+	padding: 5px;
+	border-bottom: 1px solid #ddd;
+	cursor: pointer;
+	min-height: 20px;
+	// position: sticky; NOT WORKING because overflow:hidden on parents :(
+
+	&:hover {
+		.delete-query {
+			visibility: visible;
+		}
+		.fa-trash {
+			opacity: 1;
+		}
+
+		.checkbox-container input ~ .checkmark {
+			border: 1px solid #ccc;
+		}
+	}
+
+	.checkbox-container {
+		display: block;
+		position: relative;
+		cursor: pointer;
+		user-select: none;
+
+		input {
+			position: absolute;
+			opacity: 0;
+			cursor: pointer;
+			top: 0;
+			left: 0;
+		}
+
+		input:checked ~ .checkmark {
+			background-color: #666;
+			border-color: #666;
+		}
+
+		input:checked ~ .checkmark:after {
+			opacity: 1;
+			visibility: visible;
+		}
+
+		.checkmark {
+			position: absolute;
+			top: 0;
+			left: 0;
+			height: 16px;
+			width: 16px;
+			border: 1px solid #eee; 
+			border-radius: 2px;
+		}
+
+		.checkmark:after {
+			content: "";
+			position: absolute;
+			visibility: hidden;
+			opacity: 0;
+			left: 4.5px;
+			top: 0;
+			width: 4px;
+			height: 10px;
+			border: solid white;
+			border-width: 0 2.5px 2.5px 0;
+			border-radius: 1px;
+			transform: rotate(45deg);
+			transition: all .3s linear;
+		}
+	}
+}
+
+.action-button {
+	cursor: pointer;
+	border: none;
+	
+	&:active, 
+	&:hover, 
+	&:focus {
+		outline: 0;
+		color: red;
+	}
+}
+
+.run-query-check {
+	position: relative;
+	top: 3px;
+}
+
+.delete-query,
+.add-query {
+	margin-left: auto;
+
+	&:active, 
+	&:hover, 
+	&:focus {
+		.fa {
+			color: #666;
+		}
+		
+	}
+
+	.fa {
+		font-size: 16px;
+		color: #999;
+	}
+}
+
+.delete-query {
+	visibility: hidden;
+
+	.fa-trash {
+		opacity: 0;
+		font-size: 19px;
+		transition: opacity 2s linear;
+	}
+}
+
+.add-query {
+	display: none;
+	margin-right: 5px;
+	transition: color 2s linear;
+}
 
 .graphiql-container .topBarWrap {
   display: flex;

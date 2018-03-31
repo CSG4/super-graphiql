@@ -43,8 +43,8 @@ export class QueryEditor extends React.Component {
     onClickDeleteButton: PropTypes.func,
     onPrettifyQuery: PropTypes.func,
     onRunQuery: PropTypes.func,
-    editorTheme: PropTypes.string
-    // onAddQuery: PropTypes.func
+    editorTheme: PropTypes.string,
+    onAddNewQueryEditor: PropTypes.func
   };
 
   constructor(props) {
@@ -195,32 +195,53 @@ export class QueryEditor extends React.Component {
 
   render() {
     return (
-      <div
-        className="query-editor"
-        id={this.props.editorId}
-        ref={node => {
-          this._node = node;
-        }}
-      >
-        <button
-          className="delete-query"
+      <div className="query-editor-container">
+        <div
+          className="query-editor"
           id={this.props.editorId}
-          onClick={() => {
-            this.props.onClickDeleteButton(this.props.editorId);
+          ref={node => {
+            this._node = node;
           }}
         >
-          {"x"}
-        </button>
-        <input
-          className="run-query-check"
-          id={"checkbox_" + this.props.editorId}
-          type="checkbox"
-          title="Check me for running this query"
-          defaultChecked
-          onChange={e => {
-            this.props.onCheckToRun(this.props.editorId, e.target.checked);
+          <div className="query-editor-top-actions">
+            <label className="checkbox-container">
+              <input
+                type="checkbox"
+                defaultChecked
+                className="run-query-check"
+                id={"checkbox_" + this.props.editorId}
+                value="select"
+                title="Select"
+                onChange={e => {
+                  this.props.onCheckToRun(
+                    this.props.editorId,
+                    e.target.checked
+                  );
+                }}
+              />
+              <span className="checkmark" />
+            </label>
+            <button
+              title="Delete"
+              className="action-button delete-query"
+              id={this.props.editorId}
+              onClick={() => {
+                this.props.onClickDeleteButton(this.props.editorId);
+              }}
+            >
+              <i className="fa fa-trash" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+        <button
+          title="Add"
+          className="action-button add-query"
+          onClick={() => {
+            this.props.onAddNewQueryEditor();
           }}
-        />
+        >
+          <i className="fa fa-plus" aria-hidden="true" />
+        </button>
       </div>
     );
   }

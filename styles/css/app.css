@@ -29,7 +29,6 @@ body {
   display: flex;
   flex-direction: row;
   height: 100vh;
-  /* height: 100%; */
   margin: 0;
   overflow: hidden;
   width: 100%;
@@ -160,26 +159,6 @@ body {
   padding: 18px 16px 15px 12px;
 }
 
-.graphiql-container div .query-editor {
-  border-style: solid;
-  border-color: rgb(193, 193, 193);
-  border-width: 1px;
-  flex: 1;
-  position: relative;
-}
-
-.graphiql-container .delete-query {
-  position: relative;
-  z-index: 1000;
-}
-
-.graphiql-container .run-query-check {
-  position: relative;
-  z-index: 1000;
-  display: block;
-  margin-top: 10px;
-}
-
 .graphiql-container div .path-editor {
   background: #fdfdfd;
   background: linear-gradient(#f9f9f9, #ececec);
@@ -230,6 +209,7 @@ body {
   padding: 6px 0 8px 43px;
   text-transform: lowercase;
   user-select: none;
+  z-index: 3;
 }
 
 .graphiql-container .codemirrorWrap {
