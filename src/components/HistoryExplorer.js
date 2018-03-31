@@ -5,7 +5,6 @@ import QueryStore from "../utility/QueryStore";
 import HistoryQuery from "./HistoryExplorer/HistoryQuery";
 import SearchBox from "./HistoryExplorer/SearchBox";
 import debounce from "../utility/debounce";
-// import { exec } from "child_process";
 
 const queriesToSave = (nextProps, currProps, lastQuerySaved) => {
   // add current variable prop to each query
