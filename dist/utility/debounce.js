@@ -18,12 +18,12 @@ exports.default = debounce;
  */
 function debounce(duration, fn) {
   var timeout = void 0;
-  return function() {
+  return function () {
     var _this = this,
-      _arguments = arguments;
+        _arguments = arguments;
 
     clearTimeout(timeout);
-    timeout = setTimeout(function() {
+    timeout = setTimeout(function () {
       timeout = null;
       fn.apply(_this, _arguments);
     }, duration);
