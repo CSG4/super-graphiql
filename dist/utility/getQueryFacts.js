@@ -30,7 +30,7 @@ function getQueryFacts(schema, documentStr) {
 
   // Collect operations by their names.
   var operations = [];
-  documentAST.definitions.forEach(function(def) {
+  documentAST.definitions.forEach(function (def) {
     if (def.kind === "OperationDefinition") {
       operations.push(def);
     }
@@ -52,13 +52,13 @@ function getQueryFacts(schema, documentStr) {
 
 function collectVariables(schema, documentAST) {
   var variableToType = Object.create(null);
-  documentAST.definitions.forEach(function(definition) {
+  documentAST.definitions.forEach(function (definition) {
     if (definition.kind === "OperationDefinition") {
       var variableDefinitions = definition.variableDefinitions;
       if (variableDefinitions) {
-        variableDefinitions.forEach(function(_ref) {
+        variableDefinitions.forEach(function (_ref) {
           var variable = _ref.variable,
-            type = _ref.type;
+              type = _ref.type;
 
           var inputType = (0, _graphql.typeFromAST)(schema, type);
           if (inputType) {

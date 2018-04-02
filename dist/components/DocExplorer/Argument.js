@@ -21,9 +21,7 @@ var _DefaultValue = require("./DefaultValue");
 
 var _DefaultValue2 = _interopRequireDefault(_DefaultValue);
 
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : { default: obj };
-}
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
  *  Copyright (c) Facebook, Inc.
@@ -35,20 +33,20 @@ function _interopRequireDefault(obj) {
 
 function Argument(_ref) {
   var arg = _ref.arg,
-    onClickType = _ref.onClickType,
-    showDefaultValue = _ref.showDefaultValue;
+      onClickType = _ref.onClickType,
+      showDefaultValue = _ref.showDefaultValue;
 
   return _react2.default.createElement(
     "span",
     { className: "arg" },
-    _react2.default.createElement("span", { className: "arg-name" }, arg.name),
+    _react2.default.createElement(
+      "span",
+      { className: "arg-name" },
+      arg.name
+    ),
     ": ",
-    _react2.default.createElement(_TypeLink2.default, {
-      type: arg.type,
-      onClick: onClickType
-    }),
-    showDefaultValue !== false &&
-      _react2.default.createElement(_DefaultValue2.default, { field: arg })
+    _react2.default.createElement(_TypeLink2.default, { type: arg.type, onClick: onClickType }),
+    showDefaultValue !== false && _react2.default.createElement(_DefaultValue2.default, { field: arg })
   );
 }
 

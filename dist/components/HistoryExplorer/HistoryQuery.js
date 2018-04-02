@@ -14,10 +14,6 @@ var _propTypes = require("prop-types");
 
 var _propTypes2 = _interopRequireDefault(_propTypes);
 
-var _debounce = require("../../utility/debounce");
-
-var _debounce2 = _interopRequireDefault(_debounce);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -32,57 +28,97 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 *  LICENSE file in the root directory of this source tree.
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 */
 
-var SearchBox = function (_React$Component) {
-  _inherits(SearchBox, _React$Component);
+var HistoryQuery = function (_React$Component) {
+  _inherits(HistoryQuery, _React$Component);
 
-  function SearchBox(props) {
-    _classCallCheck(this, SearchBox);
+  function HistoryQuery(props) {
+    _classCallCheck(this, HistoryQuery);
 
-    var _this = _possibleConstructorReturn(this, (SearchBox.__proto__ || Object.getPrototypeOf(SearchBox)).call(this, props));
+    var _this = _possibleConstructorReturn(this, (HistoryQuery.__proto__ || Object.getPrototypeOf(HistoryQuery)).call(this, props));
 
-    _this.handleChange = function (event) {
-      var value = event.target.value;
-      _this.setState({ value: value });
-      _this.debouncedOnSearch(value);
-    };
-
-    _this.handleClear = function () {
-      _this.setState({ value: "" });
-      _this.props.onSearch("");
-    };
-
-    _this.state = { value: props.value || "" };
-    _this.debouncedOnSearch = (0, _debounce2.default)(200, _this.props.onSearch);
+    var visibility = _this.props.pinned ? "visible" : "hidden";
+    _this.state = { visibility: visibility };
     return _this;
   }
 
-  _createClass(SearchBox, [{
+  _createClass(HistoryQuery, [{
     key: "render",
     value: function render() {
+      if (this.props.pinned && this.state.visibility === "hidden") {
+        this.setState({ visibility: "visible" });
+      }
+      var bmStyles = {
+        float: "left",
+        marginLeft: "7px",
+        visibility: this.state.visibility
+      };
+
+      var binStyles = {
+        float: "right",
+        marginLeft: "7px",
+        visibility: this.state.visibility
+      };
+
+      var displayName = this.props.operationName || this.props.query.split("\n").filter(function (line) {
+        return line.indexOf("#") !== 0;
+      }).join("");
+      var bookmark = this.props.pinned ? "fa fa-bookmark" : "fa fa-bookmark-o";
       return _react2.default.createElement(
-        "label",
-        { className: "search-box" },
-        _react2.default.createElement("input", {
-          value: this.state.value,
-          onChange: this.handleChange,
-          type: "text",
-          placeholder: this.props.placeholder
-        }),
-        this.state.value && _react2.default.createElement(
-          "div",
-          { className: "search-box-clear", onClick: this.handleClear },
-          "\u2715"
+        "div",
+        {
+          className: "history-query",
+          onClick: this.handleClick.bind(this),
+          onMouseEnter: this.handleMouseEnter.bind(this),
+          onMouseLeave: this.handleMouseLeave.bind(this)
+        },
+        _react2.default.createElement(
+          "span",
+          { onClick: this.handlePinClick.bind(this), style: bmStyles },
+          _react2.default.createElement("i", { className: bookmark, "aria-hidden": "true" })
+        ),
+        _react2.default.createElement(
+          "span",
+          null,
+          displayName
         )
       );
     }
+  }, {
+    key: "handleMouseEnter",
+    value: function handleMouseEnter() {
+      if (!this.props.pinned) {
+        this.setState({ visibility: "visible" });
+      }
+    }
+  }, {
+    key: "handleMouseLeave",
+    value: function handleMouseLeave() {
+      if (!this.props.pinned) {
+        this.setState({ visibility: "hidden" });
+      }
+    }
+  }, {
+    key: "handleClick",
+    value: function handleClick() {
+      this.props.onSelect(this.props.query, this.props.variables);
+    }
+  }, {
+    key: "handlePinClick",
+    value: function handlePinClick(e) {
+      e.stopPropagation();
+      this.props.handleTogglePinned(this.props.query, this.props.variables, this.props.operationName, this.props.pinned);
+    }
   }]);
 
-  return SearchBox;
+  return HistoryQuery;
 }(_react2.default.Component);
 
-SearchBox.propTypes = {
-  value: _propTypes2.default.string,
-  placeholder: _propTypes2.default.string,
-  onSearch: _propTypes2.default.func
+HistoryQuery.propTypes = {
+  pinned: _propTypes2.default.bool,
+  favoriteSize: _propTypes2.default.number,
+  handleTogglePinned: _propTypes2.default.func,
+  operationName: _propTypes2.default.string,
+  onSelect: _propTypes2.default.func,
+  query: _propTypes2.default.string
 };
-exports.default = SearchBox;
+exports.default = HistoryQuery;
