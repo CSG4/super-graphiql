@@ -46,9 +46,7 @@ function fillLeafs(schema, docString, getDefaultFieldNames) {
           var indent = getIndentation(docString, node.loc.start);
           insertions.push({
             index: node.loc.end,
-            string:
-              " " +
-              (0, _graphql.print)(selectionSet).replace(/\n/g, "\n" + indent)
+            string: " " + (0, _graphql.print)(selectionSet).replace(/\n/g, "\n" + indent)
           });
         }
       }
@@ -98,7 +96,7 @@ function defaultGetDefaultFieldNames(type) {
 
   // Include all leaf-type fields.
   var leafFieldNames = [];
-  Object.keys(fields).forEach(function(fieldName) {
+  Object.keys(fields).forEach(function (fieldName) {
     if ((0, _graphql.isLeafType)(fields[fieldName].type)) {
       leafFieldNames.push(fieldName);
     }
@@ -128,7 +126,7 @@ function buildSelectionSet(type, getDefaultFieldNames) {
   // Build a selection set of each field, calling buildSelectionSet recursively.
   return {
     kind: "SelectionSet",
-    selections: fieldNames.map(function(fieldName) {
+    selections: fieldNames.map(function (fieldName) {
       var fieldDef = namedType.getFields()[fieldName];
       var fieldType = fieldDef ? fieldDef.type : null;
       return {
@@ -151,9 +149,9 @@ function withInsertions(initial, insertions) {
   }
   var edited = "";
   var prevIndex = 0;
-  insertions.forEach(function(_ref) {
+  insertions.forEach(function (_ref) {
     var index = _ref.index,
-      string = _ref.string;
+        string = _ref.string;
 
     edited += initial.slice(prevIndex, index) + string;
     prevIndex = index;
