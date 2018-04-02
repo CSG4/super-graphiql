@@ -11,13 +11,18 @@ const app = express();
 const ws = createServer(app);
 
 
-app.use("/*/graphiql.css", (req, res) => {
-  res.sendFile(path.join(__dirname, "./../../../graphiql.css"));
+app.use("/*/app.bundle.css", (req, res) => {
+  console.log('css');
+  console.log(__dirname);
+  res.sendFile(path.join(__dirname, "./../../dist/app.bundle.css"));
 });
 
 app.use('/*/webpack-bundle.js', (req, res) => {
-  console.log('')
   res.sendFile(path.join(__dirname, "./../../dist/webpack-bundle.js"));
+});
+
+app.use('/graphiql.min.js', (req, res) => {
+  res.sendFile(path.join(__dirname, "./../../../graphiql.min.js"));
 });
 // app.use("/*/graphiql.css", (req, res) => {
 //   res.sendFile(path.join(__dirname, "./../../../graphiql.css"));

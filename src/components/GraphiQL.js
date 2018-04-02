@@ -8,7 +8,6 @@ import { ToolbarButton } from "./ToolbarButton";
 import { ToolbarGroup } from "./ToolbarGroup";
 import { ToolbarMenu, ToolbarMenuItem } from "./ToolbarMenu";
 import { ToolbarSelect, ToolbarSelectOption } from "./ToolbarSelect";
-import { PathEditor } from "./PathEditor";
 import { QueryEditor } from "./QueryEditor";
 import { VariableEditor } from "./VariableEditor";
 import { ResultViewer } from "./ResultViewer";
@@ -41,7 +40,6 @@ export class GraphiQL extends React.Component {
     fetcher: PropTypes.func.isRequired,
     schema: PropTypes.instanceOf(GraphQLSchema),
     query: PropTypes.string,
-    path: PropTypes.string,
     variables: PropTypes.string,
     operationName: PropTypes.string,
     response: PropTypes.string,
@@ -50,11 +48,7 @@ export class GraphiQL extends React.Component {
       setItem: PropTypes.func,
       removeItem: PropTypes.func
     }),
-    defaultPath: PropTypes.string,
     defaultQuery: PropTypes.string,
-    onEditQuery: PropTypes.func,
-    onEditVariables: PropTypes.func,
-    onEditOperationName: PropTypes.func,
     onToggleDocs: PropTypes.func,
     getDefaultFieldNames: PropTypes.func,
     editorTheme: PropTypes.string,
@@ -66,7 +60,6 @@ export class GraphiQL extends React.Component {
     super(props);
     // Ensure props are correct
     if (typeof props.fetcher !== "function") {
-      console.log(typeof props.fetcher);
       throw new TypeError("GraphiQL requires a fetcher function.");
     }
 
@@ -75,41 +68,22 @@ export class GraphiQL extends React.Component {
 
     // Determine the initial query to display.
     const query =
-      props.query !== undefined
-        ? props.query
-        : this._storage.get("query") !== null
-          ? this._storage.get("query")
-          : props.defaultQuery !== undefined
-            ? props.defaultQuery
-            : defaultQuery;
-
-    // Determine the initial path to fetch schema from.
-    // Determine the initial schema?
-    const path =
-      props.path !== undefined
-        ? props.path
-        : this._storage.get("path") !== null
-          ? this._storage.get("path")
-          : props.defaultPath !== undefined ? props.defaultPath : defaultPath;
+      this._storage.get("query") !== null
+        ? this._storage.get("query")
+        : props.defaultQuery !== undefined ? props.defaultQuery : defaultQuery;
 
     // Get the initial query facts.
     const queryFacts = getQueryFacts(props.schema, query);
 
     // Determine the initial variables to display.
-    const variables =
-      props.variables !== undefined
-        ? props.variables
-        : this._storage.get("variables");
+    const variables = this._storage.get("variables");
 
     // Determine the initial operationName to use.
-    const operationName =
-      props.operationName !== undefined
-        ? props.operationName
-        : getSelectedOperationName(
-            null,
-            this._storage.get("operationName"),
-            queryFacts && queryFacts.operations
-          );
+    const operationName = getSelectedOperationName(
+      null,
+      this._storage.get("operationName"),
+      queryFacts && queryFacts.operations
+    );
 
     // Determine the initial queries to render (if there are queries in local storage)
     const storedQueryList = this._storage.get("queryList");
@@ -125,7 +99,6 @@ export class GraphiQL extends React.Component {
 
     // Initialize state
     this.state = {
-      path,
       schema: props.schema,
       queryList: prevQuery,
       query,
@@ -192,24 +165,6 @@ export class GraphiQL extends React.Component {
     if (nextProps.response !== undefined) {
       nextResponse = nextProps.response;
     }
-    if (
-      nextSchema !== this.state.schema ||
-      nextQuery !== this.state.query ||
-      nextOperationName !== this.state.operationName
-    ) {
-      const updatedQueryAttributes = this._updateQueryFacts(
-        nextQuery,
-        nextOperationName,
-        this.state.operations,
-        nextSchema
-      );
-
-      if (updatedQueryAttributes !== undefined) {
-        nextOperationName = updatedQueryAttributes.operationName;
-
-        this.setState(updatedQueryAttributes);
-      }
-    }
 
     // If schema is not supplied via props and the fetcher changed, then
     // remove the schema so fetchSchema() will be called with the new fetcher.
@@ -253,7 +208,6 @@ export class GraphiQL extends React.Component {
     const queryList = JSON.stringify(this.state.queryList);
     // this._storage.set("query", this.state.query);
     this._storage.set("queryList", queryList);
-    this._storage.set("path", this.state.path);
     this._storage.set("variables", this.state.variables);
     this._storage.set("operationName", this.state.operationName);
     this._storage.set("editorFlex", this.state.editorFlex);
@@ -522,11 +476,8 @@ export class GraphiQL extends React.Component {
   // Private methods
 
   _fetchSchema() {
-    const fetcher = this.props.fetcher;
-    const serverPath = this.state.path;
-    const fetch = observableToPromise(
-      fetcher({ query: introspectionQuery }, serverPath)
-    );
+    const fetcher = this._multiFetcher(this.props.fetcher);
+    const fetch = observableToPromise(fetcher({ query: introspectionQuery }));
     if (!isPromise(fetch)) {
       this.setState({
         response: "Fetcher did not return a Promise for introspection."
@@ -543,12 +494,9 @@ export class GraphiQL extends React.Component {
         // Try the stock introspection query first, falling back on the
         // sans-subscriptions query for services which do not yet support it.
         const fetch2 = observableToPromise(
-          fetcher(
-            {
-              query: introspectionQuerySansSubscriptions
-            },
-            serverPath
-          )
+          fetcher({
+            query: introspectionQuerySansSubscriptions
+          })
         );
         if (!isPromise(fetch)) {
           throw new Error(
@@ -590,8 +538,7 @@ export class GraphiQL extends React.Component {
   }
 
   _fetchQuery(queries, variables, cb) {
-    const fetcher = this.props.fetcher;
-    const serverPath = this.state.path;
+    const fetcher = this._multiFetcher(this.props.fetcher);
     let jsonVariables = null;
 
     try {
@@ -605,7 +552,7 @@ export class GraphiQL extends React.Component {
       throw new Error("Variables are not a JSON object.");
     }
 
-    const fetch = fetcher(queries, serverPath, variables);
+    const fetch = fetcher(queries, variables);
 
     if (isPromise(fetch)) {
       // If fetcher returned a Promise, then call the callback when the promise
@@ -643,20 +590,45 @@ export class GraphiQL extends React.Component {
     }
   }
 
+  _multiFetcher = fetcher => {
+    return function(graphQLParams, variables) {
+      if (Array.isArray(graphQLParams)) {
+        const promises = [];
+
+        graphQLParams.forEach(queryObj => {
+          let cleanQueryObj = {
+            query: queryObj.query,
+            operationName: queryObj.operationName,
+            variables: variables
+          };
+
+          let promise = new Promise((resolve, reject) => {
+            fetcher(cleanQueryObj).then(response => {
+              resolve(response);
+            });
+          });
+          promises.push(promise);
+        });
+
+        return Promise.all(promises).then(allResponses => {
+          return allResponses;
+        });
+      } else {
+        // Handles initial Introspection Query
+        return new Promise((resolve, reject) => {
+          fetcher(graphQLParams).then(response => {
+            resolve(response);
+          });
+        });
+      }
+    };
+  };
+
   handleClickReference = reference => {
     this.setState({ docExplorerOpen: true }, () => {
       this.docExplorerComponent.showDocForReference(reference);
     });
   };
-
-  // Path is updated as user types input
-
-  handleEditPath = debounce(100, serverPath => {
-    this.setState({ path: serverPath }, () => {
-      this.docExplorerComponent.reset();
-      this._fetchSchema();
-    });
-  });
 
   handleRunQuery = selectedOperationName => {
     this._runCounter++;
@@ -665,7 +637,6 @@ export class GraphiQL extends React.Component {
     // Use the edited query after autoCompleteLeafs() runs or,
     // in case autoCompletion fails (the function returns undefined),
     // the current query from the editor.
-    const serverPath = this.state.path;
     // NOT USING THIS, UPDATED TO EDITED QUERY LIST
     // const editedQuery =
     //   this.autoCompleteLeafs() ||
@@ -686,43 +657,46 @@ export class GraphiQL extends React.Component {
     // operation name, then report that it changed.
     if (selectedOperationName && selectedOperationName !== operationName) {
       operationName = selectedOperationName;
-      this.handleEditOperationName(operationName);
     }
-
-    try {
+    if (!editedQueryList.length) {
       this.setState({
-        isWaitingForResponse: true,
-        response: null,
-        operationName
+        response: "Enter a valid query"
       });
+    } else {
+      try {
+        this.setState({
+          isWaitingForResponse: true,
+          response: null,
+          operationName
+        });
 
-      // _fetchQuery may return a subscription.
-      const subscription = this._fetchQuery(
-        editedQueryList,
-        variables,
-        // operationName
-        result => {
-          const cleanResults = result.map((resultObj, index) => {
-            resultObj["dataSet" + index] = resultObj.data;
-            delete resultObj["data"];
-            return resultObj;
-          });
-
-          if (runID === this._runCounter) {
-            this.setState({
-              isWaitingForResponse: false,
-              response: JSON.stringify(cleanResults, null, 2)
+        // _fetchQuery may return a subscription.
+        const subscription = this._fetchQuery(
+          editedQueryList,
+          variables,
+          // operationName
+          result => {
+            const cleanResults = result.map((resultObj, index) => {
+              resultObj["dataSet" + index] = resultObj.data;
+              delete resultObj["data"];
+              return resultObj;
             });
-          }
-        }
-      );
 
-      this.setState({ subscription });
-    } catch (error) {
-      this.setState({
-        isWaitingForResponse: false,
-        response: error.message
-      });
+            if (runID === this._runCounter) {
+              this.setState({
+                isWaitingForResponse: false,
+                response: JSON.stringify(cleanResults, null, 2)
+              });
+            }
+          }
+        );
+        this.setState({ subscription });
+      } catch (error) {
+        this.setState({
+          isWaitingForResponse: false,
+          response: error.message
+        });
+      }
     }
   };
 
@@ -875,9 +849,6 @@ export class GraphiQL extends React.Component {
       queryList,
       ...queryFacts
     });
-    if (this.props.onEditQuery) {
-      return this.props.onEditQuery(value);
-    }
   });
 
   _updateQueryFacts = (query, operationName, prevOperations, schema) => {
@@ -891,11 +862,6 @@ export class GraphiQL extends React.Component {
       );
 
       // Report changing of operationName if it changed.
-      const onEditOperationName = this.props.onEditOperationName;
-      if (onEditOperationName && operationName !== updatedOperationName) {
-        onEditOperationName(updatedOperationName);
-      }
-
       return {
         operationName: updatedOperationName,
         ...queryFacts
@@ -905,16 +871,6 @@ export class GraphiQL extends React.Component {
 
   handleEditVariables = value => {
     this.setState({ variables: value });
-    if (this.props.onEditVariables) {
-      this.props.onEditVariables(value);
-    }
-  };
-
-  handleEditOperationName = operationName => {
-    const onEditOperationName = this.props.onEditOperationName;
-    if (onEditOperationName) {
-      onEditOperationName(operationName);
-    }
   };
 
   handleHintInformationRender = elem => {
@@ -963,11 +919,10 @@ export class GraphiQL extends React.Component {
     this.setState({ historyPaneOpen: !this.state.historyPaneOpen });
   };
 
-  handleSelectHistoryQuery = (query, variables, operationName) => {
+  handleSelectHistoryQuery = (query, variables) => {
     this.handleNewQueryBox(query);
     this.handleEditQuery(query);
     this.handleEditVariables(variables);
-    this.handleEditOperationName(operationName);
   };
 
   handleResizeStart = downEvent => {
@@ -1192,8 +1147,6 @@ const defaultQuery = `# Welcome to GraphiQL
 #
 
 `;
-
-const defaultPath = "/graphql"; //
 
 // Duck-type promise detection.
 function isPromise(value) {
