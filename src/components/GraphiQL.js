@@ -733,7 +733,7 @@ export class GraphiQL extends React.Component {
           } else {
             this.setState({
               isWaitingForResponse: false,
-              response: "This is not a valid query"
+              response: "Enter a valid query"
             });
           }
         }
