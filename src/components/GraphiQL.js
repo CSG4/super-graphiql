@@ -658,41 +658,45 @@ export class GraphiQL extends React.Component {
     if (selectedOperationName && selectedOperationName !== operationName) {
       operationName = selectedOperationName;
     }
-
-    try {
+    if (!editedQueryList.length) {
       this.setState({
-        isWaitingForResponse: true,
-        response: null,
-        operationName
+        response: "Enter a valid query"
       });
+    } else {
+      try {
+        this.setState({
+          isWaitingForResponse: true,
+          response: null,
+          operationName
+        });
 
-      // _fetchQuery may return a subscription.
-      const subscription = this._fetchQuery(
-        editedQueryList,
-        variables,
-        // operationName
-        result => {
-          const cleanResults = result.map((resultObj, index) => {
-            resultObj["dataSet" + index] = resultObj.data;
-            delete resultObj["data"];
-            return resultObj;
-          });
-
-          if (runID === this._runCounter) {
-            this.setState({
-              isWaitingForResponse: false,
-              response: JSON.stringify(cleanResults, null, 2)
+        // _fetchQuery may return a subscription.
+        const subscription = this._fetchQuery(
+          editedQueryList,
+          variables,
+          // operationName
+          result => {
+            const cleanResults = result.map((resultObj, index) => {
+              resultObj["dataSet" + index] = resultObj.data;
+              delete resultObj["data"];
+              return resultObj;
             });
-          }
-        }
-      );
 
-      this.setState({ subscription });
-    } catch (error) {
-      this.setState({
-        isWaitingForResponse: false,
-        response: error.message
-      });
+            if (runID === this._runCounter) {
+              this.setState({
+                isWaitingForResponse: false,
+                response: JSON.stringify(cleanResults, null, 2)
+              });
+            }
+          }
+        );
+        this.setState({ subscription });
+      } catch (error) {
+        this.setState({
+          isWaitingForResponse: false,
+          response: error.message
+        });
+      }
     }
   };
 
