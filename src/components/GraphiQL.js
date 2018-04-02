@@ -725,7 +725,6 @@ export class GraphiQL extends React.Component {
           });
 
           if (queryID === this._editorQueryID && cleanResults.length !== 0) {
-            console.log(cleanResults);
             this.setState({
               isWaitingForResponse: false,
               response: JSON.stringify(cleanResults, null, 2)

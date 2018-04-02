@@ -2,7 +2,7 @@
   "name": "super-graphiql",
   "version": "0.0.3",
   "description": "Super-GraphiQL is a powerful yet simple GUI designed for testing your GraphQL API",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "unpkg": "graphiql.min.js",
   "files": [
     "dist",
@@ -125,9 +125,9 @@
     "type": "git",
     "url": "git+https://github.com/mlafontant/super-graphiql.git"
   },
-  "author": "Albert, Angela, Eduardo, Marissa <superGraphicalTeam@gmail.com>",
+  "author": "Albert Chen, Angela Scerbo, Eduardo Maillo, Marissa Lafontant <superGraphiQLTeam@gmail.com>",
   "license": "MIT",
-  "keywords": [
+  "keywords": [ 
     "graphql",
     "graphiql",
     "super graphiql, gui, ide"
