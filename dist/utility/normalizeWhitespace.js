@@ -13,13 +13,10 @@ exports.normalizeWhitespace = normalizeWhitespace;
  */
 
 // Unicode whitespace characters that break the interface.
-var invalidCharacters = (exports.invalidCharacters = Array.from(
-  { length: 11 },
-  function(x, i) {
-    // \u2000 -> \u200a
-    return String.fromCharCode(0x2000 + i);
-  }
-).concat(["\u2028", "\u2029", "\u202F"]));
+var invalidCharacters = exports.invalidCharacters = Array.from({ length: 11 }, function (x, i) {
+  // \u2000 -> \u200a
+  return String.fromCharCode(0x2000 + i);
+}).concat(["\u2028", "\u2029", "\u202F"]);
 
 var sanitizeRegex = new RegExp("[" + invalidCharacters.join("|") + "]", "g");
 
