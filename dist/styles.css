@@ -1437,7 +1437,7 @@ li.CodeMirror-hint-active {
   margin-bottom: 0; }
 
 .queryEditorsWrap {
-  height: 100vh;
+  height: 100%;
   overflow: scroll; }
 
 .query-editor-container {
