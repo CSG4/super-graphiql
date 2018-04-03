@@ -10,7 +10,7 @@ var _graphql = require("graphql");
 
 /**
  * Provided previous "queryFacts", a GraphQL schema, and a query document
- * string, return a set of facts about that query useful for GraphiQL features.
+ * string, return a set of facts about that query useful for SuperGraphiQL features.
  *
  * If the query cannot be parsed, returns undefined.
  */
