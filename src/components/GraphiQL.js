@@ -676,10 +676,13 @@ export class GraphiQL extends React.Component {
           variables,
           // operationName
           result => {
-            const transformResults = result.reduce((acc, resultObj, index) => {
-              acc["dataSet" + index] = resultObj.data;
-              return acc;
-            }, {});
+            const transformResults = result.reduce(
+              (responseObj, resultObj, index) => {
+                responseObj["dataSet" + index] = resultObj.data;
+                return responseObj;
+              },
+              {}
+            );
 
             if (runID === this._runCounter) {
               this.setState({
