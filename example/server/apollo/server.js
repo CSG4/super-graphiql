@@ -11,19 +11,20 @@ const app = express();
 const ws = createServer(app);
 
 
-app.use("/*/app.bundle.css", (req, res) => {
-  console.log('css');
-  console.log(__dirname);
-  res.sendFile(path.join(__dirname, "./../../dist/app.bundle.css"));
+app.use('/*.css',(req, res) => {
+  res.setHeader('Content-Type','text/css');
+  res.sendFile(path.join(__dirname, './../../../super-graphiql.min.css'));
+  // res.sendFile(path.join(__dirname, "./../../../styles/css/app.css"));
 });
 
-app.use('/*/webpack-bundle.js', (req, res) => {
-  res.sendFile(path.join(__dirname, "./../../dist/webpack-bundle.js"));
+// // app.use('/*/webpack-bundle.js', (req, res) => {
+// //   res.sendFile(path.join(__dirname, "./../../dist/webpack-bundle.js"));
+// // });
+
+app.use('/super-graphiql.min.js', (req, res) => {
+  res.sendFile(path.join(__dirname, "./../../../super-graphiql.min.js"));
 });
 
-app.use('/graphiql.min.js', (req, res) => {
-  res.sendFile(path.join(__dirname, "./../../../graphiql.min.js"));
-});
 // app.use("/*/graphiql.css", (req, res) => {
 //   res.sendFile(path.join(__dirname, "./../../../graphiql.css"));
 // });
