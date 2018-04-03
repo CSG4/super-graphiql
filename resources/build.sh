@@ -14,6 +14,7 @@ echo "Bundling super-graphiql.js..."
 browserify -g browserify-shim -s GraphiQL dist/index.js > super-graphiql.js
 echo "Bundling super-graphiql.min.js..."
 browserify -g browserify-shim -t uglifyify -s GraphiQL dist/index.js 2> /dev/null | uglifyjs -c > super-graphiql.min.js 2> /dev/null
-echo "Bundling super-graphiql.css..."
-cssnano example/dist/app.bundle.css super-graphiql.min.css
+echo "Bundling super-graphiql.min.css..."
+node-sass styles/styles.scss dist/styles.css
+postcss --use autoprefixer -b 'last 2 versions' < dist/styles.css | postcss --use cssnano > super-graphiql.min.css
 echo "Done"
