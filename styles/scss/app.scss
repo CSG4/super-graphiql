@@ -151,14 +151,14 @@
 	.fa-trash {
 		opacity: 0;
 		font-size: 19px;
-		transition: opacity 2s linear;
+		transition: opacity 0.5s linear;
 	}
 }
 
 .add-query {
 	display: none;
 	margin-right: 5px;
-	transition: color 2s linear;
+	transition: color 0.5s linear;
 }
 
 .graphiql-container .topBarWrap {
