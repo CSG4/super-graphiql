@@ -11,7 +11,7 @@ import { describe, it } from "mocha";
 import React from "react";
 import ReactTestRenderer from "react-test-renderer";
 
-import { GraphiQL } from "../GraphiQL";
+import { SuperGraphiQL } from "../SuperGraphiQL";
 
 document.createRange = () => ({
   setEnd() {},
@@ -67,18 +67,18 @@ Object.defineProperty(window, "localStorage", {
   value: mockStorage
 });
 
-describe("GraphiQL", () => {
+describe("SuperGraphiQL", () => {
   const noOpFetcher = () => {};
 
   it("should throw error without fetcher", () => {
-    expect(() => ReactTestRenderer.create(<GraphiQL />)).to.throw(
-      "GraphiQL requires a fetcher function"
+    expect(() => ReactTestRenderer.create(<SuperGraphiQL />)).to.throw(
+      "SuperGraphiQL requires a fetcher function"
     );
   });
 
   it("should construct correctly with fetcher", () => {
     expect(() =>
-      ReactTestRenderer.create(<GraphiQL fetcher={noOpFetcher} />)
+      ReactTestRenderer.create(<SuperGraphiQL fetcher={noOpFetcher} />)
     ).to.not.throw();
   });
 
@@ -97,7 +97,7 @@ describe("GraphiQL", () => {
 
     // Initial render calls fetcher
     const instance = ReactTestRenderer.create(
-      <GraphiQL fetcher={firstFetcher} />
+      <SuperGraphiQL fetcher={firstFetcher} />
     );
     expect(firstCalled).to.equal(true);
 
@@ -105,34 +105,36 @@ describe("GraphiQL", () => {
 
     // Re-render does not call fetcher again
     firstCalled = false;
-    instance.update(<GraphiQL fetcher={firstFetcher} />);
+    instance.update(<SuperGraphiQL fetcher={firstFetcher} />);
     expect(firstCalled).to.equal(false);
 
     await wait();
 
     // Re-render with new fetcher is called.
-    instance.update(<GraphiQL fetcher={secondFetcher} />);
+    instance.update(<SuperGraphiQL fetcher={secondFetcher} />);
     expect(secondCalled).to.equal(true);
   });
 
   it("should not throw error if schema missing and query provided", () => {
     expect(() =>
-      ReactTestRenderer.create(<GraphiQL fetcher={noOpFetcher} query="{}" />)
+      ReactTestRenderer.create(
+        <SuperGraphiQL fetcher={noOpFetcher} query="{}" />
+      )
     ).to.not.throw();
   });
 
   it("defaults to the built-in default query", () => {
     const graphiQL = ReactTestRenderer.create(
-      <GraphiQL fetcher={noOpFetcher} />
+      <SuperGraphiQL fetcher={noOpFetcher} />
     );
     expect(graphiQL.getInstance().state.query).to.include(
-      "# Welcome to GraphiQL"
+      "# Welcome to SuperGraphiQL"
     );
   });
 
   it("accepts a custom default query", () => {
     const graphiQL = ReactTestRenderer.create(
-      <GraphiQL fetcher={noOpFetcher} defaultQuery="GraphQL Party!!" />
+      <SuperGraphiQL fetcher={noOpFetcher} defaultQuery="GraphQL Party!!" />
     );
     expect(graphiQL.getInstance().state.query).to.equal("GraphQL Party!!");
   });

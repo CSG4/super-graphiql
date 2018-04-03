@@ -31,7 +31,7 @@ export class ResultViewer extends React.Component {
   }
 
   componentDidMount() {
-    // Lazily require to ensure requiring GraphiQL outside of a Browser context
+    // Lazily require to ensure requiring SuperGraphiQL outside of a Browser context
     // does not produce an error.
     const CodeMirror = require("codemirror");
     require("codemirror/addon/fold/foldgutter");

@@ -57,7 +57,7 @@ var ResultViewer = exports.ResultViewer = function (_React$Component) {
     value: function componentDidMount() {
       var _this2 = this;
 
-      // Lazily require to ensure requiring GraphiQL outside of a Browser context
+      // Lazily require to ensure requiring SuperGraphiQL outside of a Browser context
       // does not produce an error.
       var CodeMirror = require("codemirror");
       require("codemirror/addon/fold/foldgutter");

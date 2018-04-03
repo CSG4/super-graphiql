@@ -9,4 +9,4 @@
  */
 
 // The primary React component to use.
-module.exports = require("./components/GraphiQL").GraphiQL;
+module.exports = require("./components/SuperGraphiQL").SuperGraphiQL;

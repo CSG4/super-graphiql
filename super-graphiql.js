@@ -1538,11 +1538,11 @@ var ExecuteButton = exports.ExecuteButton = function (_React$Component) {
         options = _react2.default.createElement(
           "ul",
           { className: "execute-options" },
-          operations.map(function (operation) {
+          operations.map(function (operation, i) {
             return _react2.default.createElement(
               "li",
               {
-                key: operation.name ? operation.name.value : "*",
+                key: operation.name ? operation.name.value : i,
                 className: operation === highlight && "selected" || null,
                 onMouseOver: function onMouseOver() {
                   return _this2.setState({ highlight: operation });
@@ -1616,7 +1616,1013 @@ ExecuteButton.propTypes = {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.GraphiQL = undefined;
+exports.HistoryExplorer = undefined;
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _graphql = require("graphql");
+
+var _react = (typeof window !== "undefined" ? window['React'] : typeof global !== "undefined" ? global['React'] : null);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = require("prop-types");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+var _QueryStore = require("../utility/QueryStore");
+
+var _QueryStore2 = _interopRequireDefault(_QueryStore);
+
+var _HistoryQuery = require("./HistoryExplorer/HistoryQuery");
+
+var _HistoryQuery2 = _interopRequireDefault(_HistoryQuery);
+
+var _SearchBox = require("./HistoryExplorer/SearchBox");
+
+var _SearchBox2 = _interopRequireDefault(_SearchBox);
+
+var _debounce = require("../utility/debounce");
+
+var _debounce2 = _interopRequireDefault(_debounce);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var queriesToSave = function queriesToSave(nextProps, currProps, lastQuerySaved) {
+  // add current variable prop to each query
+  var executedQueries = nextProps.queryList.reduce(function (acc, entry) {
+    var query = void 0;
+    try {
+      query = (0, _graphql.print)((0, _graphql.parse)(entry.query));
+    } catch (e) {
+      query = "";
+    }
+
+    var cleanEntry = {
+      query: query,
+      variables: nextProps.variables,
+      operationName: entry.operationName
+    };
+    return entry.checked && entry.query.trim() ? acc.concat(cleanEntry) : acc;
+  }, []);
+  // if history is empty, add all the last queries run
+  if (!lastQuerySaved.length && nextProps.runID) {
+    return executedQueries;
+  }
+
+  // Only add new queries to the historyStore
+  var newQueries = nextProps.runID === currProps.runID ? [] : executedQueries.filter(function (nextQuery) {
+    return !lastQuerySaved.some(function (pastQuery) {
+      return pastQuery.query === nextQuery.query ? true : false;
+    });
+  });
+
+  return newQueries;
+};
+
+var MAX_HISTORY_LENGTH = 20;
+
+var HistoryExplorer = exports.HistoryExplorer = function (_React$Component) {
+  _inherits(HistoryExplorer, _React$Component);
+
+  function HistoryExplorer(props) {
+    _classCallCheck(this, HistoryExplorer);
+
+    var _this = _possibleConstructorReturn(this, (HistoryExplorer.__proto__ || Object.getPrototypeOf(HistoryExplorer)).call(this, props));
+
+    _initialiseProps.call(_this);
+
+    _this.historyStore = new _QueryStore2.default("history", props.storage);
+    _this.pinnedStore = new _QueryStore2.default("pinned", props.storage);
+    var historyQueries = _this.historyStore.fetchAll();
+    var pinnedQueries = _this.pinnedStore.fetchAll();
+    _this.state = {
+      history: historyQueries,
+      pinned: pinnedQueries
+    };
+    return _this;
+  }
+
+  _createClass(HistoryExplorer, [{
+    key: "componentWillReceiveProps",
+    value: function componentWillReceiveProps(nextProps) {
+      var historyQueries = this.historyStore.fetchAll() || [];
+      var pinnedQueries = this.pinnedStore.fetchAll();
+      var lastSavedQueries = historyQueries.concat(pinnedQueries);
+      var newQueries = queriesToSave(nextProps, this.props, lastSavedQueries);
+      if (newQueries.length > 0) {
+        this.historyStore.concat(newQueries);
+        while (this.historyStore.length > MAX_HISTORY_LENGTH) {
+          this.historyStore.shift();
+        }
+
+        var _historyQueries = this.historyStore.items;
+        var _pinnedQueries = this.pinnedStore.items;
+        this.setState({
+          history: _historyQueries,
+          pinned: _pinnedQueries
+        });
+      }
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var historyNodes = this.createNodes(this.state.history);
+      var pinnedNodes = this.createNodes(this.state.pinned);
+      return _react2.default.createElement(
+        "div",
+        { className: "history-panel" },
+        _react2.default.createElement(
+          "div",
+          { className: "history-title-bar" },
+          _react2.default.createElement(
+            "div",
+            { className: "history-title" },
+            "History Explorer"
+          ),
+          _react2.default.createElement(
+            "div",
+            { className: "doc-explorer-rhs" },
+            this.props.children
+          )
+        ),
+        _react2.default.createElement(
+          "div",
+          { className: "history-contents" },
+          _react2.default.createElement(_SearchBox2.default, {
+            placeholder: "Search History...",
+            onSearch: this.handleSearch
+          }),
+          _react2.default.createElement(
+            "div",
+            { className: "pinned-contents" },
+            pinnedNodes
+          ),
+          _react2.default.createElement(
+            "div",
+            { className: "search-contents" },
+            historyNodes
+          )
+        )
+      );
+    }
+
+    // ENABLE REGEX Search
+
+  }]);
+
+  return HistoryExplorer;
+}(_react2.default.Component);
+
+HistoryExplorer.propTypes = {
+  runID: _propTypes2.default.number,
+  queryList: _propTypes2.default.array,
+  variables: _propTypes2.default.string,
+  onSelectQuery: _propTypes2.default.func,
+  storage: _propTypes2.default.object
+};
+
+var _initialiseProps = function _initialiseProps() {
+  var _this2 = this;
+
+  this.togglePinned = function (query, variables, operationName, pinned) {
+    var item = {
+      query: query,
+      variables: variables,
+      operationName: operationName
+    };
+    if (!_this2.pinnedStore.contains(item)) {
+      item.pinned = true;
+      _this2.pinnedStore.push(item);
+      _this2.historyStore.delete(item);
+    } else if (pinned) {
+      delete item.pinned;
+      if (!_this2.historyStore.contains(item)) _this2.historyStore.push(item);
+      _this2.pinnedStore.delete(item);
+    }
+    var historyQueries = _this2.historyStore.items;
+    var pinnedQueries = _this2.pinnedStore.items;
+    _this2.setState({
+      history: historyQueries,
+      pinned: pinnedQueries
+    });
+  };
+
+  this.handleSearch = function (searchParams) {
+    var match = _this2.historyStore.items.filter(function (entry) {
+      return entry.query.includes(searchParams);
+    });
+    _this2.setState({ history: match });
+  };
+
+  this.createNodes = function (queryStore) {
+    var queryNodes = queryStore.slice().reverse();
+    return queryNodes.map(function (entry, i) {
+      return _react2.default.createElement(_HistoryQuery2.default, _extends({
+        handleTogglePinned: _this2.togglePinned,
+        key: i,
+        onSelect: _this2.props.onSelectQuery
+      }, entry));
+    });
+  };
+};
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../utility/QueryStore":25,"../utility/debounce":27,"./HistoryExplorer/HistoryQuery":13,"./HistoryExplorer/SearchBox":14,"graphql":101,"prop-types":239}],13:[function(require,module,exports){
+(function (global){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = (typeof window !== "undefined" ? window['React'] : typeof global !== "undefined" ? global['React'] : null);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = require("prop-types");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Copyright (c) Facebook, Inc.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  All rights reserved.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  This source code is licensed under the license found in the
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  LICENSE file in the root directory of this source tree.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
+
+var HistoryQuery = function (_React$Component) {
+  _inherits(HistoryQuery, _React$Component);
+
+  function HistoryQuery(props) {
+    _classCallCheck(this, HistoryQuery);
+
+    var _this = _possibleConstructorReturn(this, (HistoryQuery.__proto__ || Object.getPrototypeOf(HistoryQuery)).call(this, props));
+
+    var visibility = _this.props.pinned ? "visible" : "hidden";
+    _this.state = { visibility: visibility };
+    return _this;
+  }
+
+  _createClass(HistoryQuery, [{
+    key: "render",
+    value: function render() {
+      if (this.props.pinned && this.state.visibility === "hidden") {
+        this.setState({ visibility: "visible" });
+      }
+      var bmStyles = {
+        float: "left",
+        marginLeft: "7px",
+        visibility: this.state.visibility
+      };
+
+      var binStyles = {
+        float: "right",
+        marginLeft: "7px",
+        visibility: this.state.visibility
+      };
+
+      var displayName = this.props.operationName || this.props.query.split("\n").filter(function (line) {
+        return line.indexOf("#") !== 0;
+      }).join("");
+      var bookmark = this.props.pinned ? "fa fa-bookmark" : "fa fa-bookmark-o";
+      return _react2.default.createElement(
+        "div",
+        {
+          className: "history-query",
+          onClick: this.handleClick.bind(this),
+          onMouseEnter: this.handleMouseEnter.bind(this),
+          onMouseLeave: this.handleMouseLeave.bind(this)
+        },
+        _react2.default.createElement(
+          "span",
+          { onClick: this.handlePinClick.bind(this), style: bmStyles },
+          _react2.default.createElement("i", { className: bookmark, "aria-hidden": "true" })
+        ),
+        _react2.default.createElement(
+          "span",
+          null,
+          displayName
+        )
+      );
+    }
+  }, {
+    key: "handleMouseEnter",
+    value: function handleMouseEnter() {
+      if (!this.props.pinned) {
+        this.setState({ visibility: "visible" });
+      }
+    }
+  }, {
+    key: "handleMouseLeave",
+    value: function handleMouseLeave() {
+      if (!this.props.pinned) {
+        this.setState({ visibility: "hidden" });
+      }
+    }
+  }, {
+    key: "handleClick",
+    value: function handleClick() {
+      this.props.onSelect(this.props.query, this.props.variables);
+    }
+  }, {
+    key: "handlePinClick",
+    value: function handlePinClick(e) {
+      e.stopPropagation();
+      this.props.handleTogglePinned(this.props.query, this.props.variables, this.props.operationName, this.props.pinned);
+    }
+  }]);
+
+  return HistoryQuery;
+}(_react2.default.Component);
+
+HistoryQuery.propTypes = {
+  pinned: _propTypes2.default.bool,
+  favoriteSize: _propTypes2.default.number,
+  handleTogglePinned: _propTypes2.default.func,
+  operationName: _propTypes2.default.string,
+  onSelect: _propTypes2.default.func,
+  query: _propTypes2.default.string
+};
+exports.default = HistoryQuery;
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"prop-types":239}],14:[function(require,module,exports){
+(function (global){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = (typeof window !== "undefined" ? window['React'] : typeof global !== "undefined" ? global['React'] : null);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = require("prop-types");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+var _debounce = require("../../utility/debounce");
+
+var _debounce2 = _interopRequireDefault(_debounce);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var SearchBox = function (_React$Component) {
+  _inherits(SearchBox, _React$Component);
+
+  function SearchBox(props) {
+    _classCallCheck(this, SearchBox);
+
+    var _this = _possibleConstructorReturn(this, (SearchBox.__proto__ || Object.getPrototypeOf(SearchBox)).call(this, props));
+
+    _this.handleChange = function (event) {
+      var value = event.target.value;
+      _this.setState({ value: value });
+      _this.debouncedOnSearch(value);
+    };
+
+    _this.handleClear = function () {
+      _this.setState({ value: "" });
+      _this.props.onSearch("");
+    };
+
+    _this.state = { value: props.value || "" };
+    _this.debouncedOnSearch = (0, _debounce2.default)(200, _this.props.onSearch);
+    return _this;
+  }
+
+  _createClass(SearchBox, [{
+    key: "render",
+    value: function render() {
+      return _react2.default.createElement(
+        "label",
+        { className: "search-box" },
+        _react2.default.createElement("input", {
+          value: this.state.value,
+          onChange: this.handleChange,
+          type: "text",
+          placeholder: this.props.placeholder
+        }),
+        this.state.value && _react2.default.createElement(
+          "div",
+          { className: "search-box-clear", onClick: this.handleClear },
+          "\u2715"
+        )
+      );
+    }
+  }]);
+
+  return SearchBox;
+}(_react2.default.Component);
+
+SearchBox.propTypes = {
+  value: _propTypes2.default.string,
+  placeholder: _propTypes2.default.string,
+  onSearch: _propTypes2.default.func
+};
+exports.default = SearchBox;
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../../utility/debounce":27,"prop-types":239}],15:[function(require,module,exports){
+(function (global){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.QueryEditor = undefined;
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = (typeof window !== "undefined" ? window['React'] : typeof global !== "undefined" ? global['React'] : null);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = require("prop-types");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+var _graphql = require("graphql");
+
+var _markdownIt = require("markdown-it");
+
+var _markdownIt2 = _interopRequireDefault(_markdownIt);
+
+var _normalizeWhitespace = require("../utility/normalizeWhitespace");
+
+var _onHasCompletion = require("../utility/onHasCompletion");
+
+var _onHasCompletion2 = _interopRequireDefault(_onHasCompletion);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Copyright (c) Facebook, Inc.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  All rights reserved.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  This source code is licensed under the license found in the
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  LICENSE file in the root directory of this source tree.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
+
+var md = new _markdownIt2.default();
+var AUTO_COMPLETE_AFTER_KEY = /^[a-zA-Z0-9_@(]$/;
+
+/**
+ * QueryEditor
+ *
+ * Maintains an instance of CodeMirror responsible for editing a GraphQL query.
+ *
+ * Props:
+ *
+ *   - schema: A GraphQLSchema instance enabling editor linting and hinting.
+ *   - value: The text of the editor.
+ *   - onEdit: A function called when the editor changes, given the edited text.
+ *   - readOnly: Turns the editor to read-only mode.
+ *
+ */
+
+var QueryEditor = exports.QueryEditor = function (_React$Component) {
+  _inherits(QueryEditor, _React$Component);
+
+  function QueryEditor(props) {
+    _classCallCheck(this, QueryEditor);
+
+    // Keep a cached version of the value, this cache will be updated when the
+    // editor is updated, which can later be used to protect the editor from
+    // unnecessary updates during the update lifecycle.
+    var _this = _possibleConstructorReturn(this, (QueryEditor.__proto__ || Object.getPrototypeOf(QueryEditor)).call(this));
+
+    _this._onKeyUp = function (cm, event) {
+      if (AUTO_COMPLETE_AFTER_KEY.test(event.key)) {
+        _this.editor.execCommand("autocomplete");
+      }
+    };
+
+    _this._onEdit = function () {
+      if (!_this.ignoreChangeEvent) {
+        _this.cachedValue = _this.editor.getValue();
+        if (_this.props.onEdit) {
+          _this.props.onEdit(_this.cachedValue, _this.props.editorId);
+        }
+      }
+    };
+
+    _this._onHasCompletion = function (cm, data) {
+      (0, _onHasCompletion2.default)(cm, data, _this.props.onHintInformationRender);
+    };
+
+    _this.cachedValue = props.value || "";
+    return _this;
+  }
+
+  _createClass(QueryEditor, [{
+    key: "componentDidMount",
+    value: function componentDidMount() {
+      var _this2 = this;
+
+      // Lazily require to ensure requiring SuperGraphiQL outside of a Browser context
+      // does not produce an error.
+      var CodeMirror = require("codemirror");
+      require("codemirror/addon/hint/show-hint");
+      require("codemirror/addon/comment/comment");
+      require("codemirror/addon/edit/matchbrackets");
+      require("codemirror/addon/edit/closebrackets");
+      require("codemirror/addon/fold/foldgutter");
+      require("codemirror/addon/fold/brace-fold");
+      require("codemirror/addon/search/search");
+      require("codemirror/addon/search/searchcursor");
+      require("codemirror/addon/search/jump-to-line");
+      require("codemirror/addon/dialog/dialog");
+      require("codemirror/addon/lint/lint");
+      require("codemirror/keymap/sublime");
+      require("codemirror-graphql/hint");
+      require("codemirror-graphql/lint");
+      require("codemirror-graphql/info");
+      require("codemirror-graphql/jump");
+      require("codemirror-graphql/mode"); // specify language
+
+      this.editor = CodeMirror(this._node, {
+        value: this.cachedValue,
+        lineNumbers: true,
+        tabSize: 2,
+        mode: "graphql",
+        theme: this.props.editorTheme || "graphiql",
+        keyMap: "sublime",
+        autoCloseBrackets: true,
+        matchBrackets: true,
+        showCursorWhenSelecting: true,
+        readOnly: this.props.readOnly ? "nocursor" : false,
+        foldGutter: {
+          minFoldSize: 4
+        },
+        lint: {
+          schema: this.props.schema
+        },
+        hintOptions: {
+          schema: this.props.schema,
+          closeOnUnfocus: false,
+          completeSingle: false
+        },
+        info: {
+          schema: this.props.schema,
+          renderDescription: function renderDescription(text) {
+            return md.render(text);
+          },
+          onClick: function onClick(reference) {
+            return _this2.props.onClickReference(reference);
+          }
+        },
+        jump: {
+          schema: this.props.schema,
+          onClick: function onClick(reference) {
+            return _this2.props.onClickReference(reference);
+          }
+        },
+        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+        extraKeys: {
+          "Cmd-Space": function CmdSpace() {
+            return _this2.editor.showHint({ completeSingle: true });
+          },
+          "Ctrl-Space": function CtrlSpace() {
+            return _this2.editor.showHint({ completeSingle: true });
+          },
+          "Alt-Space": function AltSpace() {
+            return _this2.editor.showHint({ completeSingle: true });
+          },
+          "Shift-Space": function ShiftSpace() {
+            return _this2.editor.showHint({ completeSingle: true });
+          },
+
+          "Cmd-Enter": function CmdEnter() {
+            if (_this2.props.onRunQuery) {
+              _this2.props.onRunQuery();
+            }
+          },
+          "Ctrl-Enter": function CtrlEnter() {
+            if (_this2.props.onRunQuery) {
+              _this2.props.onRunQuery();
+            }
+          },
+
+          "Shift-Ctrl-P": function ShiftCtrlP() {
+            if (_this2.props.onPrettifyQuery) {
+              _this2.props.onPrettifyQuery();
+            }
+          },
+
+          // Persistent search box in Query Editor
+          "Cmd-F": "findPersistent",
+          "Ctrl-F": "findPersistent",
+
+          // Editor improvements
+          "Ctrl-Left": "goSubwordLeft",
+          "Ctrl-Right": "goSubwordRight",
+          "Alt-Left": "goGroupLeft",
+          "Alt-Right": "goGroupRight"
+        }
+      });
+
+      this.editor.on("change", this._onEdit);
+      this.editor.on("keyup", this._onKeyUp);
+      this.editor.on("hasCompletion", this._onHasCompletion);
+      this.editor.on("beforeChange", this._onBeforeChange);
+      this.editor.on("cursorActivity", this._onEdit);
+
+      if (!this.props.checked) {
+        document.getElementById("checkbox_" + this.props.editorId).checked = false;
+      }
+
+      this.manageHintsBox();
+      this.setFocus();
+    }
+  }, {
+    key: "componentDidUpdate",
+    value: function componentDidUpdate(prevProps) {
+      var CodeMirror = require("codemirror");
+
+      // Ensure the changes caused by this update are not interpretted as
+      // user-input changes which could otherwise result in an infinite
+      // event loop.
+      this.ignoreChangeEvent = true;
+      if (this.props.schema !== prevProps.schema) {
+        this.editor.options.lint.schema = this.props.schema;
+        this.editor.options.hintOptions.schema = this.props.schema;
+        this.editor.options.info.schema = this.props.schema;
+        this.editor.options.jump.schema = this.props.schema;
+        CodeMirror.signal(this.editor, "change", this.editor);
+      }
+      if (this.props.value !== prevProps.value && this.props.value !== this.cachedValue) {
+        this.cachedValue = this.props.value;
+        this.editor.setValue(this.props.value);
+      }
+      this.ignoreChangeEvent = false;
+    }
+  }, {
+    key: "componentWillUnmount",
+    value: function componentWillUnmount() {
+      this.setFocus(1);
+
+      this.editor.off("change", this._onEdit);
+      this.editor.off("keyup", this._onKeyUp);
+      this.editor.off("hasCompletion", this._onHasCompletion);
+      this.editor = null;
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var _this3 = this;
+
+      return _react2.default.createElement(
+        "div",
+        { className: "query-editor-container" },
+        _react2.default.createElement(
+          "div",
+          {
+            className: "query-editor",
+            id: this.props.editorId,
+            ref: function ref(node) {
+              _this3._node = node;
+            }
+          },
+          _react2.default.createElement(
+            "div",
+            { className: "query-editor-top-actions" },
+            _react2.default.createElement(
+              "label",
+              { className: "checkbox-container" },
+              _react2.default.createElement("input", {
+                type: "checkbox",
+                defaultChecked: true,
+                className: "run-query-check",
+                id: "checkbox_" + this.props.editorId,
+                value: "select",
+                title: "Select",
+                onChange: function onChange(e) {
+                  _this3.props.onCheckToRun(_this3.props.editorId, e.target.checked);
+                }
+              }),
+              _react2.default.createElement("span", { className: "checkmark" })
+            ),
+            _react2.default.createElement(
+              "button",
+              {
+                title: "Delete",
+                className: "action-button delete-query",
+                id: this.props.editorId,
+                onClick: function onClick() {
+                  _this3.props.onClickDeleteButton(_this3.props.editorId);
+                }
+              },
+              _react2.default.createElement("i", { className: "fa fa-trash", "aria-hidden": "true" })
+            )
+          )
+        ),
+        _react2.default.createElement(
+          "button",
+          {
+            title: "Add",
+            className: "action-button add-query",
+            onClick: function onClick() {
+              _this3.props.onAddNewQueryEditor();
+            }
+          },
+          _react2.default.createElement("i", { className: "fa fa-plus", "aria-hidden": "true" })
+        )
+      );
+    }
+  }, {
+    key: "setFocus",
+    value: function setFocus(action) {
+      var textAreas = document.getElementsByTagName("textarea");
+      if (textAreas.length === 1 || action === 1) {
+        textAreas[0].focus();
+      } else if (textAreas[textAreas.length - 3] !== undefined) {
+        textAreas[textAreas.length - 3].focus();
+      }
+    }
+  }, {
+    key: "manageHintsBox",
+    value: function manageHintsBox() {
+      var _this4 = this;
+
+      var currentEditor = document.getElementById(this.props.editorId);
+      if (currentEditor) {
+        currentEditor.addEventListener("click", function () {
+          if (_this4.props.value.trim() && _this4.editor.getCursor().ch === _this4.props.value.length) {
+            _this4.editor.execCommand("autocomplete");
+          }
+        });
+        currentEditor.addEventListener("focusout", function () {
+          var openHints = document.getElementsByClassName("CodeMirror-hints");
+          if (openHints[0]) {
+            setTimeout(function () {
+              if (openHints[0]) openHints[0].remove();
+            }, 200);
+          }
+        });
+      }
+    }
+
+    /**
+     * Public API for retrieving the CodeMirror instance from this
+     * React component.
+     */
+
+  }, {
+    key: "getCodeMirror",
+    value: function getCodeMirror() {
+      return this.editor;
+    }
+
+    /**
+     * Public API for retrieving the DOM client height for this component.
+     */
+
+  }, {
+    key: "getClientHeight",
+    value: function getClientHeight() {
+      return this._node && this._node.clientHeight;
+    }
+
+    /**
+     * Render a custom UI for CodeMirror's hint which includes additional info
+     * about the type and description for the selected context.
+     */
+
+  }, {
+    key: "_onBeforeChange",
+    value: function _onBeforeChange(instance, change) {
+      // The update function is only present on non-redo, non-undo events.
+      if (change.origin === "paste") {
+        var text = change.text.map(_normalizeWhitespace.normalizeWhitespace);
+        change.update(change.from, change.to, text);
+      }
+    }
+  }]);
+
+  return QueryEditor;
+}(_react2.default.Component);
+
+QueryEditor.propTypes = {
+  schema: _propTypes2.default.instanceOf(_graphql.GraphQLSchema),
+  editorId: _propTypes2.default.number,
+  value: _propTypes2.default.string,
+  checked: _propTypes2.default.bool,
+  onEdit: _propTypes2.default.func,
+  readOnly: _propTypes2.default.bool,
+  onCheckToRun: _propTypes2.default.func,
+  onHintInformationRender: _propTypes2.default.func,
+  onClickReference: _propTypes2.default.func,
+  onClickDeleteButton: _propTypes2.default.func,
+  onPrettifyQuery: _propTypes2.default.func,
+  onRunQuery: _propTypes2.default.func,
+  editorTheme: _propTypes2.default.string,
+  onAddNewQueryEditor: _propTypes2.default.func
+};
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../utility/normalizeWhitespace":34,"../utility/onHasCompletion":35,"codemirror":66,"codemirror-graphql/hint":37,"codemirror-graphql/info":38,"codemirror-graphql/jump":39,"codemirror-graphql/lint":40,"codemirror-graphql/mode":41,"codemirror/addon/comment/comment":53,"codemirror/addon/dialog/dialog":54,"codemirror/addon/edit/closebrackets":55,"codemirror/addon/edit/matchbrackets":56,"codemirror/addon/fold/brace-fold":57,"codemirror/addon/fold/foldgutter":59,"codemirror/addon/hint/show-hint":60,"codemirror/addon/lint/lint":61,"codemirror/addon/search/jump-to-line":62,"codemirror/addon/search/search":63,"codemirror/addon/search/searchcursor":64,"codemirror/keymap/sublime":65,"graphql":101,"markdown-it":178,"prop-types":239}],16:[function(require,module,exports){
+(function (global){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ResultViewer = undefined;
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = (typeof window !== "undefined" ? window['React'] : typeof global !== "undefined" ? global['React'] : null);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _reactDom = (typeof window !== "undefined" ? window['ReactDOM'] : typeof global !== "undefined" ? global['ReactDOM'] : null);
+
+var _reactDom2 = _interopRequireDefault(_reactDom);
+
+var _propTypes = require("prop-types");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Copyright (c) Facebook, Inc.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  All rights reserved.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  This source code is licensed under the license found in the
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  LICENSE file in the root directory of this source tree.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
+
+/**
+ * ResultViewer
+ *
+ * Maintains an instance of CodeMirror for viewing a GraphQL response.
+ *
+ * Props:
+ *
+ *   - value: The text of the editor.
+ *
+ */
+var ResultViewer = exports.ResultViewer = function (_React$Component) {
+  _inherits(ResultViewer, _React$Component);
+
+  function ResultViewer() {
+    _classCallCheck(this, ResultViewer);
+
+    return _possibleConstructorReturn(this, (ResultViewer.__proto__ || Object.getPrototypeOf(ResultViewer)).call(this));
+  }
+
+  _createClass(ResultViewer, [{
+    key: "componentDidMount",
+    value: function componentDidMount() {
+      var _this2 = this;
+
+      // Lazily require to ensure requiring SuperGraphiQL outside of a Browser context
+      // does not produce an error.
+      var CodeMirror = require("codemirror");
+      require("codemirror/addon/fold/foldgutter");
+      require("codemirror/addon/fold/brace-fold");
+      require("codemirror/addon/dialog/dialog");
+      require("codemirror/addon/search/search");
+      require("codemirror/addon/search/searchcursor");
+      require("codemirror/addon/search/jump-to-line");
+      require("codemirror/keymap/sublime");
+      require("codemirror-graphql/results/mode");
+
+      if (this.props.ResultsTooltip) {
+        require("codemirror-graphql/utils/info-addon");
+        var tooltipDiv = document.createElement("div");
+        CodeMirror.registerHelper("info", "graphql-results", function (token, options, cm, pos) {
+          var Tooltip = _this2.props.ResultsTooltip;
+          _reactDom2.default.render(_react2.default.createElement(Tooltip, { pos: pos }), tooltipDiv);
+          return tooltipDiv;
+        });
+      }
+
+      this.viewer = CodeMirror(this._node, {
+        lineWrapping: true,
+        value: this.props.value || "",
+        readOnly: true,
+        theme: this.props.editorTheme || "graphiql",
+        mode: "graphql-results",
+        keyMap: "sublime",
+        foldGutter: {
+          minFoldSize: 4
+        },
+        gutters: ["CodeMirror-foldgutter"],
+        info: Boolean(this.props.ResultsTooltip),
+        extraKeys: {
+          // Persistent search box in Query Editor
+          "Cmd-F": "findPersistent",
+          "Ctrl-F": "findPersistent",
+
+          // Editor improvements
+          "Ctrl-Left": "goSubwordLeft",
+          "Ctrl-Right": "goSubwordRight",
+          "Alt-Left": "goGroupLeft",
+          "Alt-Right": "goGroupRight"
+        }
+      });
+    }
+  }, {
+    key: "shouldComponentUpdate",
+    value: function shouldComponentUpdate(nextProps) {
+      return this.props.value !== nextProps.value;
+    }
+  }, {
+    key: "componentDidUpdate",
+    value: function componentDidUpdate() {
+      this.viewer.setValue(this.props.value || "");
+    }
+  }, {
+    key: "componentWillUnmount",
+    value: function componentWillUnmount() {
+      this.viewer = null;
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var _this3 = this;
+
+      return _react2.default.createElement("div", {
+        className: "result-window",
+        ref: function ref(node) {
+          _this3._node = node;
+        }
+      });
+    }
+
+    /**
+     * Public API for retrieving the CodeMirror instance from this
+     * React component.
+     */
+
+  }, {
+    key: "getCodeMirror",
+    value: function getCodeMirror() {
+      return this.viewer;
+    }
+
+    /**
+     * Public API for retrieving the DOM client height for this component.
+     */
+
+  }, {
+    key: "getClientHeight",
+    value: function getClientHeight() {
+      return this._node && this._node.clientHeight;
+    }
+  }]);
+
+  return ResultViewer;
+}(_react2.default.Component);
+
+ResultViewer.propTypes = {
+  value: _propTypes2.default.string,
+  editorTheme: _propTypes2.default.string,
+  ResultsTooltip: _propTypes2.default.any
+};
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"codemirror":66,"codemirror-graphql/results/mode":42,"codemirror-graphql/utils/info-addon":47,"codemirror/addon/dialog/dialog":54,"codemirror/addon/fold/brace-fold":57,"codemirror/addon/fold/foldgutter":59,"codemirror/addon/search/jump-to-line":62,"codemirror/addon/search/search":63,"codemirror/addon/search/searchcursor":64,"codemirror/keymap/sublime":65,"prop-types":239}],17:[function(require,module,exports){
+(function (global){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.SuperGraphiQL = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -1701,25 +2707,25 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var DEFAULT_DOC_EXPLORER_WIDTH = 350;
 
 /**
- * The top-level React component for GraphiQL, intended to encompass the entire
+ * The top-level React component for SuperGraphiQL, intended to encompass the entire
  * browser viewport.
  *
  * @see https://github.com/graphql/graphiql#usage
  */
 
-var GraphiQL = exports.GraphiQL = function (_React$Component) {
-  _inherits(GraphiQL, _React$Component);
+var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
+  _inherits(SuperGraphiQL, _React$Component);
 
-  function GraphiQL(props) {
-    _classCallCheck(this, GraphiQL);
+  function SuperGraphiQL(props) {
+    _classCallCheck(this, SuperGraphiQL);
 
     // Ensure props are correct
-    var _this = _possibleConstructorReturn(this, (GraphiQL.__proto__ || Object.getPrototypeOf(GraphiQL)).call(this, props));
+    var _this = _possibleConstructorReturn(this, (SuperGraphiQL.__proto__ || Object.getPrototypeOf(SuperGraphiQL)).call(this, props));
 
     _initialiseProps.call(_this);
 
     if (typeof props.fetcher !== "function") {
-      throw new TypeError("GraphiQL requires a fetcher function.");
+      throw new TypeError("SuperGraphiQL requires a fetcher function.");
     }
 
     // Cache the storage instance
@@ -1777,7 +2783,7 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
     return _this;
   }
 
-  _createClass(GraphiQL, [{
+  _createClass(SuperGraphiQL, [{
     key: "componentDidMount",
     value: function componentDidMount() {
       // Only fetch schema via introspection if a schema has not been
@@ -1870,9 +2876,9 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
       var children = _react2.default.Children.toArray(this.props.children);
 
       var toolbar = (0, _find2.default)(children, function (child) {
-        return child.type === GraphiQL.Toolbar;
+        return child.type === SuperGraphiQL.Toolbar;
       }) || _react2.default.createElement(
-        GraphiQL.Toolbar,
+        SuperGraphiQL.Toolbar,
         null,
         _react2.default.createElement(_ExecuteButton.ExecuteButton, {
           isRunning: Boolean(this.state.subscription),
@@ -1893,7 +2899,7 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
       );
 
       var footer = (0, _find2.default)(children, function (child) {
-        return child.type === GraphiQL.Footer;
+        return child.type === SuperGraphiQL.Footer;
       });
 
       var queryWrapStyle = {
@@ -1955,7 +2961,7 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
                 title: "Show Schema Documentation",
                 label: "History"
               }),
-              _react2.default.createElement(GraphiQL.Logo, null),
+              _react2.default.createElement(SuperGraphiQL.Logo, null),
               _react2.default.createElement(_ToolbarButton.ToolbarButton, {
                 onClick: this.handleToggleDocs,
                 title: "Show Schema Documentation",
@@ -2336,13 +3342,13 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
     }
   }]);
 
-  return GraphiQL;
+  return SuperGraphiQL;
 }(_react2.default.Component);
 
-// Configure the UI by providing this Component as a child of GraphiQL.
+// Configure the UI by providing this Component as a child of SuperGraphiQL.
 
 
-GraphiQL.propTypes = {
+SuperGraphiQL.propTypes = {
   queryList: _propTypes2.default.array,
   fetcher: _propTypes2.default.func.isRequired,
   schema: _propTypes2.default.instanceOf(_graphql.GraphQLSchema),
@@ -2450,16 +3456,15 @@ var _initialiseProps = function _initialiseProps() {
         var subscription = _this6._fetchQuery(editedQueryList, variables,
         // operationName
         function (result) {
-          var cleanResults = result.map(function (resultObj, index) {
-            resultObj["dataSet" + index] = resultObj.data;
-            delete resultObj["data"];
-            return resultObj;
-          });
+          var transformResults = result.reduce(function (responseObj, resultObj, index) {
+            responseObj["dataSet" + index] = resultObj.data;
+            return responseObj;
+          }, {});
 
           if (runID === _this6._runCounter) {
             _this6.setState({
               isWaitingForResponse: false,
-              response: JSON.stringify(cleanResults, null, 2)
+              response: JSON.stringify(transformResults, null, 2)
             });
           }
         });
@@ -2817,7 +3822,7 @@ var _initialiseProps = function _initialiseProps() {
   };
 };
 
-GraphiQL.Logo = function GraphiQLLogo(props) {
+SuperGraphiQL.Logo = function SuperGraphiQLLogo(props) {
   return _react2.default.createElement(
     "div",
     { className: "title" },
@@ -2835,8 +3840,8 @@ GraphiQL.Logo = function GraphiQLLogo(props) {
   );
 };
 
-// Configure the UI by providing this Component as a child of GraphiQL.
-GraphiQL.Toolbar = function GraphiQLToolbar(props) {
+// Configure the UI by providing this Component as a child of SuperGraphiQL.
+SuperGraphiQL.Toolbar = function SuperGraphiQLToolbar(props) {
   return _react2.default.createElement(
     "div",
     { className: "toolbar" },
@@ -2845,27 +3850,27 @@ GraphiQL.Toolbar = function GraphiQLToolbar(props) {
 };
 
 // Export main windows/panes to be used separately if desired.
-GraphiQL.QueryEditor = _QueryEditor.QueryEditor;
-GraphiQL.VariableEditor = _VariableEditor.VariableEditor;
-GraphiQL.ResultViewer = _ResultViewer.ResultViewer;
+SuperGraphiQL.QueryEditor = _QueryEditor.QueryEditor;
+SuperGraphiQL.VariableEditor = _VariableEditor.VariableEditor;
+SuperGraphiQL.ResultViewer = _ResultViewer.ResultViewer;
 
 // Add a button to the Toolbar.
-GraphiQL.Button = _ToolbarButton.ToolbarButton;
-GraphiQL.ToolbarButton = _ToolbarButton.ToolbarButton; // Don't break existing API.
+SuperGraphiQL.Button = _ToolbarButton.ToolbarButton;
+SuperGraphiQL.ToolbarButton = _ToolbarButton.ToolbarButton; // Don't break existing API.
 
 // Add a group of buttons to the Toolbar
-GraphiQL.Group = _ToolbarGroup.ToolbarGroup;
+SuperGraphiQL.Group = _ToolbarGroup.ToolbarGroup;
 
 // Add a menu of items to the Toolbar.
-GraphiQL.Menu = _ToolbarMenu.ToolbarMenu;
-GraphiQL.MenuItem = _ToolbarMenu.ToolbarMenuItem;
+SuperGraphiQL.Menu = _ToolbarMenu.ToolbarMenu;
+SuperGraphiQL.MenuItem = _ToolbarMenu.ToolbarMenuItem;
 
 // Add a select-option input to the Toolbar.
-GraphiQL.Select = _ToolbarSelect.ToolbarSelect;
-GraphiQL.SelectOption = _ToolbarSelect.ToolbarSelectOption;
+SuperGraphiQL.Select = _ToolbarSelect.ToolbarSelect;
+SuperGraphiQL.SelectOption = _ToolbarSelect.ToolbarSelectOption;
 
-// Configure the UI by providing this Component as a child of GraphiQL.
-GraphiQL.Footer = function GraphiQLFooter(props) {
+// Configure the UI by providing this Component as a child of SuperGraphiQL.
+SuperGraphiQL.Footer = function SuperGraphiQLFooter(props) {
   return _react2.default.createElement(
     "div",
     { className: "footer" },
@@ -2873,7 +3878,7 @@ GraphiQL.Footer = function GraphiQLFooter(props) {
   );
 };
 
-var defaultQuery = "# Welcome to GraphiQL\n#\n# GraphiQL is an in-browser tool for writing, validating, and\n# testing GraphQL queries.\n#\n# Type queries into this side of the screen, and you will see intelligent\n# typeaheads aware of the current GraphQL type schema and live syntax and\n# validation errors highlighted within the text.\n#\n# GraphQL queries typically start with a \"{\" character. Lines that starts\n# with a # are ignored.\n#\n# An example GraphQL query might look like:\n#\n#     {\n#       field(arg: \"value\") {\n#         subField\n#       }\n#     }\n#\n# Keyboard shortcuts:\n#\n#  Prettify Query:  Shift-Ctrl-P (or press the prettify button above)\n#\n#       Run Query:  Ctrl-Enter (or press the play button above)\n#\n#   Auto Complete:  Ctrl-Space (or just start typing)\n#\n\n";
+var defaultQuery = "# Welcome to SuperGraphiQL\n#\n# SuperGraphiQL is an in-browser tool for writing, validating, and\n# testing GraphQL queries.\n#\n# Type queries into this side of the screen, and you will see intelligent\n# typeaheads aware of the current GraphQL type schema and live syntax and\n# validation errors highlighted within the text.\n#\n# GraphQL queries typically start with a \"{\" character. Lines that starts\n# with a # are ignored.\n#\n# An example GraphQL query might look like:\n#\n#     {\n#       field(arg: \"value\") {\n#         subField\n#       }\n#     }\n#\n# Keyboard shortcuts:\n#\n#  Prettify Query:  Shift-Ctrl-P (or press the prettify button above)\n#\n#       Run Query:  Ctrl-Enter (or press the play button above)\n#\n#   Auto Complete:  Ctrl-Space (or just start typing)\n#\n\n";
 
 // Duck-type promise detection.
 function isPromise(value) {
@@ -2900,1013 +3905,7 @@ function isObservable(value) {
   return (typeof value === "undefined" ? "undefined" : _typeof(value)) === "object" && typeof value.subscribe === "function";
 }
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../utility/CodeMirrorSizer":24,"../utility/StorageAPI":26,"../utility/debounce":27,"../utility/elementPosition":28,"../utility/fillLeafs":29,"../utility/find":30,"../utility/getQueryFacts":31,"../utility/getSelectedOperationName":32,"../utility/introspectionQueries":33,"./DocExplorer":1,"./ExecuteButton":11,"./HistoryExplorer":13,"./QueryEditor":16,"./ResultViewer":17,"./ToolbarButton":18,"./ToolbarGroup":19,"./ToolbarMenu":20,"./ToolbarSelect":21,"./VariableEditor":22,"graphql":101,"prop-types":239}],13:[function(require,module,exports){
-(function (global){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.HistoryExplorer = undefined;
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _graphql = require("graphql");
-
-var _react = (typeof window !== "undefined" ? window['React'] : typeof global !== "undefined" ? global['React'] : null);
-
-var _react2 = _interopRequireDefault(_react);
-
-var _propTypes = require("prop-types");
-
-var _propTypes2 = _interopRequireDefault(_propTypes);
-
-var _QueryStore = require("../utility/QueryStore");
-
-var _QueryStore2 = _interopRequireDefault(_QueryStore);
-
-var _HistoryQuery = require("./HistoryExplorer/HistoryQuery");
-
-var _HistoryQuery2 = _interopRequireDefault(_HistoryQuery);
-
-var _SearchBox = require("./HistoryExplorer/SearchBox");
-
-var _SearchBox2 = _interopRequireDefault(_SearchBox);
-
-var _debounce = require("../utility/debounce");
-
-var _debounce2 = _interopRequireDefault(_debounce);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var queriesToSave = function queriesToSave(nextProps, currProps, lastQuerySaved) {
-  // add current variable prop to each query
-  var executedQueries = nextProps.queryList.reduce(function (acc, entry) {
-    var query = void 0;
-    try {
-      query = (0, _graphql.print)((0, _graphql.parse)(entry.query));
-    } catch (e) {
-      query = "";
-    }
-
-    var cleanEntry = {
-      query: query,
-      variables: nextProps.variables,
-      operationName: entry.operationName
-    };
-    return entry.checked && entry.query.trim() ? acc.concat(cleanEntry) : acc;
-  }, []);
-  // if history is empty, add all the last queries run
-  if (!lastQuerySaved.length && nextProps.runID) {
-    return executedQueries;
-  }
-
-  // Only add new queries to the historyStore
-  var newQueries = nextProps.runID === currProps.runID ? [] : executedQueries.filter(function (nextQuery) {
-    return !lastQuerySaved.some(function (pastQuery) {
-      return pastQuery.query === nextQuery.query ? true : false;
-    });
-  });
-
-  return newQueries;
-};
-
-var MAX_HISTORY_LENGTH = 20;
-
-var HistoryExplorer = exports.HistoryExplorer = function (_React$Component) {
-  _inherits(HistoryExplorer, _React$Component);
-
-  function HistoryExplorer(props) {
-    _classCallCheck(this, HistoryExplorer);
-
-    var _this = _possibleConstructorReturn(this, (HistoryExplorer.__proto__ || Object.getPrototypeOf(HistoryExplorer)).call(this, props));
-
-    _initialiseProps.call(_this);
-
-    _this.historyStore = new _QueryStore2.default("history", props.storage);
-    _this.pinnedStore = new _QueryStore2.default("pinned", props.storage);
-    var historyQueries = _this.historyStore.fetchAll();
-    var pinnedQueries = _this.pinnedStore.fetchAll();
-    _this.state = {
-      history: historyQueries,
-      pinned: pinnedQueries
-    };
-    return _this;
-  }
-
-  _createClass(HistoryExplorer, [{
-    key: "componentWillReceiveProps",
-    value: function componentWillReceiveProps(nextProps) {
-      var historyQueries = this.historyStore.fetchAll() || [];
-      var pinnedQueries = this.pinnedStore.fetchAll();
-      var lastSavedQueries = historyQueries.concat(pinnedQueries);
-      var newQueries = queriesToSave(nextProps, this.props, lastSavedQueries);
-      if (newQueries.length > 0) {
-        this.historyStore.concat(newQueries);
-        while (this.historyStore.length > MAX_HISTORY_LENGTH) {
-          this.historyStore.shift();
-        }
-
-        var _historyQueries = this.historyStore.items;
-        var _pinnedQueries = this.pinnedStore.items;
-        this.setState({
-          history: _historyQueries,
-          pinned: _pinnedQueries
-        });
-      }
-    }
-  }, {
-    key: "render",
-    value: function render() {
-      var historyNodes = this.createNodes(this.state.history);
-      var pinnedNodes = this.createNodes(this.state.pinned);
-      return _react2.default.createElement(
-        "div",
-        { className: "history-panel" },
-        _react2.default.createElement(
-          "div",
-          { className: "history-title-bar" },
-          _react2.default.createElement(
-            "div",
-            { className: "history-title" },
-            "History Explorer"
-          ),
-          _react2.default.createElement(
-            "div",
-            { className: "doc-explorer-rhs" },
-            this.props.children
-          )
-        ),
-        _react2.default.createElement(
-          "div",
-          { className: "history-contents" },
-          _react2.default.createElement(_SearchBox2.default, {
-            placeholder: "Search History...",
-            onSearch: this.handleSearch
-          }),
-          _react2.default.createElement(
-            "div",
-            { className: "pinned-contents" },
-            pinnedNodes
-          ),
-          _react2.default.createElement(
-            "div",
-            { className: "search-contents" },
-            historyNodes
-          )
-        )
-      );
-    }
-
-    // ENABLE REGEX Search
-
-  }]);
-
-  return HistoryExplorer;
-}(_react2.default.Component);
-
-HistoryExplorer.propTypes = {
-  runID: _propTypes2.default.number,
-  queryList: _propTypes2.default.array,
-  variables: _propTypes2.default.string,
-  onSelectQuery: _propTypes2.default.func,
-  storage: _propTypes2.default.object
-};
-
-var _initialiseProps = function _initialiseProps() {
-  var _this2 = this;
-
-  this.togglePinned = function (query, variables, operationName, pinned) {
-    var item = {
-      query: query,
-      variables: variables,
-      operationName: operationName
-    };
-    if (!_this2.pinnedStore.contains(item)) {
-      item.pinned = true;
-      _this2.pinnedStore.push(item);
-      _this2.historyStore.delete(item);
-    } else if (pinned) {
-      delete item.pinned;
-      if (!_this2.historyStore.contains(item)) _this2.historyStore.push(item);
-      _this2.pinnedStore.delete(item);
-    }
-    var historyQueries = _this2.historyStore.items;
-    var pinnedQueries = _this2.pinnedStore.items;
-    _this2.setState({
-      history: historyQueries,
-      pinned: pinnedQueries
-    });
-  };
-
-  this.handleSearch = function (searchParams) {
-    var match = _this2.historyStore.items.filter(function (entry) {
-      return entry.query.includes(searchParams);
-    });
-    _this2.setState({ history: match });
-  };
-
-  this.createNodes = function (queryStore) {
-    var queryNodes = queryStore.slice().reverse();
-    return queryNodes.map(function (entry, i) {
-      return _react2.default.createElement(_HistoryQuery2.default, _extends({
-        handleTogglePinned: _this2.togglePinned,
-        key: i,
-        onSelect: _this2.props.onSelectQuery
-      }, entry));
-    });
-  };
-};
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../utility/QueryStore":25,"../utility/debounce":27,"./HistoryExplorer/HistoryQuery":14,"./HistoryExplorer/SearchBox":15,"graphql":101,"prop-types":239}],14:[function(require,module,exports){
-(function (global){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _react = (typeof window !== "undefined" ? window['React'] : typeof global !== "undefined" ? global['React'] : null);
-
-var _react2 = _interopRequireDefault(_react);
-
-var _propTypes = require("prop-types");
-
-var _propTypes2 = _interopRequireDefault(_propTypes);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Copyright (c) Facebook, Inc.
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  All rights reserved.
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  This source code is licensed under the license found in the
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  LICENSE file in the root directory of this source tree.
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
-
-var HistoryQuery = function (_React$Component) {
-  _inherits(HistoryQuery, _React$Component);
-
-  function HistoryQuery(props) {
-    _classCallCheck(this, HistoryQuery);
-
-    var _this = _possibleConstructorReturn(this, (HistoryQuery.__proto__ || Object.getPrototypeOf(HistoryQuery)).call(this, props));
-
-    var visibility = _this.props.pinned ? "visible" : "hidden";
-    _this.state = { visibility: visibility };
-    return _this;
-  }
-
-  _createClass(HistoryQuery, [{
-    key: "render",
-    value: function render() {
-      if (this.props.pinned && this.state.visibility === "hidden") {
-        this.setState({ visibility: "visible" });
-      }
-      var bmStyles = {
-        float: "left",
-        marginLeft: "7px",
-        visibility: this.state.visibility
-      };
-
-      var binStyles = {
-        float: "right",
-        marginLeft: "7px",
-        visibility: this.state.visibility
-      };
-
-      var displayName = this.props.operationName || this.props.query.split("\n").filter(function (line) {
-        return line.indexOf("#") !== 0;
-      }).join("");
-      var bookmark = this.props.pinned ? "fa fa-bookmark" : "fa fa-bookmark-o";
-      return _react2.default.createElement(
-        "div",
-        {
-          className: "history-query",
-          onClick: this.handleClick.bind(this),
-          onMouseEnter: this.handleMouseEnter.bind(this),
-          onMouseLeave: this.handleMouseLeave.bind(this)
-        },
-        _react2.default.createElement(
-          "span",
-          { onClick: this.handlePinClick.bind(this), style: bmStyles },
-          _react2.default.createElement("i", { className: bookmark, "aria-hidden": "true" })
-        ),
-        _react2.default.createElement(
-          "span",
-          null,
-          displayName
-        )
-      );
-    }
-  }, {
-    key: "handleMouseEnter",
-    value: function handleMouseEnter() {
-      if (!this.props.pinned) {
-        this.setState({ visibility: "visible" });
-      }
-    }
-  }, {
-    key: "handleMouseLeave",
-    value: function handleMouseLeave() {
-      if (!this.props.pinned) {
-        this.setState({ visibility: "hidden" });
-      }
-    }
-  }, {
-    key: "handleClick",
-    value: function handleClick() {
-      this.props.onSelect(this.props.query, this.props.variables);
-    }
-  }, {
-    key: "handlePinClick",
-    value: function handlePinClick(e) {
-      e.stopPropagation();
-      this.props.handleTogglePinned(this.props.query, this.props.variables, this.props.operationName, this.props.pinned);
-    }
-  }]);
-
-  return HistoryQuery;
-}(_react2.default.Component);
-
-HistoryQuery.propTypes = {
-  pinned: _propTypes2.default.bool,
-  favoriteSize: _propTypes2.default.number,
-  handleTogglePinned: _propTypes2.default.func,
-  operationName: _propTypes2.default.string,
-  onSelect: _propTypes2.default.func,
-  query: _propTypes2.default.string
-};
-exports.default = HistoryQuery;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"prop-types":239}],15:[function(require,module,exports){
-(function (global){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _react = (typeof window !== "undefined" ? window['React'] : typeof global !== "undefined" ? global['React'] : null);
-
-var _react2 = _interopRequireDefault(_react);
-
-var _propTypes = require("prop-types");
-
-var _propTypes2 = _interopRequireDefault(_propTypes);
-
-var _debounce = require("../../utility/debounce");
-
-var _debounce2 = _interopRequireDefault(_debounce);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var SearchBox = function (_React$Component) {
-  _inherits(SearchBox, _React$Component);
-
-  function SearchBox(props) {
-    _classCallCheck(this, SearchBox);
-
-    var _this = _possibleConstructorReturn(this, (SearchBox.__proto__ || Object.getPrototypeOf(SearchBox)).call(this, props));
-
-    _this.handleChange = function (event) {
-      var value = event.target.value;
-      _this.setState({ value: value });
-      _this.debouncedOnSearch(value);
-    };
-
-    _this.handleClear = function () {
-      _this.setState({ value: "" });
-      _this.props.onSearch("");
-    };
-
-    _this.state = { value: props.value || "" };
-    _this.debouncedOnSearch = (0, _debounce2.default)(200, _this.props.onSearch);
-    return _this;
-  }
-
-  _createClass(SearchBox, [{
-    key: "render",
-    value: function render() {
-      return _react2.default.createElement(
-        "label",
-        { className: "search-box" },
-        _react2.default.createElement("input", {
-          value: this.state.value,
-          onChange: this.handleChange,
-          type: "text",
-          placeholder: this.props.placeholder
-        }),
-        this.state.value && _react2.default.createElement(
-          "div",
-          { className: "search-box-clear", onClick: this.handleClear },
-          "\u2715"
-        )
-      );
-    }
-  }]);
-
-  return SearchBox;
-}(_react2.default.Component);
-
-SearchBox.propTypes = {
-  value: _propTypes2.default.string,
-  placeholder: _propTypes2.default.string,
-  onSearch: _propTypes2.default.func
-};
-exports.default = SearchBox;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../../utility/debounce":27,"prop-types":239}],16:[function(require,module,exports){
-(function (global){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.QueryEditor = undefined;
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _react = (typeof window !== "undefined" ? window['React'] : typeof global !== "undefined" ? global['React'] : null);
-
-var _react2 = _interopRequireDefault(_react);
-
-var _propTypes = require("prop-types");
-
-var _propTypes2 = _interopRequireDefault(_propTypes);
-
-var _graphql = require("graphql");
-
-var _markdownIt = require("markdown-it");
-
-var _markdownIt2 = _interopRequireDefault(_markdownIt);
-
-var _normalizeWhitespace = require("../utility/normalizeWhitespace");
-
-var _onHasCompletion = require("../utility/onHasCompletion");
-
-var _onHasCompletion2 = _interopRequireDefault(_onHasCompletion);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Copyright (c) Facebook, Inc.
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  All rights reserved.
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  This source code is licensed under the license found in the
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  LICENSE file in the root directory of this source tree.
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
-
-var md = new _markdownIt2.default();
-var AUTO_COMPLETE_AFTER_KEY = /^[a-zA-Z0-9_@(]$/;
-
-/**
- * QueryEditor
- *
- * Maintains an instance of CodeMirror responsible for editing a GraphQL query.
- *
- * Props:
- *
- *   - schema: A GraphQLSchema instance enabling editor linting and hinting.
- *   - value: The text of the editor.
- *   - onEdit: A function called when the editor changes, given the edited text.
- *   - readOnly: Turns the editor to read-only mode.
- *
- */
-
-var QueryEditor = exports.QueryEditor = function (_React$Component) {
-  _inherits(QueryEditor, _React$Component);
-
-  function QueryEditor(props) {
-    _classCallCheck(this, QueryEditor);
-
-    // Keep a cached version of the value, this cache will be updated when the
-    // editor is updated, which can later be used to protect the editor from
-    // unnecessary updates during the update lifecycle.
-    var _this = _possibleConstructorReturn(this, (QueryEditor.__proto__ || Object.getPrototypeOf(QueryEditor)).call(this));
-
-    _this._onKeyUp = function (cm, event) {
-      if (AUTO_COMPLETE_AFTER_KEY.test(event.key)) {
-        _this.editor.execCommand("autocomplete");
-      }
-    };
-
-    _this._onEdit = function () {
-      if (!_this.ignoreChangeEvent) {
-        _this.cachedValue = _this.editor.getValue();
-        if (_this.props.onEdit) {
-          _this.props.onEdit(_this.cachedValue, _this.props.editorId);
-        }
-      }
-    };
-
-    _this._onHasCompletion = function (cm, data) {
-      (0, _onHasCompletion2.default)(cm, data, _this.props.onHintInformationRender);
-    };
-
-    _this.cachedValue = props.value || "";
-    return _this;
-  }
-
-  _createClass(QueryEditor, [{
-    key: "componentDidMount",
-    value: function componentDidMount() {
-      var _this2 = this;
-
-      // Lazily require to ensure requiring GraphiQL outside of a Browser context
-      // does not produce an error.
-      var CodeMirror = require("codemirror");
-      require("codemirror/addon/hint/show-hint");
-      require("codemirror/addon/comment/comment");
-      require("codemirror/addon/edit/matchbrackets");
-      require("codemirror/addon/edit/closebrackets");
-      require("codemirror/addon/fold/foldgutter");
-      require("codemirror/addon/fold/brace-fold");
-      require("codemirror/addon/search/search");
-      require("codemirror/addon/search/searchcursor");
-      require("codemirror/addon/search/jump-to-line");
-      require("codemirror/addon/dialog/dialog");
-      require("codemirror/addon/lint/lint");
-      require("codemirror/keymap/sublime");
-      require("codemirror-graphql/hint");
-      require("codemirror-graphql/lint");
-      require("codemirror-graphql/info");
-      require("codemirror-graphql/jump");
-      require("codemirror-graphql/mode"); // specify language
-
-      this.editor = CodeMirror(this._node, {
-        value: this.cachedValue,
-        lineNumbers: true,
-        tabSize: 2,
-        mode: "graphql",
-        theme: this.props.editorTheme || "graphiql",
-        keyMap: "sublime",
-        autoCloseBrackets: true,
-        matchBrackets: true,
-        showCursorWhenSelecting: true,
-        readOnly: this.props.readOnly ? "nocursor" : false,
-        foldGutter: {
-          minFoldSize: 4
-        },
-        lint: {
-          schema: this.props.schema
-        },
-        hintOptions: {
-          schema: this.props.schema,
-          closeOnUnfocus: false,
-          completeSingle: false
-        },
-        info: {
-          schema: this.props.schema,
-          renderDescription: function renderDescription(text) {
-            return md.render(text);
-          },
-          onClick: function onClick(reference) {
-            return _this2.props.onClickReference(reference);
-          }
-        },
-        jump: {
-          schema: this.props.schema,
-          onClick: function onClick(reference) {
-            return _this2.props.onClickReference(reference);
-          }
-        },
-        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-        extraKeys: {
-          "Cmd-Space": function CmdSpace() {
-            return _this2.editor.showHint({ completeSingle: true });
-          },
-          "Ctrl-Space": function CtrlSpace() {
-            return _this2.editor.showHint({ completeSingle: true });
-          },
-          "Alt-Space": function AltSpace() {
-            return _this2.editor.showHint({ completeSingle: true });
-          },
-          "Shift-Space": function ShiftSpace() {
-            return _this2.editor.showHint({ completeSingle: true });
-          },
-
-          "Cmd-Enter": function CmdEnter() {
-            if (_this2.props.onRunQuery) {
-              _this2.props.onRunQuery();
-            }
-          },
-          "Ctrl-Enter": function CtrlEnter() {
-            if (_this2.props.onRunQuery) {
-              _this2.props.onRunQuery();
-            }
-          },
-
-          "Shift-Ctrl-P": function ShiftCtrlP() {
-            if (_this2.props.onPrettifyQuery) {
-              _this2.props.onPrettifyQuery();
-            }
-          },
-
-          // Persistent search box in Query Editor
-          "Cmd-F": "findPersistent",
-          "Ctrl-F": "findPersistent",
-
-          // Editor improvements
-          "Ctrl-Left": "goSubwordLeft",
-          "Ctrl-Right": "goSubwordRight",
-          "Alt-Left": "goGroupLeft",
-          "Alt-Right": "goGroupRight"
-        }
-      });
-
-      this.editor.on("change", this._onEdit);
-      this.editor.on("keyup", this._onKeyUp);
-      this.editor.on("hasCompletion", this._onHasCompletion);
-      this.editor.on("beforeChange", this._onBeforeChange);
-      this.editor.on("cursorActivity", this._onEdit);
-
-      if (!this.props.checked) {
-        document.getElementById("checkbox_" + this.props.editorId).checked = false;
-      }
-
-      this.manageHintsBox();
-      this.setFocus();
-    }
-  }, {
-    key: "componentDidUpdate",
-    value: function componentDidUpdate(prevProps) {
-      var CodeMirror = require("codemirror");
-
-      // Ensure the changes caused by this update are not interpretted as
-      // user-input changes which could otherwise result in an infinite
-      // event loop.
-      this.ignoreChangeEvent = true;
-      if (this.props.schema !== prevProps.schema) {
-        this.editor.options.lint.schema = this.props.schema;
-        this.editor.options.hintOptions.schema = this.props.schema;
-        this.editor.options.info.schema = this.props.schema;
-        this.editor.options.jump.schema = this.props.schema;
-        CodeMirror.signal(this.editor, "change", this.editor);
-      }
-      if (this.props.value !== prevProps.value && this.props.value !== this.cachedValue) {
-        this.cachedValue = this.props.value;
-        this.editor.setValue(this.props.value);
-      }
-      this.ignoreChangeEvent = false;
-    }
-  }, {
-    key: "componentWillUnmount",
-    value: function componentWillUnmount() {
-      this.setFocus(1);
-
-      this.editor.off("change", this._onEdit);
-      this.editor.off("keyup", this._onKeyUp);
-      this.editor.off("hasCompletion", this._onHasCompletion);
-      this.editor = null;
-    }
-  }, {
-    key: "render",
-    value: function render() {
-      var _this3 = this;
-
-      return _react2.default.createElement(
-        "div",
-        { className: "query-editor-container" },
-        _react2.default.createElement(
-          "div",
-          {
-            className: "query-editor",
-            id: this.props.editorId,
-            ref: function ref(node) {
-              _this3._node = node;
-            }
-          },
-          _react2.default.createElement(
-            "div",
-            { className: "query-editor-top-actions" },
-            _react2.default.createElement(
-              "label",
-              { className: "checkbox-container" },
-              _react2.default.createElement("input", {
-                type: "checkbox",
-                defaultChecked: true,
-                className: "run-query-check",
-                id: "checkbox_" + this.props.editorId,
-                value: "select",
-                title: "Select",
-                onChange: function onChange(e) {
-                  _this3.props.onCheckToRun(_this3.props.editorId, e.target.checked);
-                }
-              }),
-              _react2.default.createElement("span", { className: "checkmark" })
-            ),
-            _react2.default.createElement(
-              "button",
-              {
-                title: "Delete",
-                className: "action-button delete-query",
-                id: this.props.editorId,
-                onClick: function onClick() {
-                  _this3.props.onClickDeleteButton(_this3.props.editorId);
-                }
-              },
-              _react2.default.createElement("i", { className: "fa fa-trash", "aria-hidden": "true" })
-            )
-          )
-        ),
-        _react2.default.createElement(
-          "button",
-          {
-            title: "Add",
-            className: "action-button add-query",
-            onClick: function onClick() {
-              _this3.props.onAddNewQueryEditor();
-            }
-          },
-          _react2.default.createElement("i", { className: "fa fa-plus", "aria-hidden": "true" })
-        )
-      );
-    }
-  }, {
-    key: "setFocus",
-    value: function setFocus(action) {
-      var textAreas = document.getElementsByTagName("textarea");
-      if (textAreas.length === 1 || action === 1) {
-        textAreas[0].focus();
-      } else if (textAreas[textAreas.length - 3] !== undefined) {
-        textAreas[textAreas.length - 3].focus();
-      }
-    }
-  }, {
-    key: "manageHintsBox",
-    value: function manageHintsBox() {
-      var _this4 = this;
-
-      var currentEditor = document.getElementById(this.props.editorId);
-      if (currentEditor) {
-        currentEditor.addEventListener("click", function () {
-          if (_this4.props.value.trim() && _this4.editor.getCursor().ch === _this4.props.value.length) {
-            _this4.editor.execCommand("autocomplete");
-          }
-        });
-        currentEditor.addEventListener("focusout", function () {
-          var openHints = document.getElementsByClassName("CodeMirror-hints");
-          if (openHints[0]) {
-            setTimeout(function () {
-              if (openHints[0]) openHints[0].remove();
-            }, 200);
-          }
-        });
-      }
-    }
-
-    /**
-     * Public API for retrieving the CodeMirror instance from this
-     * React component.
-     */
-
-  }, {
-    key: "getCodeMirror",
-    value: function getCodeMirror() {
-      return this.editor;
-    }
-
-    /**
-     * Public API for retrieving the DOM client height for this component.
-     */
-
-  }, {
-    key: "getClientHeight",
-    value: function getClientHeight() {
-      return this._node && this._node.clientHeight;
-    }
-
-    /**
-     * Render a custom UI for CodeMirror's hint which includes additional info
-     * about the type and description for the selected context.
-     */
-
-  }, {
-    key: "_onBeforeChange",
-    value: function _onBeforeChange(instance, change) {
-      // The update function is only present on non-redo, non-undo events.
-      if (change.origin === "paste") {
-        var text = change.text.map(_normalizeWhitespace.normalizeWhitespace);
-        change.update(change.from, change.to, text);
-      }
-    }
-  }]);
-
-  return QueryEditor;
-}(_react2.default.Component);
-
-QueryEditor.propTypes = {
-  schema: _propTypes2.default.instanceOf(_graphql.GraphQLSchema),
-  editorId: _propTypes2.default.number,
-  value: _propTypes2.default.string,
-  checked: _propTypes2.default.bool,
-  onEdit: _propTypes2.default.func,
-  readOnly: _propTypes2.default.bool,
-  onCheckToRun: _propTypes2.default.func,
-  onHintInformationRender: _propTypes2.default.func,
-  onClickReference: _propTypes2.default.func,
-  onClickDeleteButton: _propTypes2.default.func,
-  onPrettifyQuery: _propTypes2.default.func,
-  onRunQuery: _propTypes2.default.func,
-  editorTheme: _propTypes2.default.string,
-  onAddNewQueryEditor: _propTypes2.default.func
-};
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../utility/normalizeWhitespace":34,"../utility/onHasCompletion":35,"codemirror":66,"codemirror-graphql/hint":37,"codemirror-graphql/info":38,"codemirror-graphql/jump":39,"codemirror-graphql/lint":40,"codemirror-graphql/mode":41,"codemirror/addon/comment/comment":53,"codemirror/addon/dialog/dialog":54,"codemirror/addon/edit/closebrackets":55,"codemirror/addon/edit/matchbrackets":56,"codemirror/addon/fold/brace-fold":57,"codemirror/addon/fold/foldgutter":59,"codemirror/addon/hint/show-hint":60,"codemirror/addon/lint/lint":61,"codemirror/addon/search/jump-to-line":62,"codemirror/addon/search/search":63,"codemirror/addon/search/searchcursor":64,"codemirror/keymap/sublime":65,"graphql":101,"markdown-it":178,"prop-types":239}],17:[function(require,module,exports){
-(function (global){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.ResultViewer = undefined;
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _react = (typeof window !== "undefined" ? window['React'] : typeof global !== "undefined" ? global['React'] : null);
-
-var _react2 = _interopRequireDefault(_react);
-
-var _reactDom = (typeof window !== "undefined" ? window['ReactDOM'] : typeof global !== "undefined" ? global['ReactDOM'] : null);
-
-var _reactDom2 = _interopRequireDefault(_reactDom);
-
-var _propTypes = require("prop-types");
-
-var _propTypes2 = _interopRequireDefault(_propTypes);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Copyright (c) Facebook, Inc.
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  All rights reserved.
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  This source code is licensed under the license found in the
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  LICENSE file in the root directory of this source tree.
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
-
-/**
- * ResultViewer
- *
- * Maintains an instance of CodeMirror for viewing a GraphQL response.
- *
- * Props:
- *
- *   - value: The text of the editor.
- *
- */
-var ResultViewer = exports.ResultViewer = function (_React$Component) {
-  _inherits(ResultViewer, _React$Component);
-
-  function ResultViewer() {
-    _classCallCheck(this, ResultViewer);
-
-    return _possibleConstructorReturn(this, (ResultViewer.__proto__ || Object.getPrototypeOf(ResultViewer)).call(this));
-  }
-
-  _createClass(ResultViewer, [{
-    key: "componentDidMount",
-    value: function componentDidMount() {
-      var _this2 = this;
-
-      // Lazily require to ensure requiring GraphiQL outside of a Browser context
-      // does not produce an error.
-      var CodeMirror = require("codemirror");
-      require("codemirror/addon/fold/foldgutter");
-      require("codemirror/addon/fold/brace-fold");
-      require("codemirror/addon/dialog/dialog");
-      require("codemirror/addon/search/search");
-      require("codemirror/addon/search/searchcursor");
-      require("codemirror/addon/search/jump-to-line");
-      require("codemirror/keymap/sublime");
-      require("codemirror-graphql/results/mode");
-
-      if (this.props.ResultsTooltip) {
-        require("codemirror-graphql/utils/info-addon");
-        var tooltipDiv = document.createElement("div");
-        CodeMirror.registerHelper("info", "graphql-results", function (token, options, cm, pos) {
-          var Tooltip = _this2.props.ResultsTooltip;
-          _reactDom2.default.render(_react2.default.createElement(Tooltip, { pos: pos }), tooltipDiv);
-          return tooltipDiv;
-        });
-      }
-
-      this.viewer = CodeMirror(this._node, {
-        lineWrapping: true,
-        value: this.props.value || "",
-        readOnly: true,
-        theme: this.props.editorTheme || "graphiql",
-        mode: "graphql-results",
-        keyMap: "sublime",
-        foldGutter: {
-          minFoldSize: 4
-        },
-        gutters: ["CodeMirror-foldgutter"],
-        info: Boolean(this.props.ResultsTooltip),
-        extraKeys: {
-          // Persistent search box in Query Editor
-          "Cmd-F": "findPersistent",
-          "Ctrl-F": "findPersistent",
-
-          // Editor improvements
-          "Ctrl-Left": "goSubwordLeft",
-          "Ctrl-Right": "goSubwordRight",
-          "Alt-Left": "goGroupLeft",
-          "Alt-Right": "goGroupRight"
-        }
-      });
-    }
-  }, {
-    key: "shouldComponentUpdate",
-    value: function shouldComponentUpdate(nextProps) {
-      return this.props.value !== nextProps.value;
-    }
-  }, {
-    key: "componentDidUpdate",
-    value: function componentDidUpdate() {
-      this.viewer.setValue(this.props.value || "");
-    }
-  }, {
-    key: "componentWillUnmount",
-    value: function componentWillUnmount() {
-      this.viewer = null;
-    }
-  }, {
-    key: "render",
-    value: function render() {
-      var _this3 = this;
-
-      return _react2.default.createElement("div", {
-        className: "result-window",
-        ref: function ref(node) {
-          _this3._node = node;
-        }
-      });
-    }
-
-    /**
-     * Public API for retrieving the CodeMirror instance from this
-     * React component.
-     */
-
-  }, {
-    key: "getCodeMirror",
-    value: function getCodeMirror() {
-      return this.viewer;
-    }
-
-    /**
-     * Public API for retrieving the DOM client height for this component.
-     */
-
-  }, {
-    key: "getClientHeight",
-    value: function getClientHeight() {
-      return this._node && this._node.clientHeight;
-    }
-  }]);
-
-  return ResultViewer;
-}(_react2.default.Component);
-
-ResultViewer.propTypes = {
-  value: _propTypes2.default.string,
-  editorTheme: _propTypes2.default.string,
-  ResultsTooltip: _propTypes2.default.any
-};
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"codemirror":66,"codemirror-graphql/results/mode":42,"codemirror-graphql/utils/info-addon":47,"codemirror/addon/dialog/dialog":54,"codemirror/addon/fold/brace-fold":57,"codemirror/addon/fold/foldgutter":59,"codemirror/addon/search/jump-to-line":62,"codemirror/addon/search/search":63,"codemirror/addon/search/searchcursor":64,"codemirror/keymap/sublime":65,"prop-types":239}],18:[function(require,module,exports){
+},{"../utility/CodeMirrorSizer":24,"../utility/StorageAPI":26,"../utility/debounce":27,"../utility/elementPosition":28,"../utility/fillLeafs":29,"../utility/find":30,"../utility/getQueryFacts":31,"../utility/getSelectedOperationName":32,"../utility/introspectionQueries":33,"./DocExplorer":1,"./ExecuteButton":11,"./HistoryExplorer":12,"./QueryEditor":15,"./ResultViewer":16,"./ToolbarButton":18,"./ToolbarGroup":19,"./ToolbarMenu":20,"./ToolbarSelect":21,"./VariableEditor":22,"graphql":101,"prop-types":239}],18:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -4467,7 +4466,7 @@ var VariableEditor = exports.VariableEditor = function (_React$Component) {
     value: function componentDidMount() {
       var _this2 = this;
 
-      // Lazily require to ensure requiring GraphiQL outside of a Browser context
+      // Lazily require to ensure requiring SuperGraphiQL outside of a Browser context
       // does not produce an error.
       var CodeMirror = require("codemirror");
       require("codemirror/addon/hint/show-hint");
@@ -4643,8 +4642,8 @@ VariableEditor.propTypes = {
  */
 
 // The primary React component to use.
-module.exports = require("./components/GraphiQL").GraphiQL;
-},{"./components/GraphiQL":12}],24:[function(require,module,exports){
+module.exports = require("./components/SuperGraphiQL").SuperGraphiQL;
+},{"./components/SuperGraphiQL":17}],24:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5163,7 +5162,7 @@ var _graphql = require("graphql");
 
 /**
  * Provided previous "queryFacts", a GraphQL schema, and a query document
- * string, return a set of facts about that query useful for GraphiQL features.
+ * string, return a set of facts about that query useful for SuperGraphiQL features.
  *
  * If the query cannot be parsed, returns undefined.
  */
