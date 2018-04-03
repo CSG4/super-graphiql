@@ -676,16 +676,18 @@ export class GraphiQL extends React.Component {
           variables,
           // operationName
           result => {
-            const cleanResults = result.map((resultObj, index) => {
-              resultObj["dataSet" + index] = resultObj.data;
-              delete resultObj["data"];
-              return resultObj;
-            });
+            const transformResults = result.reduce(
+              (responseObj, resultObj, index) => {
+                responseObj["dataSet" + index] = resultObj.data;
+                return responseObj;
+              },
+              {}
+            );
 
             if (runID === this._runCounter) {
               this.setState({
                 isWaitingForResponse: false,
-                response: JSON.stringify(cleanResults, null, 2)
+                response: JSON.stringify(transformResults, null, 2)
               });
             }
           }
