@@ -1,13 +1,13 @@
 {
   "name": "super-graphiql",
-  "version": "0.0.1",
+  "version": "0.0.4",
    "description": "Super-GraphiQL is a powerful yet simple GUI designed for testing your GraphQL API",
   "main": "dist/index.js",
   "files": [
     "dist",
-    "graphiql.js",
-    "graphiql.min.js",
-    "graphiql.css",
+    "super-graphiql.js",
+    "super-graphiql.min.js",
+    "super-graphiql.min.css",
     "README.md",
     "LICENSE"
   ],
