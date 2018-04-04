@@ -19,9 +19,9 @@
     "mocha": "--full-trace --require resources/mocha-bootload src/**/*-test.js"
   },
   "scripts": {
-    "start": "node ./example/server/server.js",
-    "example": "nodemon ./example/server/server.js",
-    "apollo": "nodemon ./example/server/apollo/server.js",
+    "start": "node ./example/server/csr/server.js",
+    "example": "nodemon ./example/server/csr/server.js",
+    "apollo": "nodemon ./example/server/ssr/server.js",
     "webpack": "webpack -w --config ./example/webpack.config.js --mode development",
     "webpackdev": "webpack-dev-server -w --config ./example/webpack.config.js --mode development",
     "build": "bash ./resources/build.sh",
