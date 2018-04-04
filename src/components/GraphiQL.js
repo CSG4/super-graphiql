@@ -104,7 +104,7 @@ export class GraphiQL extends React.Component {
       query,
       variables,
       operationName,
-      response: "",
+      response: props.response,
       editorFlex: Number(this._storage.get("editorFlex")) || 1,
       variableEditorOpen: Boolean(variables),
       variableEditorHeight:
@@ -328,7 +328,7 @@ export class GraphiQL extends React.Component {
                     onEdit={this.handleEditQuery}
                     onHintInformationRender={this.handleHintInformationRender}
                     onClickReference={this.handleClickReference}
-                    // onAddQuery={this.handleSelectHistoryQuery}
+                    onAddQuery={this.handleSelectHistoryQuery}
                     onPrettifyQuery={this.handlePrettifyQuery}
                     onCheckToRun={this.handleCheckQueryToRun}
                     onClickDeleteButton={this.handleDeleteQueryBox}
@@ -613,57 +613,7 @@ export class GraphiQL extends React.Component {
         }
       });
     }
-
-    // const fetcher = this._multiFetcher(this.props.fetcher);
-
-    // const fetch = fetcher(queries, variables);
   }
-
-  // _multiFetcher = fetcher => {
-  //   return function(graphQLParams, variables) {
-  //     if (Array.isArray(graphQLParams)) {
-  //       const promises = [];
-
-  //       graphQLParams.forEach(queryObj => {
-  //         let cleanQueryObj = {
-  //           query: queryObj.query,
-  //           operationName: queryObj.operationName,
-  //           variables: variables
-  //         };
-
-  //         let promise = new Promise((resolve, reject) => {
-  //           const fetched = fetcher(cleanQueryObj);
-  //           console.log("isPromise", isPromise(fetched));
-  //           console.log("isObservable", isObservable(fetched));
-  //           if (isPromise(fetched)) {
-  //             fetched.then(response => {
-  //               resolve(response);
-  //             });
-  //             // Otherwise, must be an observable
-  //           } else if (isObservable(fetched)) {
-  //             fetched.subscribe({
-  //               next: response => {
-  //                 resolve(response);
-  //               }
-  //             });
-  //           }
-  //         });
-  //         promises.push(promise);
-  //       });
-
-  //       return Promise.all(promises).then(allResponses => {
-  //         return allResponses;
-  //       });
-  //     } else {
-  //       // Handles initial Introspection Query
-  //       return new Promise((resolve, reject) => {
-  //         fetcher(graphQLParams).then(response => {
-  //           resolve(response);
-  //         });
-  //       });
-  //     }
-  //   };
-  // };
 
   handleClickReference = reference => {
     this.setState({ docExplorerOpen: true }, () => {
@@ -715,18 +665,7 @@ export class GraphiQL extends React.Component {
         const subscription = this._fetchQuery(
           editedQueryList,
           variables,
-          // operationName
           (result, index, type) => {
-            // let transformResults = "";
-            //   transformResults = result.reduce(
-            //     (responseObj, resultObj, index) => {
-            //       responseObj["dataSet" + index] = resultObj.data;
-            //       return responseObj;
-            //     },
-            //     {}
-            //   );
-            // }
-
             if (runID === this._runCounter) {
               this.setState(prevState => {
                 const prevRes = prevState.response
