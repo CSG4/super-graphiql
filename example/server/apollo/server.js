@@ -46,7 +46,6 @@ app.use("/graphiql",
 
 // HTTP Request endpoint
 app.use('/graphql', bodyParser.json(), (req, res, next) => {
-  console.log(req.body);
   next();
 }, graphqlExpress({ schema }));
 

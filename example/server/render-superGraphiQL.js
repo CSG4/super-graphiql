@@ -3,17 +3,17 @@
  * (https://github.com/graphql/express-graphql/blob/master/LICENSE)
  */
 
-export type GraphiQLData = {
-  endpointURL: string;
-  subscriptionsEndpoint?: string;
-  query?: string;
-  variables?: Object;
-  operationName?: string;
-  result?: Object;
-  passHeader?: string;
-  editorTheme?: string;
-  websocketConnectionParams?: Object;
-};
+// export type GraphiQLData = {
+//   endpointURL: string;
+//   subscriptionsEndpoint?: string;
+//   query?: string;
+//   variables?: Object;
+//   operationName?: string;
+//   result?: Object;
+//   passHeader?: string;
+//   editorTheme?: string;
+//   websocketConnectionParams?: Object;
+// };
 
 const GRAPHIQL_VERSION = '0.11.11';
 const SUBSCRIPTIONS_TRANSPORT_VERSION = '0.8.2';
