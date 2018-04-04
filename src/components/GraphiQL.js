@@ -576,7 +576,7 @@ export class GraphiQL extends React.Component {
           // resolves, otherwise handle the error.
           fetch
             .then(response => {
-              cb(response, i, "outputData");
+              cb(response, i, "output");
             })
             .catch(error => {
               this.setState({
@@ -672,7 +672,7 @@ export class GraphiQL extends React.Component {
                   ? JSON.parse(prevState.response)
                   : {};
 
-                prevRes[type + "_" + index] = result;
+                prevRes[type + "[" + index + "]"] = result;
 
                 return {
                   isWaitingForResponse: false,

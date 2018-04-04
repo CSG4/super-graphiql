@@ -51,11 +51,12 @@ superGraphiql.renderGraphiQL = function(data) {
       <meta charset="UTF-8">
         <title>Super GraphiQL</title>
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/super-graphiql@0.0.5/super-graphiql.min.css" />
-        <script src="https://use.fontawesome.com/992e44b468.js"></script>
         <script src="http://unpkg.com/react@15.6.1/dist/react.min.js"></script>
         <script src="http://unpkg.com/react-dom@15.6.1/dist/react-dom.min.js"></script>
-        <!-- <script type="text/javascript" src="./super-graphiql.min.js"></script> -->
-        <script type="text/javascript" src="./super-graphiql.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/super-graphiql@0.0.5/super-graphiql.min.js"></script>
+        <script src="https://use.fontawesome.com/992e44b468.js"></script>
+        <!-- <script type="text/javascript" src="./super-graphiql.min.js"></script>  -->
+        <!-- <script type="text/javascript" src="./super-graphiql.js"></script> -->
         ${usingHttp ? `<script src="//cdn.jsdelivr.net/fetch/2.0.1/fetch.min.js"></script>` : ''}
         ${usingWs ? `<script src="//unpkg.com/subscriptions-transport-ws@${SUBSCRIPTIONS_TRANSPORT_VERSION}/browser/client.js"></script>` : ''}
         ${usingWs && usingHttp ? '<script src="//unpkg.com/graphiql-subscriptions-fetcher@0.0.2/browser/client.js"></script>' : ''}
