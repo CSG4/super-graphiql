@@ -294,6 +294,7 @@ export class SuperGraphiQL extends React.Component {
                 title="Show Schema Documentation"
                 label="History"
               />
+              <div>{toolbar}</div>
               <SuperGraphiQL.Logo />
               <ToolbarButton
                 onClick={this.handleToggleDocs}
@@ -301,9 +302,6 @@ export class SuperGraphiQL extends React.Component {
                 label="Schema"
               />
             </div>
-          </div>
-          <div className="toolbarWrap">
-            <div className="toolbar">{toolbar}</div>
           </div>
           <div
             ref={n => {
