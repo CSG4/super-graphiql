@@ -603,9 +603,21 @@ export class GraphiQL extends React.Component {
           };
 
           let promise = new Promise((resolve, reject) => {
-            fetcher(cleanQueryObj).then(response => {
-              resolve(response);
-            });
+            const fetched = fetcher(cleanQueryObj);
+            console.log("isPromise", isPromise(fetched));
+            console.log("isObservable", isObservable(fetched));
+            if (isPromise(fetched)) {
+              fetched.then(response => {
+                resolve(response);
+              });
+              // Otherwise, must be an observable
+            } else if (isObservable(fetched)) {
+              fetched.subscribe({
+                next: response => {
+                  resolve(response);
+                }
+              });
+            }
           });
           promises.push(promise);
         });
@@ -676,11 +688,12 @@ export class GraphiQL extends React.Component {
           variables,
           // operationName
           result => {
-            const cleanResults = result.map((resultObj, index) => {
-              resultObj["dataSet" + index] = resultObj.data;
-              delete resultObj["data"];
-              return resultObj;
-            });
+            const cleanResults = result;
+            // const cleanResults = result.map((resultObj, index) => {
+            //   resultObj["dataSet" + index] = resultObj.data;
+            //   delete resultObj["data"];
+            //   return resultObj;
+            // });
 
             if (runID === this._runCounter) {
               this.setState({

@@ -36,33 +36,26 @@ superGraphiql.renderGraphiQL = function(data) {
   const usingWs = endpointWs || Boolean(subscriptionsEndpoint);
   const endpointURLWs =
     usingWs && (endpointWs ? endpointURL : subscriptionsEndpoint);
-
-  //is the query in the body or in the query string. I think we need to import body parser
-  // const queryString = data.query;
-  // const variablesString = data.variables
-  //   ? JSON.stringify(data.variables, null, 2)
-  //   : null;
-  // const resultString = null;
-  // const operationName = data.operationName;
   const passHeader = data.passHeader ? data.passHeader : '';
   const websocketConnectionParams = data.websocketConnectionParams || null;
 
   return `<!DOCTYPE html> 
-  < html >
+  <html>
     <head>
       <meta charset="UTF-8">
         <title>Super GraphiQL</title>
+        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/super-graphiql@0.0.5/super-graphiql.min.css" />
         <script src="https://use.fontawesome.com/992e44b468.js"></script>
         <script src="http://unpkg.com/react@15.6.1/dist/react.min.js"></script>
         <script src="http://unpkg.com/react-dom@15.6.1/dist/react-dom.min.js"></script>
-        <!-- <script src="http://unpkg.com/graphiql@${GRAPHIQL_VERSION}/graphiql.min.js"></script> -->
-        <script type="text/javascript" src="./super-graphiql.min.js"></script>
+        <!-- <script type="text/javascript" src="./super-graphiql.min.js"></script> -->
+        <script type="text/javascript" src="./super-graphiql.js"></script>
         ${usingHttp ? `<script src="//cdn.jsdelivr.net/fetch/2.0.1/fetch.min.js"></script>` : ''}
         ${usingWs ? `<script src="//unpkg.com/subscriptions-transport-ws@${SUBSCRIPTIONS_TRANSPORT_VERSION}/browser/client.js"></script>` : ''}
         ${usingWs && usingHttp ? '<script src="//unpkg.com/graphiql-subscriptions-fetcher@0.0.2/browser/client.js"></script>' : ''}
-        <!-- <link rel="stylesheet" type="text/css" href="./super-graphiql.min.css" /> -->
     </head>
     <body>
+    <div id="content"> </div>
       <script>
         ${
           usingWs
@@ -85,7 +78,33 @@ superGraphiql.renderGraphiQL = function(data) {
             // We don't use safe-serialize for location, because it's not client input.
             var fetchURL = "${endpointURL}";
             // Defines a GraphQL fetcher using the fetch API.
+            // function graphQLHttpFetcher(graphQLParams) {
+            //   return new Promise((resolve, reject) => {
+            //     fetch(fetchURL, {
+            //       method: 'post',
+            //       headers: {
+            //         'Content-Type': 'application/json',
+            //         'Accept': 'application/json',
+            //         ${passHeader}
+            //       },
+            //       body: JSON.stringify(graphQLParams),
+            //       // credentials: 'same-origin',
+            //       credentials: 'include', 
+            //     }).then(function (response) {
+            //       return response.text();
+            //     })
+            //     .then(function (responseBody) {
+            //       try {
+            //         resolve(JSON.parse(responseBody));
+            //       } catch (error) {
+            //         resolve(responseBody);
+            //       }
+            //     });
+            //   });
+            // }
+            
             function graphQLHttpFetcher(graphQLParams) {
+              console.log('httpFetcher');
                 return fetch(fetchURL, {
                   method: 'post',
                   headers: {
@@ -119,26 +138,14 @@ superGraphiql.renderGraphiQL = function(data) {
           `
         }
          // Render <GraphiQL /> into the body.
-        ReactDOM.render(
+         ReactDOM.render(
           React.createElement(GraphiQL, {
             fetcher: fetcher,
           }),
-          document.body
+          document.getElementById("content")
         );
       </script>
     </body>
-    <footer>
-      <!-- <link href="https://unpkg.com/graphiql@${GRAPHIQL_VERSION}/graphiql.css" rel="stylesheet" />
-        <style>
-          html, body {
-          height: 100vh;
-          margin: 0;
-          overflow: hidden;
-          width: 100%;
-        }
-      </style> -->
-      <link rel="stylesheet" type="text/css" href="/super-graphiql.min.css" />
-    </footer>
   </html>`
 }
 

@@ -2379,9 +2379,21 @@ var _initialiseProps = function _initialiseProps() {
           };
 
           var promise = new Promise(function (resolve, reject) {
-            fetcher(cleanQueryObj).then(function (response) {
-              resolve(response);
-            });
+            var fetched = fetcher(cleanQueryObj);
+            console.log('isPromise', isPromise(fetched));
+            console.log('isObservable', isObservable(fetched));
+            if (isPromise(fetched)) {
+              fetched.then(function (response) {
+                resolve(response);
+              });
+              // Otherwise, must be an observable
+            } else if (isObservable(fetched)) {
+              fetched.subscribe({
+                next: function next(response) {
+                  resolve(response);
+                }
+              });
+            }
           });
           promises.push(promise);
         });
@@ -2450,11 +2462,12 @@ var _initialiseProps = function _initialiseProps() {
         var subscription = _this6._fetchQuery(editedQueryList, variables,
         // operationName
         function (result) {
-          var cleanResults = result.map(function (resultObj, index) {
-            resultObj["dataSet" + index] = resultObj.data;
-            delete resultObj["data"];
-            return resultObj;
-          });
+          var cleanResults = result;
+          // const cleanResults = result.map((resultObj, index) => {
+          //   resultObj["dataSet" + index] = resultObj.data;
+          //   delete resultObj["data"];
+          //   return resultObj;
+          // });
 
           if (runID === _this6._runCounter) {
             _this6.setState({
@@ -7712,10 +7725,8 @@ _codemirror2.default.registerHelper('lint', 'graphql-variables', function (text,
 
 function validateVariables(editor, variableToType, variablesAST) {
   var errors = [];
-  console.log('variableToType', variableToType)
 
   variablesAST.members.forEach(function (member) {
-    console.log('lint', member)
     var variableName = member.key.value;
     var type = variableToType[variableName];
     if (!type) {
