@@ -7,8 +7,6 @@ exports.SuperGraphiQL = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _react = require("react");
@@ -52,10 +50,6 @@ var _CodeMirrorSizer2 = _interopRequireDefault(_CodeMirrorSizer);
 var _StorageAPI = require("../utility/StorageAPI");
 
 var _StorageAPI2 = _interopRequireDefault(_StorageAPI);
-
-var _getQueryFacts = require("../utility/getQueryFacts");
-
-var _getQueryFacts2 = _interopRequireDefault(_getQueryFacts);
 
 var _getSelectedOperationName = require("../utility/getSelectedOperationName");
 
@@ -112,33 +106,31 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
     // Cache the storage instance
     _this._storage = new _StorageAPI2.default(props.storage);
 
-    // Determine the initial query to display.
-    var query = _this._storage.get("query") !== null ? _this._storage.get("query") : props.defaultQuery !== undefined ? props.defaultQuery : defaultQuery;
+    // Determine the inital variable to display
+    var queries = _this._storage.get("query");
 
-    // Get the initial query facts.
-    var queryFacts = (0, _getQueryFacts2.default)(props.schema, query);
+    var query = queries ? queries[queries.length - 1] : props.defaultQuery !== undefined ? props.defaultQuery : defaultQuery;
 
     // Determine the initial variables to display.
     var variables = _this._storage.get("variables");
 
     // Determine the initial operationName to use.
-    var operationName = (0, _getSelectedOperationName2.default)(null, _this._storage.get("operationName"), queryFacts && queryFacts.operations);
+    var operationName = (0, _getSelectedOperationName2.default)(null, _this._storage.get("operationName"));
 
     // Determine the initial queries to render (if there are queries in local storage)
     var storedQueryList = _this._storage.get("queryList");
     var emptyQuery = {
       id: 0,
-      query: "",
+      query: query,
       checked: true,
       operationName: operationName
     };
     var prevQuery = storedQueryList ? JSON.parse(storedQueryList) : [emptyQuery];
 
     // Initialize state
-    _this.state = _extends({
+    _this.state = {
       schema: props.schema,
       queryList: prevQuery,
-      query: query,
       variables: variables,
       operationName: operationName,
       response: props.response,
@@ -150,7 +142,7 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
       docExplorerWidth: Number(_this._storage.get("docExplorerWidth")) || DEFAULT_DOC_EXPLORER_WIDTH,
       isWaitingForResponse: false,
       subscription: null
-    }, queryFacts);
+    };
 
     // Reset execution / run counter to 0
     _this._runCounter = 0;
@@ -184,7 +176,7 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
       var _this2 = this;
 
       var nextSchema = this.state.schema;
-      var nextQuery = this.state.query;
+      var nextQueryList = this.state.queryList;
       var nextVariables = this.state.variables;
       var nextOperationName = this.state.operationName;
       var nextResponse = this.state.response;
@@ -192,8 +184,8 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
       if (nextProps.schema !== undefined) {
         nextSchema = nextProps.schema;
       }
-      if (nextProps.query !== undefined) {
-        nextQuery = nextProps.query;
+      if (nextProps.queryList !== undefined) {
+        nextQueryList = nextProps.queryList;
       }
       if (nextProps.variables !== undefined) {
         nextVariables = nextProps.variables;
@@ -213,7 +205,7 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
 
       this.setState({
         schema: nextSchema,
-        query: nextQuery,
+        queryList: nextQueryList,
         variables: nextVariables,
         operationName: nextOperationName,
         response: nextResponse
@@ -239,7 +231,6 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
     key: "componentWillUnmount",
     value: function componentWillUnmount() {
       var queryList = JSON.stringify(this.state.queryList);
-      // this._storage.set("query", this.state.query);
       this._storage.set("queryList", queryList);
       this._storage.set("variables", this.state.variables);
       this._storage.set("operationName", this.state.operationName);
@@ -387,9 +378,9 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
                     schema: _this3.state.schema,
                     onEdit: _this3.handleEditQuery,
                     onHintInformationRender: _this3.handleHintInformationRender,
-                    onClickReference: _this3.handleClickReference
-                    // onAddQuery={this.handleSelectHistoryQuery}
-                    , onPrettifyQuery: _this3.handlePrettifyQuery,
+                    onClickReference: _this3.handleClickReference,
+                    onAddQuery: _this3.handleSelectHistoryQuery,
+                    onPrettifyQuery: _this3.handlePrettifyQuery,
                     onCheckToRun: _this3.handleCheckQueryToRun,
                     onClickDeleteButton: _this3.handleDeleteQueryBox,
                     onRunQuery: _this3.handleEditorRunQuery,
@@ -517,46 +508,50 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
 
   }, {
     key: "autoCompleteLeafs",
-    value: function autoCompleteLeafs() {
-      var _fillLeafs = (0, _fillLeafs2.fillLeafs)(this.state.schema, this.state.query, this.props.getDefaultFieldNames),
-          insertions = _fillLeafs.insertions,
-          result = _fillLeafs.result;
+    value: function autoCompleteLeafs(queries) {
+      var _this4 = this;
 
-      if (insertions && insertions.length > 0) {
-        var editor = this.getQueryEditor();
-        editor.operation(function () {
-          var cursor = editor.getCursor();
-          var cursorIndex = editor.indexFromPos(cursor);
-          editor.setValue(result);
-          var added = 0;
-          var markers = insertions.map(function (_ref) {
-            var index = _ref.index,
-                string = _ref.string;
-            return editor.markText(editor.posFromIndex(index + added), editor.posFromIndex(index + (added += string.length)), {
-              className: "autoInsertedLeaf",
-              clearOnEnter: true,
-              title: "Automatically added leaf fields"
+      return queries.map(function (query) {
+        var _fillLeafs = (0, _fillLeafs2.fillLeafs)(_this4.state.schema, query, _this4.props.getDefaultFieldNames),
+            insertions = _fillLeafs.insertions,
+            result = _fillLeafs.result;
+
+        if (insertions && insertions.length > 0) {
+          var editor = _this4.getQueryEditor();
+          editor.operation(function () {
+            var cursor = editor.getCursor();
+            var cursorIndex = editor.indexFromPos(cursor);
+            editor.setValue(result);
+            var added = 0;
+            var markers = insertions.map(function (_ref) {
+              var index = _ref.index,
+                  string = _ref.string;
+              return editor.markText(editor.posFromIndex(index + added), editor.posFromIndex(index + (added += string.length)), {
+                className: "autoInsertedLeaf",
+                clearOnEnter: true,
+                title: "Automatically added leaf fields"
+              });
             });
-          });
-          setTimeout(function () {
-            return markers.forEach(function (marker) {
-              return marker.clear();
+            setTimeout(function () {
+              return markers.forEach(function (marker) {
+                return marker.clear();
+              });
+            }, 7000);
+            var newCursorIndex = cursorIndex;
+            insertions.forEach(function (_ref2) {
+              var index = _ref2.index,
+                  string = _ref2.string;
+
+              if (index < cursorIndex) {
+                newCursorIndex += string.length;
+              }
             });
-          }, 7000);
-          var newCursorIndex = cursorIndex;
-          insertions.forEach(function (_ref2) {
-            var index = _ref2.index,
-                string = _ref2.string;
-
-            if (index < cursorIndex) {
-              newCursorIndex += string.length;
-            }
+            editor.setCursor(editor.posFromIndex(newCursorIndex));
           });
-          editor.setCursor(editor.posFromIndex(newCursorIndex));
-        });
-      }
+        }
 
-      return result;
+        return result;
+      });
     }
 
     // Private methods
@@ -564,9 +559,9 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
   }, {
     key: "_fetchSchema",
     value: function _fetchSchema() {
-      var _this4 = this;
+      var _this5 = this;
 
-      var fetcher = this._multiFetcher(this.props.fetcher);
+      var fetcher = this.props.fetcher;
       var fetch = observableToPromise(fetcher({ query: _introspectionQueries.introspectionQuery }));
       if (!isPromise(fetch)) {
         this.setState({
@@ -593,24 +588,23 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
         // If a schema was provided while this fetch was underway, then
         // satisfy the race condition by respecting the already
         // provided schema.
-        if (_this4.state.schema !== undefined && _this4.state.schema !== null) {
+        if (_this5.state.schema !== undefined && _this5.state.schema !== null) {
           return;
         }
 
         if (result && result.data) {
           var schema = (0, _graphql.buildClientSchema)(result.data);
-          var queryFacts = (0, _getQueryFacts2.default)(schema, _this4.state.query);
-          _this4.setState(_extends({ schema: schema }, queryFacts));
+          _this5.setState({ schema: schema });
         } else {
           var responseString = typeof result === "string" ? result : JSON.stringify(result, null, 2);
-          _this4.setState({
+          _this5.setState({
             // Set schema to `null` to explicitly indicate that no schema exists.
             schema: null,
             response: responseString
           });
         }
       }).catch(function (error) {
-        _this4.setState({
+        _this5.setState({
           schema: null,
           response: error && String(error.stack || error)
         });
@@ -619,9 +613,9 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
   }, {
     key: "_fetchQuery",
     value: function _fetchQuery(queries, variables, cb) {
-      var _this5 = this;
+      var _this6 = this;
 
-      var fetcher = this._multiFetcher(this.props.fetcher);
+      var fetcher = this.props.fetcher;
       var jsonVariables = null;
 
       try {
@@ -634,41 +628,65 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
         throw new Error("Variables are not a JSON object.");
       }
 
-      var fetch = fetcher(queries, variables);
-
-      if (isPromise(fetch)) {
-        // If fetcher returned a Promise, then call the callback when the promise
-        // resolves, otherwise handle the error.
-        fetch.then(cb).catch(function (error) {
-          _this5.setState({
+      // if Introspection Query
+      if (!Array.isArray(queries)) {
+        fetcher(queries, variables).then(cb).catch(function (error) {
+          _this6.setState({
             isWaitingForResponse: false,
             response: error && String(error.stack || error)
           });
         });
-      } else if (isObservable(fetch)) {
-        // If the fetcher returned an Observable, then subscribe to it, calling
-        // the callback on each next value, and handling both errors and the
-        // completion of the Observable. Returns a Subscription object.
-        var subscription = fetch.subscribe({
-          next: cb,
-          error: function error(_error) {
-            _this5.setState({
-              isWaitingForResponse: false,
-              response: _error && String(_error.stack || _error),
-              subscription: null
+      } else {
+        queries.forEach(function (elem, i) {
+          var query = elem.query,
+              operationName = elem.operationName;
+
+          var cleanQuery = {
+            query: query,
+            operationName: operationName,
+            variables: variables
+          };
+          // check if it is a subscription or not
+          var fetch = fetcher(cleanQuery, variables);
+          if (isPromise(fetch)) {
+            // If fetcher returned a Promise, then call the callback when the promise
+            // resolves, otherwise handle the error.
+            fetch.then(function (response) {
+              cb(response, i, "output");
+            }).catch(function (error) {
+              _this6.setState({
+                isWaitingForResponse: false,
+                response: error && String(error.stack || error)
+              });
             });
-          },
-          complete: function complete() {
-            _this5.setState({
-              isWaitingForResponse: false,
-              subscription: null
+          } else if (isObservable(fetch)) {
+            // If the fetcher returned an Observable, then subscribe to it, calling
+            // the callback on each next value, and handling both errors and the
+            // completion of the Observable. Returns a Subscription object.
+            var subscription = fetch.subscribe({
+              next: function next(response) {
+                cb(response, i, "subscription");
+              },
+              error: function error(_error) {
+                _this6.setState({
+                  isWaitingForResponse: false,
+                  response: _error && String(_error.stack || _error),
+                  subscription: null
+                });
+              },
+              complete: function complete() {
+                _this6.setState({
+                  isWaitingForResponse: false,
+                  subscription: null
+                });
+              }
             });
+
+            return subscription;
+          } else {
+            throw new Error("Fetcher did not return Promise or Observable.");
           }
         });
-
-        return subscription;
-      } else {
-        throw new Error("Fetcher did not return Promise or Observable.");
       }
     }
   }, {
@@ -751,107 +769,70 @@ SuperGraphiQL.propTypes = {
 };
 
 var _initialiseProps = function _initialiseProps() {
-  var _this6 = this;
-
-  this._multiFetcher = function (fetcher) {
-    return function (graphQLParams, variables) {
-      if (Array.isArray(graphQLParams)) {
-        var promises = [];
-
-        graphQLParams.forEach(function (queryObj) {
-          var cleanQueryObj = {
-            query: queryObj.query,
-            operationName: queryObj.operationName,
-            variables: variables
-          };
-
-          var promise = new Promise(function (resolve, reject) {
-            fetcher(cleanQueryObj).then(function (response) {
-              resolve(response);
-            });
-          });
-          promises.push(promise);
-        });
-
-        return Promise.all(promises).then(function (allResponses) {
-          return allResponses;
-        });
-      } else {
-        // Handles initial Introspection Query
-        return new Promise(function (resolve, reject) {
-          fetcher(graphQLParams).then(function (response) {
-            resolve(response);
-          });
-        });
-      }
-    };
-  };
+  var _this7 = this;
 
   this.handleClickReference = function (reference) {
-    _this6.setState({ docExplorerOpen: true }, function () {
-      _this6.docExplorerComponent.showDocForReference(reference);
+    _this7.setState({ docExplorerOpen: true }, function () {
+      _this7.docExplorerComponent.showDocForReference(reference);
     });
   };
 
   this.handleRunQuery = function (selectedOperationName) {
-    _this6._runCounter++;
-    var runID = _this6._runCounter;
-
-    // Use the edited query after autoCompleteLeafs() runs or,
-    // in case autoCompletion fails (the function returns undefined),
-    // the current query from the editor.
-    // NOT USING THIS, UPDATED TO EDITED QUERY LIST
-    // const editedQuery =
-    //   this.autoCompleteLeafs() ||
-    //   this.state.queryList[this.state.queryList.length - 1].query; // temp fix to run query in last box
-
-    // *** IMPORTANT ***
-    // WE NEED TO RUN QUERIES THROUGH this.autoCompleteLeafs()
+    _this7._runCounter++;
+    var runID = _this7._runCounter;
 
     // filter out query editors that are not checked
-    var editedQueryList = _this6.state.queryList.filter(function (queryObj) {
+    var querytoRun = _this7.state.queryList.filter(function (queryObj) {
       return queryObj.checked && queryObj.query.trim();
     });
 
-    var variables = _this6.state.variables;
-    var operationName = _this6.state.operationName;
+    // Use the filtered queries to run after autoCompleteLeafs() runs or,
+    // in case autoCompletion fails (the function returns undefined),
+    // the current query from the editor.
+
+    var editedQueryList = _this7.autoCompleteLeafs(querytoRun);
+    var filteredQuery = editedQueryList.every(function (result) {
+      return Boolean(result);
+    }) ? editedQueryList : querytoRun;
+
+    var variables = _this7.state.variables;
+    var operationName = _this7.state.operationName;
 
     // If an operation was explicitly provided, different from the current
     // operation name, then report that it changed.
     if (selectedOperationName && selectedOperationName !== operationName) {
       operationName = selectedOperationName;
     }
-    if (!editedQueryList.length) {
-      _this6.setState({
+    if (!filteredQuery.length) {
+      _this7.setState({
         response: "Enter a valid query"
       });
     } else {
       try {
-        _this6.setState({
+        _this7.setState({
           isWaitingForResponse: true,
           response: null,
           operationName: operationName
         });
 
         // _fetchQuery may return a subscription.
-        var subscription = _this6._fetchQuery(editedQueryList, variables,
-        // operationName
-        function (result) {
-          var transformResults = result.reduce(function (responseObj, resultObj, index) {
-            responseObj["dataSet" + index] = resultObj.data;
-            return responseObj;
-          }, {});
+        var subscription = _this7._fetchQuery(filteredQuery, variables, function (result, index, type) {
+          if (runID === _this7._runCounter) {
+            _this7.setState(function (prevState) {
+              var prevRes = prevState.response ? JSON.parse(prevState.response) : {};
 
-          if (runID === _this6._runCounter) {
-            _this6.setState({
-              isWaitingForResponse: false,
-              response: JSON.stringify(transformResults, null, 2)
+              prevRes[type + "[" + index + "]"] = result;
+
+              return {
+                isWaitingForResponse: false,
+                response: JSON.stringify(prevRes, null, 2)
+              };
             });
           }
         });
-        _this6.setState({ subscription: subscription });
+        _this7.setState({ subscription: subscription });
       } catch (error) {
-        _this6.setState({
+        _this7.setState({
           isWaitingForResponse: false,
           response: error.message
         });
@@ -860,8 +841,8 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handleStopQuery = function () {
-    var subscription = _this6.state.subscription;
-    _this6.setState({
+    var subscription = _this7.state.subscription;
+    _this7.setState({
       isWaitingForResponse: false,
       subscription: null
     });
@@ -873,26 +854,27 @@ var _initialiseProps = function _initialiseProps() {
   this.handleNewQueryBox = function () {
     var query = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "";
 
-    //Check if one of the boxes are already empty, return the index of the first empty box; stays -1 if none are empty
+    // Check if one of the boxes are already empty, return the index of the first empty box; stays -1 if none are empty
     var emptyIdx = null;
 
-    for (var i = 0; i < _this6.state.queryList.length; i++) {
-      if (!_this6.state.queryList[i].query) {
+    for (var i = 0; i < _this7.state.queryList.length; i++) {
+      if (!_this7.state.queryList[i].query) {
         emptyIdx = i;
         break;
       }
     }
 
-    if (!!query && emptyIdx !== null) _this6.setState(function (prevState, props) {
-      prevState.queryList[emptyIdx].query = query;
-      return {
-        queryList: prevState.queryList
-      };
-    });
-
+    if (Boolean(query) && emptyIdx !== null) {
+      _this7.setState(function (prevState) {
+        prevState.queryList[emptyIdx].query = query;
+        return {
+          queryList: prevState.queryList
+        };
+      });
+    }
     // if there are no empty boxes, add one
     if (emptyIdx === null) {
-      _this6.setState(function (prevState, props) {
+      _this7.setState(function (prevState) {
         // generate psuedo random id
         var uniqid = Math.floor(Math.random() * Date.now());
         prevState.queryList.push({
@@ -910,8 +892,8 @@ var _initialiseProps = function _initialiseProps() {
 
   this.handleCheckQueryToRun = function (id, isChecked) {
     var _loop = function _loop(i) {
-      if (_this6.state.queryList[i].id === id) {
-        _this6.setState(function (prevState, props) {
+      if (_this7.state.queryList[i].id === id) {
+        _this7.setState(function (prevState) {
           // find the query with the same id as the button
           prevState.queryList[i].checked = isChecked;
           return {
@@ -922,7 +904,7 @@ var _initialiseProps = function _initialiseProps() {
       }
     };
 
-    for (var i = 0; i < _this6.state.queryList.length; i++) {
+    for (var i = 0; i < _this7.state.queryList.length; i++) {
       var _ret = _loop(i);
 
       if (_ret === "break") break;
@@ -930,15 +912,15 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handleDeleteQueryBox = function (id) {
-    //check the > 1 queries in the query list state
-    if (_this6.state.queryList.length > 1) {
-      _this6.setState(function (prevState, props) {
-        //filter the item out of the QueryList and store to a temp item
+    // check the > 1 queries in the query list state
+    if (_this7.state.queryList.length > 1) {
+      _this7.setState(function (prevState) {
+        // filter the item out of the QueryList and store to a temp item
         prevState.queryList = prevState.queryList.filter(function (query) {
           return query.id !== id;
         });
-        //reset the state
-        _this6.setState({
+        // reset the state
+        _this7.setState({
           queryList: prevState.queryList
         });
       });
@@ -946,7 +928,7 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handleDeleteAll = function () {
-    _this6.setState({
+    _this7.setState({
       queryList: [{
         id: Math.floor(Math.random() * Date.now()),
         query: "",
@@ -957,14 +939,12 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handlePrettifyQuery = function () {
-    var editor = _this6.getQueryEditor();
+    var editor = _this7.getQueryEditor();
     editor.setValue((0, _graphql.print)((0, _graphql.parse)(editor.getValue())));
   };
 
   this.handleEditQuery = (0, _debounce2.default)(100, function (value, editorID) {
-    var queryFacts = _this6._updateQueryFacts(value, _this6.state.operationName, _this6.state.operations, _this6.state.schema);
-
-    var queryListCopy = [].concat(_toConsumableArray(_this6.state.queryList));
+    var queryListCopy = [].concat(_toConsumableArray(_this7.state.queryList));
     // find object in query list with id of editor ID and update query value
     var queryList = queryListCopy.map(function (queryObj) {
       if (queryObj.id === editorID) {
@@ -973,52 +953,38 @@ var _initialiseProps = function _initialiseProps() {
       return queryObj;
     });
 
-    _this6.setState(_extends({
-      //query: value,
+    _this7.setState({
       queryList: queryList
-    }, queryFacts));
+    });
   });
 
-  this._updateQueryFacts = function (query, operationName, prevOperations, schema) {
-    var queryFacts = (0, _getQueryFacts2.default)(schema, query);
-    if (queryFacts) {
-      // Update operation name should any query names change.
-      var updatedOperationName = (0, _getSelectedOperationName2.default)(prevOperations, operationName, queryFacts.operations);
-
-      // Report changing of operationName if it changed.
-      return _extends({
-        operationName: updatedOperationName
-      }, queryFacts);
-    }
-  };
-
   this.handleEditVariables = function (value) {
-    _this6.setState({ variables: value });
+    _this7.setState({ variables: value });
   };
 
   this.handleHintInformationRender = function (elem) {
-    elem.addEventListener("click", _this6._onClickHintInformation);
+    elem.addEventListener("click", _this7._onClickHintInformation);
 
     var _onRemoveFn = void 0;
     elem.addEventListener("DOMNodeRemoved", _onRemoveFn = function onRemoveFn() {
       elem.removeEventListener("DOMNodeRemoved", _onRemoveFn);
-      elem.removeEventListener("click", _this6._onClickHintInformation);
+      elem.removeEventListener("click", _this7._onClickHintInformation);
     });
   };
 
   this.handleEditorRunQuery = function () {
-    _this6._runQueryAtCursor();
+    _this7._runQueryAtCursor();
   };
 
   this._onClickHintInformation = function (event) {
     if (event.target.className === "typeName") {
       var typeName = event.target.innerHTML;
-      var schema = _this6.state.schema;
+      var schema = _this7.state.schema;
       if (schema) {
         var type = schema.getType(typeName);
         if (type) {
-          _this6.setState({ docExplorerOpen: true }, function () {
-            _this6.docExplorerComponent.showDoc(type);
+          _this7.setState({ docExplorerOpen: true }, function () {
+            _this7.docExplorerComponent.showDoc(type);
           });
         }
       }
@@ -1026,27 +992,27 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handleToggleDocs = function () {
-    if (typeof _this6.props.onToggleDocs === "function") {
-      _this6.props.onToggleDocs(!_this6.state.docExplorerOpen);
+    if (typeof _this7.props.onToggleDocs === "function") {
+      _this7.props.onToggleDocs(!_this7.state.docExplorerOpen);
     }
-    _this6.setState({ docExplorerOpen: !_this6.state.docExplorerOpen });
+    _this7.setState({ docExplorerOpen: !_this7.state.docExplorerOpen });
   };
 
   this.handleToggleHistory = function () {
-    if (typeof _this6.props.onToggleHistory === "function") {
-      _this6.props.onToggleHistory(!_this6.state.historyPaneOpen);
+    if (typeof _this7.props.onToggleHistory === "function") {
+      _this7.props.onToggleHistory(!_this7.state.historyPaneOpen);
     }
-    _this6.setState({ historyPaneOpen: !_this6.state.historyPaneOpen });
+    _this7.setState({ historyPaneOpen: !_this7.state.historyPaneOpen });
   };
 
   this.handleSelectHistoryQuery = function (query, variables) {
-    _this6.handleNewQueryBox(query);
-    _this6.handleEditQuery(query);
-    _this6.handleEditVariables(variables);
+    _this7.handleNewQueryBox(query);
+    _this7.handleEditQuery(query);
+    _this7.handleEditVariables(variables);
   };
 
   this.handleResizeStart = function (downEvent) {
-    if (!_this6._didClickDragBar(downEvent)) {
+    if (!_this7._didClickDragBar(downEvent)) {
       return;
     }
 
@@ -1059,10 +1025,10 @@ var _initialiseProps = function _initialiseProps() {
         return onMouseUp();
       }
 
-      var editorBar = _reactDom2.default.findDOMNode(_this6.editorBarComponent);
+      var editorBar = _reactDom2.default.findDOMNode(_this7.editorBarComponent);
       var leftSize = moveEvent.clientX - (0, _elementPosition.getLeft)(editorBar) - offset;
       var rightSize = editorBar.clientWidth - leftSize;
-      _this6.setState({ editorFlex: leftSize / rightSize });
+      _this7.setState({ editorFlex: leftSize / rightSize });
     };
 
     var onMouseUp = function (_onMouseUp) {
@@ -1087,13 +1053,13 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handleResetResize = function () {
-    _this6.setState({ editorFlex: 1 });
+    _this7.setState({ editorFlex: 1 });
   };
 
   this.handleDocsResizeStart = function (downEvent) {
     downEvent.preventDefault();
 
-    var hadWidth = _this6.state.docExplorerWidth;
+    var hadWidth = _this7.state.docExplorerWidth;
     var offset = downEvent.clientX - (0, _elementPosition.getLeft)(downEvent.target);
 
     var onMouseMove = function onMouseMove(moveEvent) {
@@ -1101,14 +1067,14 @@ var _initialiseProps = function _initialiseProps() {
         return onMouseUp();
       }
 
-      var app = _reactDom2.default.findDOMNode(_this6);
+      var app = _reactDom2.default.findDOMNode(_this7);
       var cursorPos = moveEvent.clientX - (0, _elementPosition.getLeft)(app) - offset;
       var docsSize = app.clientWidth - cursorPos;
 
       if (docsSize < 100) {
-        _this6.setState({ docExplorerOpen: false });
+        _this7.setState({ docExplorerOpen: false });
       } else {
-        _this6.setState({
+        _this7.setState({
           docExplorerOpen: true,
           docExplorerWidth: Math.min(docsSize, 650)
         });
@@ -1126,8 +1092,8 @@ var _initialiseProps = function _initialiseProps() {
 
       return onMouseUp;
     }(function () {
-      if (!_this6.state.docExplorerOpen) {
-        _this6.setState({ docExplorerWidth: hadWidth });
+      if (!_this7.state.docExplorerOpen) {
+        _this7.setState({ docExplorerWidth: hadWidth });
       }
 
       document.removeEventListener("mousemove", onMouseMove);
@@ -1141,7 +1107,7 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handleDocsResetResize = function () {
-    _this6.setState({
+    _this7.setState({
       docExplorerWidth: DEFAULT_DOC_EXPLORER_WIDTH
     });
   };
@@ -1150,8 +1116,8 @@ var _initialiseProps = function _initialiseProps() {
     downEvent.preventDefault();
 
     var didMove = false;
-    var wasOpen = _this6.state.variableEditorOpen;
-    var hadHeight = _this6.state.variableEditorHeight;
+    var wasOpen = _this7.state.variableEditorOpen;
+    var hadHeight = _this7.state.variableEditorHeight;
     var offset = downEvent.clientY - (0, _elementPosition.getTop)(downEvent.target);
 
     var onMouseMove = function onMouseMove(moveEvent) {
@@ -1161,16 +1127,16 @@ var _initialiseProps = function _initialiseProps() {
 
       didMove = true;
 
-      var editorBar = _reactDom2.default.findDOMNode(_this6.editorBarComponent);
+      var editorBar = _reactDom2.default.findDOMNode(_this7.editorBarComponent);
       var topSize = moveEvent.clientY - (0, _elementPosition.getTop)(editorBar) - offset;
       var bottomSize = editorBar.clientHeight - topSize;
       if (bottomSize < 60) {
-        _this6.setState({
+        _this7.setState({
           variableEditorOpen: false,
           variableEditorHeight: hadHeight
         });
       } else {
-        _this6.setState({
+        _this7.setState({
           variableEditorOpen: true,
           variableEditorHeight: bottomSize
         });
@@ -1189,7 +1155,7 @@ var _initialiseProps = function _initialiseProps() {
       return onMouseUp;
     }(function () {
       if (!didMove) {
-        _this6.setState({ variableEditorOpen: !wasOpen });
+        _this7.setState({ variableEditorOpen: !wasOpen });
       }
 
       document.removeEventListener("mousemove", onMouseMove);
@@ -1203,7 +1169,7 @@ var _initialiseProps = function _initialiseProps() {
   };
 };
 
-SuperGraphiQL.Logo = function SuperGraphiQLLogo(props) {
+SuperGraphiQL.Logo = function () {
   return _react2.default.createElement(
     "div",
     { className: "title" },
@@ -1259,7 +1225,7 @@ SuperGraphiQL.Footer = function SuperGraphiQLFooter(props) {
   );
 };
 
-var defaultQuery = "# Welcome to SuperGraphiQL\n#\n# SuperGraphiQL is an in-browser tool for writing, validating, and\n# testing GraphQL queries.\n#\n# Type queries into this side of the screen, and you will see intelligent\n# typeaheads aware of the current GraphQL type schema and live syntax and\n# validation errors highlighted within the text.\n#\n# GraphQL queries typically start with a \"{\" character. Lines that starts\n# with a # are ignored.\n#\n# An example GraphQL query might look like:\n#\n#     {\n#       field(arg: \"value\") {\n#         subField\n#       }\n#     }\n#\n# Keyboard shortcuts:\n#\n#  Prettify Query:  Shift-Ctrl-P (or press the prettify button above)\n#\n#       Run Query:  Ctrl-Enter (or press the play button above)\n#\n#   Auto Complete:  Ctrl-Space (or just start typing)\n#\n\n";
+var defaultQuery = "# Welcome to SuperGraphiQL\n#\n# GraphiQL is an in-browser tool for writing, validating, and\n# testing GraphQL queries.\n#\n# An example GraphQL query might look like:\n#\n#     {\n#       field(arg: \"value\") {\n#         subField\n#       }\n#     }\n#\n#       Run Query:  Ctrl-Enter (or press the play button above)\n#   Auto Complete:  Ctrl-Space (or just start typing)\n#\n";
 
 // Duck-type promise detection.
 function isPromise(value) {

@@ -9,8 +9,7 @@ import fetch from 'isomorphic-fetch';
 function graphQLFetcher(graphQLParams) {
   // This example expects a GraphQL server at the path /graphql.
   // Change this to point wherever you host your GraphQL server.
-  return new Promise((resolve, reject) => {
-    fetch('/graphql', {
+  return fetch('/graphql', {
     method: 'post',
     headers: {
       'Content-Type': 'application/json',
@@ -19,16 +18,15 @@ function graphQLFetcher(graphQLParams) {
     body: JSON.stringify(graphQLParams),
     
     credentials: 'include', 
-    }).then(function (response) {
-      return response.text();
-    })
-    .then(function (responseBody) {
-      try {
-        resolve(JSON.parse(responseBody));
-      } catch (error) {
-        resolve(responseBody);
-      }
-    });
+  }).then(function (response) {
+    return response.text();
+  })
+  .then(function (responseBody) {
+    try {
+      return JSON.parse(responseBody);
+    } catch (error) {
+      return responseBody;
+    }
   });
 }
 
