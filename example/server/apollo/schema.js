@@ -1,3 +1,11 @@
+const mongoose = require("mongoose");
+const myURI = "mongodb://user:pw1@ds113169.mlab.com:13169/graphql-test";
+const uri = process.env.MONGO_URI || myURI;
+mongoose.connect(uri);
+mongoose.connection.once("open", () => {
+  console.log("Connected to Database");
+});
+
 const makeExecutableSchema = require("graphql-tools").makeExecutableSchema;
 const resolvers = require("./resolvers");
 

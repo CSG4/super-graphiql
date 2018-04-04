@@ -3006,9 +3006,9 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
                     schema: _this3.state.schema,
                     onEdit: _this3.handleEditQuery,
                     onHintInformationRender: _this3.handleHintInformationRender,
-                    onClickReference: _this3.handleClickReference
-                    // onAddQuery={this.handleSelectHistoryQuery}
-                    , onPrettifyQuery: _this3.handlePrettifyQuery,
+                    onClickReference: _this3.handleClickReference,
+                    onAddQuery: _this3.handleSelectHistoryQuery,
+                    onPrettifyQuery: _this3.handlePrettifyQuery,
                     onCheckToRun: _this3.handleCheckQueryToRun,
                     onClickDeleteButton: _this3.handleDeleteQueryBox,
                     onRunQuery: _this3.handleEditorRunQuery,
@@ -3185,7 +3185,7 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
     value: function _fetchSchema() {
       var _this4 = this;
 
-      var fetcher = this._multiFetcher(this.props.fetcher);
+      var fetcher = this.props.fetcher;
       var fetch = observableToPromise(fetcher({ query: _introspectionQueries.introspectionQuery }));
       if (!isPromise(fetch)) {
         this.setState({
@@ -3240,7 +3240,7 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
     value: function _fetchQuery(queries, variables, cb) {
       var _this5 = this;
 
-      var fetcher = this._multiFetcher(this.props.fetcher);
+      var fetcher = this.props.fetcher;
       var jsonVariables = null;
 
       try {
@@ -3253,41 +3253,62 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
         throw new Error("Variables are not a JSON object.");
       }
 
-      var fetch = fetcher(queries, variables);
-
-      if (isPromise(fetch)) {
-        // If fetcher returned a Promise, then call the callback when the promise
-        // resolves, otherwise handle the error.
-        fetch.then(cb).catch(function (error) {
+      // if Introspection Query
+      if (!Array.isArray(queries)) {
+        fetcher(queries, variables).then(cb).catch(function (error) {
           _this5.setState({
             isWaitingForResponse: false,
             response: error && String(error.stack || error)
           });
         });
-      } else if (isObservable(fetch)) {
-        // If the fetcher returned an Observable, then subscribe to it, calling
-        // the callback on each next value, and handling both errors and the
-        // completion of the Observable. Returns a Subscription object.
-        var subscription = fetch.subscribe({
-          next: cb,
-          error: function error(_error) {
-            _this5.setState({
-              isWaitingForResponse: false,
-              response: _error && String(_error.stack || _error),
-              subscription: null
+      } else {
+        queries.forEach(function (query, i) {
+          var cleanQuery = {
+            query: query.query,
+            operationName: query.operationName,
+            variables: variables
+          };
+          // check if it is a subscription or not
+          var fetch = fetcher(cleanQuery, variables);
+          if (isPromise(fetch)) {
+            // If fetcher returned a Promise, then call the callback when the promise
+            // resolves, otherwise handle the error.
+            fetch.then(function (response) {
+              cb(response, i, "output");
+            }).catch(function (error) {
+              _this5.setState({
+                isWaitingForResponse: false,
+                response: error && String(error.stack || error)
+              });
             });
-          },
-          complete: function complete() {
-            _this5.setState({
-              isWaitingForResponse: false,
-              subscription: null
+          } else if (isObservable(fetch)) {
+            // If the fetcher returned an Observable, then subscribe to it, calling
+            // the callback on each next value, and handling both errors and the
+            // completion of the Observable. Returns a Subscription object.
+            var subscription = fetch.subscribe({
+              next: function next(response) {
+                cb(response, i, "subscription");
+              },
+              error: function error(_error) {
+                _this5.setState({
+                  isWaitingForResponse: false,
+                  response: _error && String(_error.stack || _error),
+                  subscription: null
+                });
+              },
+              complete: function complete() {
+                _this5.setState({
+                  isWaitingForResponse: false,
+                  subscription: null
+                });
+              }
             });
+
+            return subscription;
+          } else {
+            throw new Error("Fetcher did not return Promise or Observable.");
           }
         });
-
-        return subscription;
-      } else {
-        throw new Error("Fetcher did not return Promise or Observable.");
       }
     }
   }, {
@@ -3372,40 +3393,6 @@ SuperGraphiQL.propTypes = {
 var _initialiseProps = function _initialiseProps() {
   var _this6 = this;
 
-  this._multiFetcher = function (fetcher) {
-    return function (graphQLParams, variables) {
-      if (Array.isArray(graphQLParams)) {
-        var promises = [];
-
-        graphQLParams.forEach(function (queryObj) {
-          var cleanQueryObj = {
-            query: queryObj.query,
-            operationName: queryObj.operationName,
-            variables: variables
-          };
-
-          var promise = new Promise(function (resolve, reject) {
-            fetcher(cleanQueryObj).then(function (response) {
-              resolve(response);
-            });
-          });
-          promises.push(promise);
-        });
-
-        return Promise.all(promises).then(function (allResponses) {
-          return allResponses;
-        });
-      } else {
-        // Handles initial Introspection Query
-        return new Promise(function (resolve, reject) {
-          fetcher(graphQLParams).then(function (response) {
-            resolve(response);
-          });
-        });
-      }
-    };
-  };
-
   this.handleClickReference = function (reference) {
     _this6.setState({ docExplorerOpen: true }, function () {
       _this6.docExplorerComponent.showDocForReference(reference);
@@ -3453,18 +3440,17 @@ var _initialiseProps = function _initialiseProps() {
         });
 
         // _fetchQuery may return a subscription.
-        var subscription = _this6._fetchQuery(editedQueryList, variables,
-        // operationName
-        function (result) {
-          var transformResults = result.reduce(function (responseObj, resultObj, index) {
-            responseObj["dataSet" + index] = resultObj.data;
-            return responseObj;
-          }, {});
-
+        var subscription = _this6._fetchQuery(editedQueryList, variables, function (result, index, type) {
           if (runID === _this6._runCounter) {
-            _this6.setState({
-              isWaitingForResponse: false,
-              response: JSON.stringify(transformResults, null, 2)
+            _this6.setState(function (prevState) {
+              var prevRes = prevState.response ? JSON.parse(prevState.response) : {};
+
+              prevRes[type + "[" + index + "]"] = result;
+
+              return {
+                isWaitingForResponse: false,
+                response: JSON.stringify(prevRes, null, 2)
+              };
             });
           }
         });
@@ -7711,10 +7697,8 @@ _codemirror2.default.registerHelper('lint', 'graphql-variables', function (text,
 
 function validateVariables(editor, variableToType, variablesAST) {
   var errors = [];
-  console.log('variableToType', variableToType)
 
   variablesAST.members.forEach(function (member) {
-    console.log('lint', member)
     var variableName = member.key.value;
     var type = variableToType[variableName];
     if (!type) {
