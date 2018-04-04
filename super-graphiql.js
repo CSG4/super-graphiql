@@ -1538,11 +1538,11 @@ var ExecuteButton = exports.ExecuteButton = function (_React$Component) {
         options = _react2.default.createElement(
           "ul",
           { className: "execute-options" },
-          operations.map(function (operation) {
+          operations.map(function (operation, i) {
             return _react2.default.createElement(
               "li",
               {
-                key: operation.name ? operation.name.value : "*",
+                key: operation.name ? operation.name.value : i,
                 className: operation === highlight && "selected" || null,
                 onMouseOver: function onMouseOver() {
                   return _this2.setState({ highlight: operation });
@@ -1754,7 +1754,7 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
       query: query,
       variables: variables,
       operationName: operationName,
-      response: props.response,
+      response: "",
       editorFlex: Number(_this._storage.get("editorFlex")) || 1,
       variableEditorOpen: Boolean(variables),
       variableEditorHeight: Number(_this._storage.get("variableEditorHeight")) || 200,
@@ -2230,8 +2230,8 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
       });
     }
   }, {
-    key: "_fetchQuery",
-    value: function _fetchQuery(queries, variables, cb) {
+    key: "_fetchQuery2",
+    value: function _fetchQuery2(queries, variables, cb) {
       var _this5 = this;
 
       var fetcher = this._multiFetcher(this.props.fetcher);
@@ -2283,6 +2283,86 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
       } else {
         throw new Error("Fetcher did not return Promise or Observable.");
       }
+    }
+  }, {
+    key: "_fetchQuery",
+    value: function _fetchQuery(queries, variables, cb) {
+      var _this6 = this;
+
+      var fetcher = this.props.fetcher;
+      var jsonVariables = null;
+
+      try {
+        jsonVariables = variables && variables.trim() !== "" ? JSON.parse(variables) : null;
+      } catch (error) {
+        throw new Error("Variables are invalid JSON: " + error.message + ".");
+      }
+
+      if ((typeof jsonVariables === "undefined" ? "undefined" : _typeof(jsonVariables)) !== "object") {
+        throw new Error("Variables are not a JSON object.");
+      }
+
+      // if Introspection Query
+      if (!Array.isArray(queries)) {
+        fetcher(queries, variables).then(cb).catch(function (error) {
+          _this6.setState({
+            isWaitingForResponse: false,
+            response: error && String(error.stack || error)
+          });
+        });
+      } else {
+        queries.forEach(function (query, i) {
+          var cleanQuery = {
+            query: query.query,
+            operationName: query.operationName,
+            variables: variables
+          };
+          // check if it is a subscription or not
+          var fetch = fetcher(cleanQuery, variables);
+          if (isPromise(fetch)) {
+            // If fetcher returned a Promise, then call the callback when the promise
+            // resolves, otherwise handle the error.
+            fetch.then(function (response) {
+              cb(response, i, "outputData");
+            }).catch(function (error) {
+              _this6.setState({
+                isWaitingForResponse: false,
+                response: error && String(error.stack || error)
+              });
+            });
+          } else if (isObservable(fetch)) {
+            // If the fetcher returned an Observable, then subscribe to it, calling
+            // the callback on each next value, and handling both errors and the
+            // completion of the Observable. Returns a Subscription object.
+            var subscription = fetch.subscribe({
+              next: function next(response) {
+                cb(response, i, "subscription");
+              },
+              error: function error(_error2) {
+                _this6.setState({
+                  isWaitingForResponse: false,
+                  response: _error2 && String(_error2.stack || _error2),
+                  subscription: null
+                });
+              },
+              complete: function complete() {
+                _this6.setState({
+                  isWaitingForResponse: false,
+                  subscription: null
+                });
+              }
+            });
+
+            return subscription;
+          } else {
+            throw new Error("Fetcher did not return Promise or Observable.");
+          }
+        });
+      }
+
+      // const fetcher = this._multiFetcher(this.props.fetcher);
+
+      // const fetch = fetcher(queries, variables);
     }
   }, {
     key: "_runQueryAtCursor",
@@ -2364,7 +2444,7 @@ GraphiQL.propTypes = {
 };
 
 var _initialiseProps = function _initialiseProps() {
-  var _this6 = this;
+  var _this7 = this;
 
   this._multiFetcher = function (fetcher) {
     return function (graphQLParams, variables) {
@@ -2380,8 +2460,8 @@ var _initialiseProps = function _initialiseProps() {
 
           var promise = new Promise(function (resolve, reject) {
             var fetched = fetcher(cleanQueryObj);
-            console.log('isPromise', isPromise(fetched));
-            console.log('isObservable', isObservable(fetched));
+            console.log("isPromise", isPromise(fetched));
+            console.log("isObservable", isObservable(fetched));
             if (isPromise(fetched)) {
               fetched.then(function (response) {
                 resolve(response);
@@ -2413,14 +2493,14 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handleClickReference = function (reference) {
-    _this6.setState({ docExplorerOpen: true }, function () {
-      _this6.docExplorerComponent.showDocForReference(reference);
+    _this7.setState({ docExplorerOpen: true }, function () {
+      _this7.docExplorerComponent.showDocForReference(reference);
     });
   };
 
   this.handleRunQuery = function (selectedOperationName) {
-    _this6._runCounter++;
-    var runID = _this6._runCounter;
+    _this7._runCounter++;
+    var runID = _this7._runCounter;
 
     // Use the edited query after autoCompleteLeafs() runs or,
     // in case autoCompletion fails (the function returns undefined),
@@ -2434,12 +2514,12 @@ var _initialiseProps = function _initialiseProps() {
     // WE NEED TO RUN QUERIES THROUGH this.autoCompleteLeafs()
 
     // filter out query editors that are not checked
-    var editedQueryList = _this6.state.queryList.filter(function (queryObj) {
+    var editedQueryList = _this7.state.queryList.filter(function (queryObj) {
       return queryObj.checked && queryObj.query.trim();
     });
 
-    var variables = _this6.state.variables;
-    var operationName = _this6.state.operationName;
+    var variables = _this7.state.variables;
+    var operationName = _this7.state.operationName;
 
     // If an operation was explicitly provided, different from the current
     // operation name, then report that it changed.
@@ -2447,38 +2527,50 @@ var _initialiseProps = function _initialiseProps() {
       operationName = selectedOperationName;
     }
     if (!editedQueryList.length) {
-      _this6.setState({
+      _this7.setState({
         response: "Enter a valid query"
       });
     } else {
       try {
-        _this6.setState({
+        _this7.setState({
           isWaitingForResponse: true,
           response: null,
           operationName: operationName
         });
 
         // _fetchQuery may return a subscription.
-        var subscription = _this6._fetchQuery(editedQueryList, variables,
+        var subscription = _this7._fetchQuery(editedQueryList, variables,
         // operationName
-        function (result) {
-          var cleanResults = result;
-          // const cleanResults = result.map((resultObj, index) => {
-          //   resultObj["dataSet" + index] = resultObj.data;
-          //   delete resultObj["data"];
-          //   return resultObj;
-          // });
+        function (result, index, type) {
+          // let transformResults = "";
+          // if (Array.isArray(result)) {
+          //   transformResults = result.reduce(
+          //     (responseObj, resultObj, index) => {
+          //       responseObj["dataSet" + index] = resultObj.data;
+          //       return responseObj;
+          //     },
+          //     {}
+          //   );
+          // } else {
+          //   transformResults = result;
+          // }
 
-          if (runID === _this6._runCounter) {
-            _this6.setState({
-              isWaitingForResponse: false,
-              response: JSON.stringify(cleanResults, null, 2)
+          if (runID === _this7._runCounter) {
+            _this7.setState(function (prevState) {
+              var prevRes = prevState.response ? JSON.parse(prevState.response) : {};
+
+              prevRes[type + "_" + index] = result;
+
+              return {
+                isWaitingForResponse: false,
+                response: JSON.stringify(prevRes, null, 2)
+              };
             });
           }
         });
-        _this6.setState({ subscription: subscription });
+        _this7.setState({ subscription: subscription });
       } catch (error) {
-        _this6.setState({
+        _this7.setState({
           isWaitingForResponse: false,
           response: error.message
         });
@@ -2487,8 +2579,8 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handleStopQuery = function () {
-    var subscription = _this6.state.subscription;
-    _this6.setState({
+    var subscription = _this7.state.subscription;
+    _this7.setState({
       isWaitingForResponse: false,
       subscription: null
     });
@@ -2503,14 +2595,14 @@ var _initialiseProps = function _initialiseProps() {
     //Check if one of the boxes are already empty, return the index of the first empty box; stays -1 if none are empty
     var emptyIdx = null;
 
-    for (var i = 0; i < _this6.state.queryList.length; i++) {
-      if (!_this6.state.queryList[i].query) {
+    for (var i = 0; i < _this7.state.queryList.length; i++) {
+      if (!_this7.state.queryList[i].query) {
         emptyIdx = i;
         break;
       }
     }
 
-    if (!!query && emptyIdx !== null) _this6.setState(function (prevState, props) {
+    if (!!query && emptyIdx !== null) _this7.setState(function (prevState, props) {
       prevState.queryList[emptyIdx].query = query;
       return {
         queryList: prevState.queryList
@@ -2519,7 +2611,7 @@ var _initialiseProps = function _initialiseProps() {
 
     // if there are no empty boxes, add one
     if (emptyIdx === null) {
-      _this6.setState(function (prevState, props) {
+      _this7.setState(function (prevState, props) {
         // generate psuedo random id
         var uniqid = Math.floor(Math.random() * Date.now());
         prevState.queryList.push({
@@ -2537,8 +2629,8 @@ var _initialiseProps = function _initialiseProps() {
 
   this.handleCheckQueryToRun = function (id, isChecked) {
     var _loop = function _loop(i) {
-      if (_this6.state.queryList[i].id === id) {
-        _this6.setState(function (prevState, props) {
+      if (_this7.state.queryList[i].id === id) {
+        _this7.setState(function (prevState, props) {
           // find the query with the same id as the button
           prevState.queryList[i].checked = isChecked;
           return {
@@ -2549,7 +2641,7 @@ var _initialiseProps = function _initialiseProps() {
       }
     };
 
-    for (var i = 0; i < _this6.state.queryList.length; i++) {
+    for (var i = 0; i < _this7.state.queryList.length; i++) {
       var _ret = _loop(i);
 
       if (_ret === "break") break;
@@ -2558,14 +2650,14 @@ var _initialiseProps = function _initialiseProps() {
 
   this.handleDeleteQueryBox = function (id) {
     //check the > 1 queries in the query list state
-    if (_this6.state.queryList.length > 1) {
-      _this6.setState(function (prevState, props) {
+    if (_this7.state.queryList.length > 1) {
+      _this7.setState(function (prevState, props) {
         //filter the item out of the QueryList and store to a temp item
         prevState.queryList = prevState.queryList.filter(function (query) {
           return query.id !== id;
         });
         //reset the state
-        _this6.setState({
+        _this7.setState({
           queryList: prevState.queryList
         });
       });
@@ -2573,7 +2665,7 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handleDeleteAll = function () {
-    _this6.setState({
+    _this7.setState({
       queryList: [{
         id: Math.floor(Math.random() * Date.now()),
         query: "",
@@ -2584,14 +2676,14 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handlePrettifyQuery = function () {
-    var editor = _this6.getQueryEditor();
+    var editor = _this7.getQueryEditor();
     editor.setValue((0, _graphql.print)((0, _graphql.parse)(editor.getValue())));
   };
 
   this.handleEditQuery = (0, _debounce2.default)(100, function (value, editorID) {
-    var queryFacts = _this6._updateQueryFacts(value, _this6.state.operationName, _this6.state.operations, _this6.state.schema);
+    var queryFacts = _this7._updateQueryFacts(value, _this7.state.operationName, _this7.state.operations, _this7.state.schema);
 
-    var queryListCopy = [].concat(_toConsumableArray(_this6.state.queryList));
+    var queryListCopy = [].concat(_toConsumableArray(_this7.state.queryList));
     // find object in query list with id of editor ID and update query value
     var queryList = queryListCopy.map(function (queryObj) {
       if (queryObj.id === editorID) {
@@ -2600,7 +2692,7 @@ var _initialiseProps = function _initialiseProps() {
       return queryObj;
     });
 
-    _this6.setState(_extends({
+    _this7.setState(_extends({
       //query: value,
       queryList: queryList
     }, queryFacts));
@@ -2620,32 +2712,32 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handleEditVariables = function (value) {
-    _this6.setState({ variables: value });
+    _this7.setState({ variables: value });
   };
 
   this.handleHintInformationRender = function (elem) {
-    elem.addEventListener("click", _this6._onClickHintInformation);
+    elem.addEventListener("click", _this7._onClickHintInformation);
 
     var _onRemoveFn = void 0;
     elem.addEventListener("DOMNodeRemoved", _onRemoveFn = function onRemoveFn() {
       elem.removeEventListener("DOMNodeRemoved", _onRemoveFn);
-      elem.removeEventListener("click", _this6._onClickHintInformation);
+      elem.removeEventListener("click", _this7._onClickHintInformation);
     });
   };
 
   this.handleEditorRunQuery = function () {
-    _this6._runQueryAtCursor();
+    _this7._runQueryAtCursor();
   };
 
   this._onClickHintInformation = function (event) {
     if (event.target.className === "typeName") {
       var typeName = event.target.innerHTML;
-      var schema = _this6.state.schema;
+      var schema = _this7.state.schema;
       if (schema) {
         var type = schema.getType(typeName);
         if (type) {
-          _this6.setState({ docExplorerOpen: true }, function () {
-            _this6.docExplorerComponent.showDoc(type);
+          _this7.setState({ docExplorerOpen: true }, function () {
+            _this7.docExplorerComponent.showDoc(type);
           });
         }
       }
@@ -2653,27 +2745,27 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handleToggleDocs = function () {
-    if (typeof _this6.props.onToggleDocs === "function") {
-      _this6.props.onToggleDocs(!_this6.state.docExplorerOpen);
+    if (typeof _this7.props.onToggleDocs === "function") {
+      _this7.props.onToggleDocs(!_this7.state.docExplorerOpen);
     }
-    _this6.setState({ docExplorerOpen: !_this6.state.docExplorerOpen });
+    _this7.setState({ docExplorerOpen: !_this7.state.docExplorerOpen });
   };
 
   this.handleToggleHistory = function () {
-    if (typeof _this6.props.onToggleHistory === "function") {
-      _this6.props.onToggleHistory(!_this6.state.historyPaneOpen);
+    if (typeof _this7.props.onToggleHistory === "function") {
+      _this7.props.onToggleHistory(!_this7.state.historyPaneOpen);
     }
-    _this6.setState({ historyPaneOpen: !_this6.state.historyPaneOpen });
+    _this7.setState({ historyPaneOpen: !_this7.state.historyPaneOpen });
   };
 
   this.handleSelectHistoryQuery = function (query, variables) {
-    _this6.handleNewQueryBox(query);
-    _this6.handleEditQuery(query);
-    _this6.handleEditVariables(variables);
+    _this7.handleNewQueryBox(query);
+    _this7.handleEditQuery(query);
+    _this7.handleEditVariables(variables);
   };
 
   this.handleResizeStart = function (downEvent) {
-    if (!_this6._didClickDragBar(downEvent)) {
+    if (!_this7._didClickDragBar(downEvent)) {
       return;
     }
 
@@ -2686,10 +2778,10 @@ var _initialiseProps = function _initialiseProps() {
         return onMouseUp();
       }
 
-      var editorBar = _reactDom2.default.findDOMNode(_this6.editorBarComponent);
+      var editorBar = _reactDom2.default.findDOMNode(_this7.editorBarComponent);
       var leftSize = moveEvent.clientX - (0, _elementPosition.getLeft)(editorBar) - offset;
       var rightSize = editorBar.clientWidth - leftSize;
-      _this6.setState({ editorFlex: leftSize / rightSize });
+      _this7.setState({ editorFlex: leftSize / rightSize });
     };
 
     var onMouseUp = function (_onMouseUp) {
@@ -2714,13 +2806,13 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handleResetResize = function () {
-    _this6.setState({ editorFlex: 1 });
+    _this7.setState({ editorFlex: 1 });
   };
 
   this.handleDocsResizeStart = function (downEvent) {
     downEvent.preventDefault();
 
-    var hadWidth = _this6.state.docExplorerWidth;
+    var hadWidth = _this7.state.docExplorerWidth;
     var offset = downEvent.clientX - (0, _elementPosition.getLeft)(downEvent.target);
 
     var onMouseMove = function onMouseMove(moveEvent) {
@@ -2728,14 +2820,14 @@ var _initialiseProps = function _initialiseProps() {
         return onMouseUp();
       }
 
-      var app = _reactDom2.default.findDOMNode(_this6);
+      var app = _reactDom2.default.findDOMNode(_this7);
       var cursorPos = moveEvent.clientX - (0, _elementPosition.getLeft)(app) - offset;
       var docsSize = app.clientWidth - cursorPos;
 
       if (docsSize < 100) {
-        _this6.setState({ docExplorerOpen: false });
+        _this7.setState({ docExplorerOpen: false });
       } else {
-        _this6.setState({
+        _this7.setState({
           docExplorerOpen: true,
           docExplorerWidth: Math.min(docsSize, 650)
         });
@@ -2753,8 +2845,8 @@ var _initialiseProps = function _initialiseProps() {
 
       return onMouseUp;
     }(function () {
-      if (!_this6.state.docExplorerOpen) {
-        _this6.setState({ docExplorerWidth: hadWidth });
+      if (!_this7.state.docExplorerOpen) {
+        _this7.setState({ docExplorerWidth: hadWidth });
       }
 
       document.removeEventListener("mousemove", onMouseMove);
@@ -2768,7 +2860,7 @@ var _initialiseProps = function _initialiseProps() {
   };
 
   this.handleDocsResetResize = function () {
-    _this6.setState({
+    _this7.setState({
       docExplorerWidth: DEFAULT_DOC_EXPLORER_WIDTH
     });
   };
@@ -2777,8 +2869,8 @@ var _initialiseProps = function _initialiseProps() {
     downEvent.preventDefault();
 
     var didMove = false;
-    var wasOpen = _this6.state.variableEditorOpen;
-    var hadHeight = _this6.state.variableEditorHeight;
+    var wasOpen = _this7.state.variableEditorOpen;
+    var hadHeight = _this7.state.variableEditorHeight;
     var offset = downEvent.clientY - (0, _elementPosition.getTop)(downEvent.target);
 
     var onMouseMove = function onMouseMove(moveEvent) {
@@ -2788,16 +2880,16 @@ var _initialiseProps = function _initialiseProps() {
 
       didMove = true;
 
-      var editorBar = _reactDom2.default.findDOMNode(_this6.editorBarComponent);
+      var editorBar = _reactDom2.default.findDOMNode(_this7.editorBarComponent);
       var topSize = moveEvent.clientY - (0, _elementPosition.getTop)(editorBar) - offset;
       var bottomSize = editorBar.clientHeight - topSize;
       if (bottomSize < 60) {
-        _this6.setState({
+        _this7.setState({
           variableEditorOpen: false,
           variableEditorHeight: hadHeight
         });
       } else {
-        _this6.setState({
+        _this7.setState({
           variableEditorOpen: true,
           variableEditorHeight: bottomSize
         });
@@ -2816,7 +2908,7 @@ var _initialiseProps = function _initialiseProps() {
       return onMouseUp;
     }(function () {
       if (!didMove) {
-        _this6.setState({ variableEditorOpen: !wasOpen });
+        _this7.setState({ variableEditorOpen: !wasOpen });
       }
 
       document.removeEventListener("mousemove", onMouseMove);

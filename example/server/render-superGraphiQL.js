@@ -16,13 +16,19 @@
 // };
 const GRAPHIQL_VERSION = '0.11.11';
 const SUBSCRIPTIONS_TRANSPORT_VERSION = '0.8.2';
-
 // Ensures string values are safe to be used within a <script> tag.
 function safeSerialize(data) {
   return data ? JSON.stringify(data).replace(/\//g, '\\/') : null;
 }
 
 const superGraphiql = {};
+
+superGraphiql.supergraphiqlExpress = function(req, res, data) {
+  res.setHeader('Content-Type', 'text/html');
+  res.write(this.renderGraphiQL(data));
+  res.end();
+}
+
 
 superGraphiql.renderGraphiQL = function(data) {
   // if(!(data instanceof GraphiQLData)) {

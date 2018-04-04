@@ -476,7 +476,7 @@ export class GraphiQL extends React.Component {
   // Private methods
 
   _fetchSchema() {
-    const fetcher = this._multiFetcher(this.props.fetcher);
+    const fetcher = this.props.fetcher;
     const fetch = observableToPromise(fetcher({ query: introspectionQuery }));
     if (!isPromise(fetch)) {
       this.setState({
@@ -537,59 +537,6 @@ export class GraphiQL extends React.Component {
       });
   }
 
-  _fetchQuery2(queries, variables, cb) {
-    const fetcher = this._multiFetcher(this.props.fetcher);
-    let jsonVariables = null;
-
-    try {
-      jsonVariables =
-        variables && variables.trim() !== "" ? JSON.parse(variables) : null;
-    } catch (error) {
-      throw new Error(`Variables are invalid JSON: ${error.message}.`);
-    }
-
-    if (typeof jsonVariables !== "object") {
-      throw new Error("Variables are not a JSON object.");
-    }
-
-    const fetch = fetcher(queries, variables);
-
-    if (isPromise(fetch)) {
-      // If fetcher returned a Promise, then call the callback when the promise
-      // resolves, otherwise handle the error.
-      fetch.then(cb).catch(error => {
-        this.setState({
-          isWaitingForResponse: false,
-          response: error && String(error.stack || error)
-        });
-      });
-    } else if (isObservable(fetch)) {
-      // If the fetcher returned an Observable, then subscribe to it, calling
-      // the callback on each next value, and handling both errors and the
-      // completion of the Observable. Returns a Subscription object.
-      const subscription = fetch.subscribe({
-        next: cb,
-        error: error => {
-          this.setState({
-            isWaitingForResponse: false,
-            response: error && String(error.stack || error),
-            subscription: null
-          });
-        },
-        complete: () => {
-          this.setState({
-            isWaitingForResponse: false,
-            subscription: null
-          });
-        }
-      });
-
-      return subscription;
-    } else {
-      throw new Error("Fetcher did not return Promise or Observable.");
-    }
-  }
-
   _fetchQuery(queries, variables, cb) {
     const fetcher = this.props.fetcher;
     let jsonVariables = null;
@@ -616,24 +563,35 @@ export class GraphiQL extends React.Component {
           });
         });
     } else {
-      queries.forEach(query => {
+      queries.forEach((query, i) => {
+        const cleanQuery = {
+          query: query.query,
+          operationName: query.operationName,
+          variables
+        };
         // check if it is a subscription or not
-        const fetch = fetcher(query, variables);
+        const fetch = fetcher(cleanQuery, variables);
         if (isPromise(fetch)) {
           // If fetcher returned a Promise, then call the callback when the promise
           // resolves, otherwise handle the error.
-          fetch.then(cb).catch(error => {
-            this.setState({
-              isWaitingForResponse: false,
-              response: error && String(error.stack || error)
+          fetch
+            .then(response => {
+              cb(response, i, "outputData");
+            })
+            .catch(error => {
+              this.setState({
+                isWaitingForResponse: false,
+                response: error && String(error.stack || error)
+              });
             });
-          });
         } else if (isObservable(fetch)) {
           // If the fetcher returned an Observable, then subscribe to it, calling
           // the callback on each next value, and handling both errors and the
           // completion of the Observable. Returns a Subscription object.
           const subscription = fetch.subscribe({
-            next: cb,
+            next: response => {
+              cb(response, i, "subscription");
+            },
             error: error => {
               this.setState({
                 isWaitingForResponse: false,
@@ -661,51 +619,51 @@ export class GraphiQL extends React.Component {
     // const fetch = fetcher(queries, variables);
   }
 
-  _multiFetcher = fetcher => {
-    return function(graphQLParams, variables) {
-      if (Array.isArray(graphQLParams)) {
-        const promises = [];
+  // _multiFetcher = fetcher => {
+  //   return function(graphQLParams, variables) {
+  //     if (Array.isArray(graphQLParams)) {
+  //       const promises = [];
 
-        graphQLParams.forEach(queryObj => {
-          let cleanQueryObj = {
-            query: queryObj.query,
-            operationName: queryObj.operationName,
-            variables: variables
-          };
+  //       graphQLParams.forEach(queryObj => {
+  //         let cleanQueryObj = {
+  //           query: queryObj.query,
+  //           operationName: queryObj.operationName,
+  //           variables: variables
+  //         };
 
-          let promise = new Promise((resolve, reject) => {
-            const fetched = fetcher(cleanQueryObj);
-            console.log("isPromise", isPromise(fetched));
-            console.log("isObservable", isObservable(fetched));
-            if (isPromise(fetched)) {
-              fetched.then(response => {
-                resolve(response);
-              });
-              // Otherwise, must be an observable
-            } else if (isObservable(fetched)) {
-              fetched.subscribe({
-                next: response => {
-                  resolve(response);
-                }
-              });
-            }
-          });
-          promises.push(promise);
-        });
+  //         let promise = new Promise((resolve, reject) => {
+  //           const fetched = fetcher(cleanQueryObj);
+  //           console.log("isPromise", isPromise(fetched));
+  //           console.log("isObservable", isObservable(fetched));
+  //           if (isPromise(fetched)) {
+  //             fetched.then(response => {
+  //               resolve(response);
+  //             });
+  //             // Otherwise, must be an observable
+  //           } else if (isObservable(fetched)) {
+  //             fetched.subscribe({
+  //               next: response => {
+  //                 resolve(response);
+  //               }
+  //             });
+  //           }
+  //         });
+  //         promises.push(promise);
+  //       });
 
-        return Promise.all(promises).then(allResponses => {
-          return allResponses;
-        });
-      } else {
-        // Handles initial Introspection Query
-        return new Promise((resolve, reject) => {
-          fetcher(graphQLParams).then(response => {
-            resolve(response);
-          });
-        });
-      }
-    };
-  };
+  //       return Promise.all(promises).then(allResponses => {
+  //         return allResponses;
+  //       });
+  //     } else {
+  //       // Handles initial Introspection Query
+  //       return new Promise((resolve, reject) => {
+  //         fetcher(graphQLParams).then(response => {
+  //           resolve(response);
+  //         });
+  //       });
+  //     }
+  //   };
+  // };
 
   handleClickReference = reference => {
     this.setState({ docExplorerOpen: true }, () => {
@@ -758,24 +716,29 @@ export class GraphiQL extends React.Component {
           editedQueryList,
           variables,
           // operationName
-          result => {
-            let transformResults = "";
-            if (Array.isArray(result)) {
-              transformResults = result.reduce(
-                (responseObj, resultObj, index) => {
-                  responseObj["dataSet" + index] = resultObj.data;
-                  return responseObj;
-                },
-                {}
-              );
-            } else {
-              transformResults = result;
-            }
+          (result, index, type) => {
+            // let transformResults = "";
+            //   transformResults = result.reduce(
+            //     (responseObj, resultObj, index) => {
+            //       responseObj["dataSet" + index] = resultObj.data;
+            //       return responseObj;
+            //     },
+            //     {}
+            //   );
+            // }
 
             if (runID === this._runCounter) {
-              this.setState({
-                isWaitingForResponse: false,
-                response: JSON.stringify(transformResults, null, 2)
+              this.setState(prevState => {
+                const prevRes = prevState.response
+                  ? JSON.parse(prevState.response)
+                  : {};
+
+                prevRes[type + "_" + index] = result;
+
+                return {
+                  isWaitingForResponse: false,
+                  response: JSON.stringify(prevRes, null, 2)
+                };
               });
             }
           }

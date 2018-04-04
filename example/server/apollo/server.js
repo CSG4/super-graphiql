@@ -4,7 +4,7 @@ const { graphql, execute, subscribe } = require("graphql");
 const { createServer } = require("http");
 const { SubscriptionServer } = require("subscriptions-transport-ws");
 const path = require("path");
-const { renderGraphiQL } = require("./../render-superGraphiQL");
+const { renderGraphiQL, supergraphiqlExpress } = require("./../render-superGraphiQL");
 const schema = require("./schema");
 const bodyParser = require("body-parser");
 const app = express();
@@ -24,14 +24,19 @@ app.use('/super-graphiql.js', (req, res) => {
   res.sendFile(path.join(__dirname, "./../../../super-graphiql.js"));
 });
 
-app.use('/test', (req, res) => {
+app.use('/test', 
+// supergraphiqlExpress({
+//   endpointURL: "/graphql",
+//   subscriptionsEndpoint: "ws://localhost:9999/subscriptions"
+// }));
+(req, res) => {
   res.setHeader('Content-Type', 'text/html');
   res.write(renderGraphiQL({
     endpointURL: "/graphql",
     subscriptionsEndpoint: "ws://localhost:9999/subscriptions"
   }));
   res.end();
-})
+});
 
 app.use("/graphiql",
   graphiqlExpress({
