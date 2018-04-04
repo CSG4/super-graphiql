@@ -123,19 +123,22 @@ describe("SuperGraphiQL", () => {
     ).to.not.throw();
   });
 
+  // TO DO: Update with a built-in default query
   it("defaults to the built-in default query", () => {
-    const graphiQL = ReactTestRenderer.create(
+    const superGraphiQL = ReactTestRenderer.create(
       <SuperGraphiQL fetcher={noOpFetcher} />
     );
-    expect(graphiQL.getInstance().state.query).to.include(
+    expect(superGraphiQL.getInstance().state.queryList[0].query).to.include(
       "# Welcome to SuperGraphiQL"
     );
   });
 
   it("accepts a custom default query", () => {
-    const graphiQL = ReactTestRenderer.create(
+    const superGraphiQL = ReactTestRenderer.create(
       <SuperGraphiQL fetcher={noOpFetcher} defaultQuery="GraphQL Party!!" />
     );
-    expect(graphiQL.getInstance().state.query).to.equal("GraphQL Party!!");
+    expect(superGraphiQL.getInstance().state.queryList[0].query).to.equal(
+      "GraphQL Party!!"
+    );
   });
 });
