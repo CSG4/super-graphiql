@@ -10,8 +10,8 @@ const SUBJECT_ADDED_TOPIC = "newSubject";
 
 module.exports = {
   Query: {
-    Student: id => {
-      return Student.findOne({ id: id }, (err, docs) => {
+    Student: (root, args) => {
+      return Student.findOne({ id: args.id }, (err, docs) => {
         if (err) {
           console.log(err);
         }
@@ -26,8 +26,8 @@ module.exports = {
         return docs;
       });
     },
-    Subject: id => {
-      return Subject.findOne({ id: id }, (err, docs) => {
+    Subject: (root, args) => {
+      return Subject.findOne({ id: args.id }, (err, docs) => {
         if (err) {
           console.log(err);
         }
@@ -51,13 +51,13 @@ module.exports = {
         name: args.name,
         subjects: args.subjects
       };
-      return Student.create(newStudent, (err, docs) => {
-        if (err) {
-          console.log(err);
-        }
-        // Publish the new student to the newStudent topic; it will then be received by clients that are subscribed to this topic
-        pubsub.publish(STUDENT_ADDED_TOPIC, { studentAdded: docs });
-        return new Promise((resolve, reject) => {
+      return new Promise((resolve, reject) => { 
+        Student.create(newStudent, (err, docs) => {
+          if (err) {
+            reject(err);
+          }
+          // Publish the new student to the newStudent topic; it will then be received by clients that are subscribed to this topic
+          pubsub.publish(STUDENT_ADDED_TOPIC, { studentAdded: docs });
           resolve(docs);
         });
       });
@@ -69,16 +69,16 @@ module.exports = {
         professor: args.professor,
         students: args.students
       };
-      return Subject.create(newSubject, (err, docs) => {
-        if (err) {
-          console.log(err);
-        }
-        pubsub.publish(SUBJECT_ADDED_TOPIC, { subjectAdded: docs });
-        return new Promise((resolve, reject) => {
+      return new Promise((resolve, reject) => {
+        Subject.create(newSubject, (err, docs) => {
+          if (err) {
+            reject(err);
+          }
+          pubsub.publish(SUBJECT_ADDED_TOPIC, { subjectAdded: docs });
           resolve(docs);
         });
       });
-    }
+    },
   },
 
   Subscription: {

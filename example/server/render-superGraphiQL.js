@@ -3,31 +3,29 @@
  * (https://github.com/graphql/express-graphql/blob/master/LICENSE)
  */
 
-// export type GraphiQLData = {
-//   endpointURL: string;
-//   subscriptionsEndpoint?: string;
-//   query?: string;
-//   variables?: Object;
-//   operationName?: string;
-//   result?: Object;
-//   passHeader?: string;
-//   editorTheme?: string;
-//   websocketConnectionParams?: Object;
-// };
+export type GraphiQLData = {
+  endpointURL: string;
+  subscriptionsEndpoint?: string;
+  query?: string;
+  variables?: Object;
+  operationName?: string;
+  result?: Object;
+  passHeader?: string;
+  editorTheme?: string;
+  websocketConnectionParams?: Object;
+};
+
 const GRAPHIQL_VERSION = '0.11.11';
 const SUBSCRIPTIONS_TRANSPORT_VERSION = '0.8.2';
 // Ensures string values are safe to be used within a <script> tag.
-function safeSerialize(data) {
-  return data ? JSON.stringify(data).replace(/\//g, '\\/') : null;
-}
 
 const superGraphiql = {};
 
-superGraphiql.supergraphiqlExpress = function(req, res, data) {
-  res.setHeader('Content-Type', 'text/html');
-  res.write(this.renderGraphiQL(data));
-  res.end();
-}
+// superGraphiql.supergraphiqlExpress = function(req, res, data) {
+//   res.setHeader('Content-Type', 'text/html');
+//   res.write(this.renderGraphiQL(data));
+//   res.end();
+// }
 
 
 superGraphiql.renderGraphiQL = function(data) {
@@ -53,10 +51,10 @@ superGraphiql.renderGraphiQL = function(data) {
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/super-graphiql@0.0.5/super-graphiql.min.css" />
         <script src="http://unpkg.com/react@15.6.1/dist/react.min.js"></script>
         <script src="http://unpkg.com/react-dom@15.6.1/dist/react-dom.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/super-graphiql@0.0.5/super-graphiql.min.js"></script>
+        <!-- <script src="https://cdn.jsdelivr.net/npm/super-graphiql@0.0.5/super-graphiql.min.js"></script> -->
         <script src="https://use.fontawesome.com/992e44b468.js"></script>
         <!-- <script type="text/javascript" src="./super-graphiql.min.js"></script>  -->
-        <!-- <script type="text/javascript" src="./super-graphiql.js"></script> -->
+        <script type="text/javascript" src="./super-graphiql.js"></script>
         ${usingHttp ? `<script src="//cdn.jsdelivr.net/fetch/2.0.1/fetch.min.js"></script>` : ''}
         ${usingWs ? `<script src="//unpkg.com/subscriptions-transport-ws@${SUBSCRIPTIONS_TRANSPORT_VERSION}/browser/client.js"></script>` : ''}
         ${usingWs && usingHttp ? '<script src="//unpkg.com/graphiql-subscriptions-fetcher@0.0.2/browser/client.js"></script>' : ''}
@@ -84,34 +82,8 @@ superGraphiql.renderGraphiQL = function(data) {
             ? `
             // We don't use safe-serialize for location, because it's not client input.
             var fetchURL = "${endpointURL}";
-            // Defines a GraphQL fetcher using the fetch API.
-            // function graphQLHttpFetcher(graphQLParams) {
-            //   return new Promise((resolve, reject) => {
-            //     fetch(fetchURL, {
-            //       method: 'post',
-            //       headers: {
-            //         'Content-Type': 'application/json',
-            //         'Accept': 'application/json',
-            //         ${passHeader}
-            //       },
-            //       body: JSON.stringify(graphQLParams),
-            //       // credentials: 'same-origin',
-            //       credentials: 'include', 
-            //     }).then(function (response) {
-            //       return response.text();
-            //     })
-            //     .then(function (responseBody) {
-            //       try {
-            //         resolve(JSON.parse(responseBody));
-            //       } catch (error) {
-            //         resolve(responseBody);
-            //       }
-            //     });
-            //   });
-            // }
-            
             function graphQLHttpFetcher(graphQLParams) {
-              console.log('httpFetcher');
+
                 return fetch(fetchURL, {
                   method: 'post',
                   headers: {

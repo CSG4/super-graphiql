@@ -10,7 +10,6 @@ const bodyParser = require("body-parser");
 const app = express();
 const ws = createServer(app);
 
-
 app.use('/*.css',(req, res) => {
   res.setHeader('Content-Type','text/css');
   res.sendFile(path.join(__dirname, './../../../super-graphiql.min.css'));
@@ -46,7 +45,10 @@ app.use("/graphiql",
 );
 
 // HTTP Request endpoint
-app.use('/graphql', bodyParser.json(), graphqlExpress({ schema }));
+app.use('/graphql', bodyParser.json(), (req, res, next) => {
+  console.log(req.body);
+  next();
+}, graphqlExpress({ schema }));
 
 // Websocket endpoint
 ws.listen(9999, () => {
@@ -70,10 +72,10 @@ ws.listen(9999, () => {
   // // A post request to retrieve the results of a query using HTTP, via specifying the query in a json in the body of the message
 
 
-app.use("/graphqlHttp", (req, res) => {
+app.use("/graphqlHttp", bodyParser.json(), (req, res) => {
   const queryObj = {
     schema, 
-    source: req.method === 'POST' ? req.body.query.toString() : req.query
+    source: req.body.query.toString()
   }
   
   if (req.body.variables) {
@@ -88,32 +90,3 @@ app.use("/graphqlHttp", (req, res) => {
 app.listen(9000, () => {
   console.log("listening on 9000");
 });
-    
-//------ Original GraphiQL implementation can be seen at route /graphql ------//
-
-// SWITCH BACK TO THIS???
-//app.use("/graphiql", graphqlHTTP({ schema, graphiql: true }));
-
-// graphql-server-express middlewear for rendering GraphiQL
-// see https://github.com/apollographql/subscriptions-transport-ws
-// Where it says: If you are using older version, or another GraphQL server, start by modifying GraphiQL static HTML, and add this package and it's fetcher from CDN...
-// graphql-server-express is doing this under the hood
-// this function is sending a long HTML string to render GraphiQL
-
-// function graphiqlExpress(options) {
-  //     return function (req, res, next) {
-    //         var query = req.url && url.parse(req.url, true).query;
-    //         GraphiQL.resolveGraphiQLString(query, options, req).then(function (graphiqlString) {
-      //             res.setHeader('Content-Type', 'text/html');
-      //             res.write(graphiqlString);
-      //             res.end();
-      //         }, function (error) { return next(error); });
-      //     };
-      // }
-      
-      // see here: https://github.com/apollographql/apollo-server/blob/5d15abc681ffc43c2ce1d68d728814b8dbcf91b8/packages/apollo-server-module-graphiql/src/renderGraphiQL.ts
-      // **** Note this file says ****
-      // TODO: in the future, build the GraphiQL app on the server, so it does not
-      // depend on any CDN and can be run offline.
-      // a GH repo trying this: https://github.com/digitalnatives/graphiql-server
-          
