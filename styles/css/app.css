@@ -76,7 +76,7 @@ body {
 } */
 
 .graphiql-container .docExplorerShow {
-  background: linear-gradient(#f7f7f7, #e2e2e2);
+/*  background: linear-gradient(#f7f7f7, #e2e2e2);*/
   border-radius: 0;
   border-bottom: 1px solid #d0d0d0;
   border-right: none;
@@ -161,7 +161,7 @@ body {
 
 .graphiql-container div .path-editor {
   background: #fdfdfd;
-  background: linear-gradient(#f9f9f9, #ececec);
+/*  background: linear-gradient(#f9f9f9, #ececec);*/
   border-radius: 3px;
   box-shadow:
   inset 0 0 0 1px rgba(0,0,0,0.20),
@@ -261,7 +261,6 @@ body {
 
 .graphiql-container .toolbar-button {
   background: #fdfdfd;
-  background: linear-gradient(#f9f9f9, #ececec);
   border-radius: 3px;
   box-shadow:
     inset 0 0 0 1px rgba(0,0,0,0.20),
@@ -284,7 +283,6 @@ body {
 }
 
 .graphiql-container .toolbar-button:active {
-  background: linear-gradient(#ececec, #d5d5d5);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.7),
     inset 0 0 0 1px rgba(0,0,0,0.10),
@@ -293,7 +291,6 @@ body {
 }
 
 .graphiql-container .toolbar-button.error {
-  background: linear-gradient(#fdf3f3, #e6d6d7);
   color: #b00;
 }
 
@@ -319,12 +316,10 @@ body {
 
 .graphiql-container .execute-button-wrap {
   height: 34px;
-  /* margin: 0 14px 0 28px; */
   position: relative;
 }
 
 .graphiql-container .execute-button {
-  background: linear-gradient(#fdfdfd, #d2d3d6);
   border-radius: 17px;
   border: 1px solid rgba(0,0,0,0.25);
   box-shadow: 0 1px 0 #fff;
@@ -341,7 +336,6 @@ body {
 }
 
 .graphiql-container .execute-button:active {
-  background: linear-gradient(#e6e6e6, #c3c3c3);
   box-shadow:
     0 1px 0 #fff,
     inset 0 0 2px rgba(0, 0, 0, 0.2),
@@ -551,7 +545,7 @@ div.CodeMirror-lint-tooltip > * + * {
 .graphiql-container .CodeMirror-foldmarker {
   border-radius: 4px;
   background: #08f;
-  background: linear-gradient(#43A8FF, #0F83E8);
+/*  background: linear-gradient(#43A8FF, #0F83E8);*/
   box-shadow:
     0 1px 1px rgba(0, 0, 0, 0.2),
     inset 0 0 0 1px rgba(0, 0, 0, 0.1);
