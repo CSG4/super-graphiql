@@ -2,7 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import ReactDOM from "react-dom";
 import { buildClientSchema, GraphQLSchema, parse, print } from "graphql";
-
 import { ExecuteButton } from "./ExecuteButton";
 import { ToolbarButton } from "./ToolbarButton";
 import { ToolbarGroup } from "./ToolbarGroup";
@@ -15,7 +14,6 @@ import { DocExplorer } from "./DocExplorer";
 import { HistoryExplorer } from "./HistoryExplorer";
 import CodeMirrorSizer from "../utility/CodeMirrorSizer";
 import StorageAPI from "../utility/StorageAPI";
-import getQueryFacts from "../utility/getQueryFacts";
 import getSelectedOperationName from "../utility/getSelectedOperationName";
 import debounce from "../utility/debounce";
 import find from "../utility/find";
@@ -66,14 +64,12 @@ export class SuperGraphiQL extends React.Component {
     // Cache the storage instance
     this._storage = new StorageAPI(props.storage);
 
-    // Determine the initial query to display.
-    const query =
-      this._storage.get("query") !== null
-        ? this._storage.get("query")
-        : props.defaultQuery !== undefined ? props.defaultQuery : defaultQuery;
+    // Determine the inital variable to display
+    const queries = this._storage.get("query");
 
-    // Get the initial query facts.
-    const queryFacts = getQueryFacts(props.schema, query);
+    const query = queries
+      ? queries[queries.length - 1]
+      : props.defaultQuery !== undefined ? props.defaultQuery : defaultQuery;
 
     // Determine the initial variables to display.
     const variables = this._storage.get("variables");
@@ -81,15 +77,14 @@ export class SuperGraphiQL extends React.Component {
     // Determine the initial operationName to use.
     const operationName = getSelectedOperationName(
       null,
-      this._storage.get("operationName"),
-      queryFacts && queryFacts.operations
+      this._storage.get("operationName")
     );
 
     // Determine the initial queries to render (if there are queries in local storage)
     const storedQueryList = this._storage.get("queryList");
     const emptyQuery = {
       id: 0,
-      query: "",
+      query,
       checked: true,
       operationName
     };
@@ -101,7 +96,6 @@ export class SuperGraphiQL extends React.Component {
     this.state = {
       schema: props.schema,
       queryList: prevQuery,
-      query,
       variables,
       operationName,
       response: props.response,
@@ -115,8 +109,7 @@ export class SuperGraphiQL extends React.Component {
         Number(this._storage.get("docExplorerWidth")) ||
         DEFAULT_DOC_EXPLORER_WIDTH,
       isWaitingForResponse: false,
-      subscription: null,
-      ...queryFacts
+      subscription: null
     };
 
     // Reset execution / run counter to 0
@@ -145,7 +138,7 @@ export class SuperGraphiQL extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     let nextSchema = this.state.schema;
-    let nextQuery = this.state.query;
+    let nextQueryList = this.state.queryList;
     let nextVariables = this.state.variables;
     let nextOperationName = this.state.operationName;
     let nextResponse = this.state.response;
@@ -153,8 +146,8 @@ export class SuperGraphiQL extends React.Component {
     if (nextProps.schema !== undefined) {
       nextSchema = nextProps.schema;
     }
-    if (nextProps.query !== undefined) {
-      nextQuery = nextProps.query;
+    if (nextProps.queryList !== undefined) {
+      nextQueryList = nextProps.queryList;
     }
     if (nextProps.variables !== undefined) {
       nextVariables = nextProps.variables;
@@ -178,7 +171,7 @@ export class SuperGraphiQL extends React.Component {
     this.setState(
       {
         schema: nextSchema,
-        query: nextQuery,
+        queryList: nextQueryList,
         variables: nextVariables,
         operationName: nextOperationName,
         response: nextResponse
@@ -206,7 +199,6 @@ export class SuperGraphiQL extends React.Component {
   // that when the component is remounted, it will use the last used values.
   componentWillUnmount() {
     const queryList = JSON.stringify(this.state.queryList);
-    // this._storage.set("query", this.state.query);
     this._storage.set("queryList", queryList);
     this._storage.set("variables", this.state.variables);
     this._storage.set("operationName", this.state.operationName);
@@ -435,42 +427,44 @@ export class SuperGraphiQL extends React.Component {
    *
    * @public
    */
-  autoCompleteLeafs() {
-    const { insertions, result } = fillLeafs(
-      this.state.schema,
-      this.state.query,
-      this.props.getDefaultFieldNames
-    );
-    if (insertions && insertions.length > 0) {
-      const editor = this.getQueryEditor();
-      editor.operation(() => {
-        const cursor = editor.getCursor();
-        const cursorIndex = editor.indexFromPos(cursor);
-        editor.setValue(result);
-        let added = 0;
-        const markers = insertions.map(({ index, string }) =>
-          editor.markText(
-            editor.posFromIndex(index + added),
-            editor.posFromIndex(index + (added += string.length)),
-            {
-              className: "autoInsertedLeaf",
-              clearOnEnter: true,
-              title: "Automatically added leaf fields"
+  autoCompleteLeafs(queries) {
+    return queries.map(query => {
+      const { insertions, result } = fillLeafs(
+        this.state.schema,
+        query,
+        this.props.getDefaultFieldNames
+      );
+      if (insertions && insertions.length > 0) {
+        const editor = this.getQueryEditor();
+        editor.operation(() => {
+          const cursor = editor.getCursor();
+          const cursorIndex = editor.indexFromPos(cursor);
+          editor.setValue(result);
+          let added = 0;
+          const markers = insertions.map(({ index, string }) =>
+            editor.markText(
+              editor.posFromIndex(index + added),
+              editor.posFromIndex(index + (added += string.length)),
+              {
+                className: "autoInsertedLeaf",
+                clearOnEnter: true,
+                title: "Automatically added leaf fields"
+              }
+            )
+          );
+          setTimeout(() => markers.forEach(marker => marker.clear()), 7000);
+          let newCursorIndex = cursorIndex;
+          insertions.forEach(({ index, string }) => {
+            if (index < cursorIndex) {
+              newCursorIndex += string.length;
             }
-          )
-        );
-        setTimeout(() => markers.forEach(marker => marker.clear()), 7000);
-        let newCursorIndex = cursorIndex;
-        insertions.forEach(({ index, string }) => {
-          if (index < cursorIndex) {
-            newCursorIndex += string.length;
-          }
+          });
+          editor.setCursor(editor.posFromIndex(newCursorIndex));
         });
-        editor.setCursor(editor.posFromIndex(newCursorIndex));
-      });
-    }
+      }
 
-    return result;
+      return result;
+    });
   }
 
   // Private methods
@@ -515,8 +509,7 @@ export class SuperGraphiQL extends React.Component {
 
         if (result && result.data) {
           const schema = buildClientSchema(result.data);
-          const queryFacts = getQueryFacts(schema, this.state.query);
-          this.setState({ schema, ...queryFacts });
+          this.setState({ schema });
         } else {
           const responseString =
             typeof result === "string"
@@ -563,10 +556,11 @@ export class SuperGraphiQL extends React.Component {
           });
         });
     } else {
-      queries.forEach((query, i) => {
+      queries.forEach((elem, i) => {
+        const { query, operationName } = elem;
         const cleanQuery = {
-          query: query.query,
-          operationName: query.operationName,
+          query,
+          operationName,
           variables
         };
         // check if it is a subscription or not
@@ -625,21 +619,19 @@ export class SuperGraphiQL extends React.Component {
     this._runCounter++;
     const runID = this._runCounter;
 
-    // Use the edited query after autoCompleteLeafs() runs or,
-    // in case autoCompletion fails (the function returns undefined),
-    // the current query from the editor.
-    // NOT USING THIS, UPDATED TO EDITED QUERY LIST
-    // const editedQuery =
-    //   this.autoCompleteLeafs() ||
-    //   this.state.queryList[this.state.queryList.length - 1].query; // temp fix to run query in last box
-
-    // *** IMPORTANT ***
-    // WE NEED TO RUN QUERIES THROUGH this.autoCompleteLeafs()
-
     // filter out query editors that are not checked
-    const editedQueryList = this.state.queryList.filter(
+    const querytoRun = this.state.queryList.filter(
       queryObj => queryObj.checked && queryObj.query.trim()
     );
+
+    // Use the filtered queries to run after autoCompleteLeafs() runs or,
+    // in case autoCompletion fails (the function returns undefined),
+    // the current query from the editor.
+
+    const editedQueryList = this.autoCompleteLeafs(querytoRun);
+    const filteredQuery = editedQueryList.every(result => Boolean(result))
+      ? editedQueryList
+      : querytoRun;
 
     const variables = this.state.variables;
     let operationName = this.state.operationName;
@@ -649,7 +641,7 @@ export class SuperGraphiQL extends React.Component {
     if (selectedOperationName && selectedOperationName !== operationName) {
       operationName = selectedOperationName;
     }
-    if (!editedQueryList.length) {
+    if (!filteredQuery.length) {
       this.setState({
         response: "Enter a valid query"
       });
@@ -663,7 +655,7 @@ export class SuperGraphiQL extends React.Component {
 
         // _fetchQuery may return a subscription.
         const subscription = this._fetchQuery(
-          editedQueryList,
+          filteredQuery,
           variables,
           (result, index, type) => {
             if (runID === this._runCounter) {
@@ -734,7 +726,7 @@ export class SuperGraphiQL extends React.Component {
   }
 
   handleNewQueryBox = (query = "") => {
-    //Check if one of the boxes are already empty, return the index of the first empty box; stays -1 if none are empty
+    // Check if one of the boxes are already empty, return the index of the first empty box; stays -1 if none are empty
     let emptyIdx = null;
 
     for (let i = 0; i < this.state.queryList.length; i++) {
@@ -744,19 +736,19 @@ export class SuperGraphiQL extends React.Component {
       }
     }
 
-    if (!!query && emptyIdx !== null)
-      this.setState((prevState, props) => {
+    if (Boolean(query) && emptyIdx !== null) {
+      this.setState(prevState => {
         prevState.queryList[emptyIdx].query = query;
         return {
           queryList: prevState.queryList
         };
       });
-
+    }
     // if there are no empty boxes, add one
     if (emptyIdx === null) {
-      this.setState((prevState, props) => {
+      this.setState(prevState => {
         // generate psuedo random id
-        let uniqid = Math.floor(Math.random() * Date.now());
+        const uniqid = Math.floor(Math.random() * Date.now());
         prevState.queryList.push({
           id: uniqid,
           query,
@@ -773,7 +765,7 @@ export class SuperGraphiQL extends React.Component {
   handleCheckQueryToRun = (id, isChecked) => {
     for (let i = 0; i < this.state.queryList.length; i++) {
       if (this.state.queryList[i].id === id) {
-        this.setState((prevState, props) => {
+        this.setState(prevState => {
           // find the query with the same id as the button
           prevState.queryList[i].checked = isChecked;
           return {
@@ -786,14 +778,14 @@ export class SuperGraphiQL extends React.Component {
   };
 
   handleDeleteQueryBox = id => {
-    //check the > 1 queries in the query list state
+    // check the > 1 queries in the query list state
     if (this.state.queryList.length > 1) {
-      this.setState((prevState, props) => {
-        //filter the item out of the QueryList and store to a temp item
+      this.setState(prevState => {
+        // filter the item out of the QueryList and store to a temp item
         prevState.queryList = prevState.queryList.filter(
           query => query.id !== id
         );
-        //reset the state
+        // reset the state
         this.setState({
           queryList: prevState.queryList
         });
@@ -820,13 +812,6 @@ export class SuperGraphiQL extends React.Component {
   };
 
   handleEditQuery = debounce(100, (value, editorID) => {
-    const queryFacts = this._updateQueryFacts(
-      value,
-      this.state.operationName,
-      this.state.operations,
-      this.state.schema
-    );
-
     const queryListCopy = [...this.state.queryList];
     // find object in query list with id of editor ID and update query value
     const queryList = queryListCopy.map(queryObj => {
@@ -837,29 +822,9 @@ export class SuperGraphiQL extends React.Component {
     });
 
     this.setState({
-      //query: value,
-      queryList,
-      ...queryFacts
+      queryList
     });
   });
-
-  _updateQueryFacts = (query, operationName, prevOperations, schema) => {
-    const queryFacts = getQueryFacts(schema, query);
-    if (queryFacts) {
-      // Update operation name should any query names change.
-      const updatedOperationName = getSelectedOperationName(
-        prevOperations,
-        operationName,
-        queryFacts.operations
-      );
-
-      // Report changing of operationName if it changed.
-      return {
-        operationName: updatedOperationName,
-        ...queryFacts
-      };
-    }
-  };
 
   handleEditVariables = value => {
     this.setState({ variables: value });
@@ -1067,7 +1032,7 @@ export class SuperGraphiQL extends React.Component {
 }
 
 // Configure the UI by providing this Component as a child of SuperGraphiQL.
-SuperGraphiQL.Logo = function SuperGraphiQLLogo(props) {
+SuperGraphiQL.Logo = () => {
   return (
     <div className="title">
       <span>
@@ -1111,15 +1076,8 @@ SuperGraphiQL.Footer = function SuperGraphiQLFooter(props) {
 
 const defaultQuery = `# Welcome to SuperGraphiQL
 #
-# SuperGraphiQL is an in-browser tool for writing, validating, and
+# GraphiQL is an in-browser tool for writing, validating, and
 # testing GraphQL queries.
-#
-# Type queries into this side of the screen, and you will see intelligent
-# typeaheads aware of the current GraphQL type schema and live syntax and
-# validation errors highlighted within the text.
-#
-# GraphQL queries typically start with a "{" character. Lines that starts
-# with a # are ignored.
 #
 # An example GraphQL query might look like:
 #
@@ -1129,15 +1087,9 @@ const defaultQuery = `# Welcome to SuperGraphiQL
 #       }
 #     }
 #
-# Keyboard shortcuts:
-#
-#  Prettify Query:  Shift-Ctrl-P (or press the prettify button above)
-#
 #       Run Query:  Ctrl-Enter (or press the play button above)
-#
 #   Auto Complete:  Ctrl-Space (or just start typing)
 #
-
 `;
 
 // Duck-type promise detection.
