@@ -208,13 +208,12 @@ body {
 .graphiql-container .result-window .CodeMirror-gutters {
   background-color: #eeeeee;
   border-color: #e0e0e0;
-  cursor: col-resize;
-  width: 40px; }
+  cursor: col-resize; }
 
 .graphiql-container .result-window .CodeMirror-foldgutter,
 .graphiql-container .result-window .CodeMirror-foldgutter-open:after,
 .graphiql-container .result-window .CodeMirror-foldgutter-folded:after {
-  padding-left: 3px; }
+  padding: 0 3px; }
 
 .graphiql-container .toolbar-button {
   background: #fdfdfd;
@@ -1538,12 +1537,12 @@ li.CodeMirror-hint-active {
   .delete-query .fa-trash {
     opacity: 0;
     font-size: 19px;
-    transition: opacity 2s linear; }
+    transition: opacity 0.5s linear; }
 
 .add-query {
   display: none;
   margin-right: 5px;
-  transition: color 2s linear; }
+  transition: color 0.5s linear; }
 
 .graphiql-container .topBarWrap {
   display: flex;

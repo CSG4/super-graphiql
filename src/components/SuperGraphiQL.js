@@ -29,12 +29,12 @@ import {
 const DEFAULT_DOC_EXPLORER_WIDTH = 350;
 
 /**
- * The top-level React component for GraphiQL, intended to encompass the entire
+ * The top-level React component for SuperGraphiQL, intended to encompass the entire
  * browser viewport.
  *
  * @see https://github.com/graphql/graphiql#usage
  */
-export class GraphiQL extends React.Component {
+export class SuperGraphiQL extends React.Component {
   static propTypes = {
     queryList: PropTypes.array,
     fetcher: PropTypes.func.isRequired,
@@ -60,7 +60,7 @@ export class GraphiQL extends React.Component {
     super(props);
     // Ensure props are correct
     if (typeof props.fetcher !== "function") {
-      throw new TypeError("GraphiQL requires a fetcher function.");
+      throw new TypeError("SuperGraphiQL requires a fetcher function.");
     }
 
     // Cache the storage instance
@@ -222,9 +222,9 @@ export class GraphiQL extends React.Component {
 
     const toolbar = find(
       children,
-      child => child.type === GraphiQL.Toolbar
+      child => child.type === SuperGraphiQL.Toolbar
     ) || (
-      <GraphiQL.Toolbar>
+      <SuperGraphiQL.Toolbar>
         <ExecuteButton
           isRunning={Boolean(this.state.subscription)}
           onRun={this.handleRunQuery}
@@ -241,10 +241,10 @@ export class GraphiQL extends React.Component {
           title="Removes all queries from the execution stack"
           label="Delete All"
         />
-      </GraphiQL.Toolbar>
+      </SuperGraphiQL.Toolbar>
     );
 
-    const footer = find(children, child => child.type === GraphiQL.Footer);
+    const footer = find(children, child => child.type === SuperGraphiQL.Footer);
 
     const queryWrapStyle = {
       WebkitFlex: this.state.editorFlex,
@@ -294,7 +294,7 @@ export class GraphiQL extends React.Component {
                 title="Show Schema Documentation"
                 label="History"
               />
-              <GraphiQL.Logo />
+              <SuperGraphiQL.Logo />
               <ToolbarButton
                 onClick={this.handleToggleDocs}
                 title="Show Schema Documentation"
@@ -328,7 +328,7 @@ export class GraphiQL extends React.Component {
                     onEdit={this.handleEditQuery}
                     onHintInformationRender={this.handleHintInformationRender}
                     onClickReference={this.handleClickReference}
-                    // onAddQuery={this.handleSelectHistoryQuery}
+                    onAddQuery={this.handleSelectHistoryQuery}
                     onPrettifyQuery={this.handlePrettifyQuery}
                     onCheckToRun={this.handleCheckQueryToRun}
                     onClickDeleteButton={this.handleDeleteQueryBox}
@@ -476,7 +476,7 @@ export class GraphiQL extends React.Component {
   // Private methods
 
   _fetchSchema() {
-    const fetcher = this._multiFetcher(this.props.fetcher);
+    const fetcher = this.props.fetcher;
     const fetch = observableToPromise(fetcher({ query: introspectionQuery }));
     if (!isPromise(fetch)) {
       this.setState({
@@ -538,7 +538,7 @@ export class GraphiQL extends React.Component {
   }
 
   _fetchQuery(queries, variables, cb) {
-    const fetcher = this._multiFetcher(this.props.fetcher);
+    const fetcher = this.props.fetcher;
     let jsonVariables = null;
 
     try {
@@ -552,77 +552,68 @@ export class GraphiQL extends React.Component {
       throw new Error("Variables are not a JSON object.");
     }
 
-    const fetch = fetcher(queries, variables);
-
-    if (isPromise(fetch)) {
-      // If fetcher returned a Promise, then call the callback when the promise
-      // resolves, otherwise handle the error.
-      fetch.then(cb).catch(error => {
-        this.setState({
-          isWaitingForResponse: false,
-          response: error && String(error.stack || error)
+    // if Introspection Query
+    if (!Array.isArray(queries)) {
+      fetcher(queries, variables)
+        .then(cb)
+        .catch(error => {
+          this.setState({
+            isWaitingForResponse: false,
+            response: error && String(error.stack || error)
+          });
         });
-      });
-    } else if (isObservable(fetch)) {
-      // If the fetcher returned an Observable, then subscribe to it, calling
-      // the callback on each next value, and handling both errors and the
-      // completion of the Observable. Returns a Subscription object.
-      const subscription = fetch.subscribe({
-        next: cb,
-        error: error => {
-          this.setState({
-            isWaitingForResponse: false,
-            response: error && String(error.stack || error),
-            subscription: null
+    } else {
+      queries.forEach((query, i) => {
+        const cleanQuery = {
+          query: query.query,
+          operationName: query.operationName,
+          variables
+        };
+        // check if it is a subscription or not
+        const fetch = fetcher(cleanQuery, variables);
+        if (isPromise(fetch)) {
+          // If fetcher returned a Promise, then call the callback when the promise
+          // resolves, otherwise handle the error.
+          fetch
+            .then(response => {
+              cb(response, i, "output");
+            })
+            .catch(error => {
+              this.setState({
+                isWaitingForResponse: false,
+                response: error && String(error.stack || error)
+              });
+            });
+        } else if (isObservable(fetch)) {
+          // If the fetcher returned an Observable, then subscribe to it, calling
+          // the callback on each next value, and handling both errors and the
+          // completion of the Observable. Returns a Subscription object.
+          const subscription = fetch.subscribe({
+            next: response => {
+              cb(response, i, "subscription");
+            },
+            error: error => {
+              this.setState({
+                isWaitingForResponse: false,
+                response: error && String(error.stack || error),
+                subscription: null
+              });
+            },
+            complete: () => {
+              this.setState({
+                isWaitingForResponse: false,
+                subscription: null
+              });
+            }
           });
-        },
-        complete: () => {
-          this.setState({
-            isWaitingForResponse: false,
-            subscription: null
-          });
+
+          return subscription;
+        } else {
+          throw new Error("Fetcher did not return Promise or Observable.");
         }
       });
-
-      return subscription;
-    } else {
-      throw new Error("Fetcher did not return Promise or Observable.");
     }
   }
-
-  _multiFetcher = fetcher => {
-    return function(graphQLParams, variables) {
-      if (Array.isArray(graphQLParams)) {
-        const promises = [];
-
-        graphQLParams.forEach(queryObj => {
-          let cleanQueryObj = {
-            query: queryObj.query,
-            operationName: queryObj.operationName,
-            variables: variables
-          };
-
-          let promise = new Promise((resolve, reject) => {
-            fetcher(cleanQueryObj).then(response => {
-              resolve(response);
-            });
-          });
-          promises.push(promise);
-        });
-
-        return Promise.all(promises).then(allResponses => {
-          return allResponses;
-        });
-      } else {
-        // Handles initial Introspection Query
-        return new Promise((resolve, reject) => {
-          fetcher(graphQLParams).then(response => {
-            resolve(response);
-          });
-        });
-      }
-    };
-  };
 
   handleClickReference = reference => {
     this.setState({ docExplorerOpen: true }, () => {
@@ -674,20 +665,19 @@ export class GraphiQL extends React.Component {
         const subscription = this._fetchQuery(
           editedQueryList,
           variables,
-          // operationName
-          result => {
-            const transformResults = result.reduce(
-              (responseObj, resultObj, index) => {
-                responseObj["dataSet" + index] = resultObj.data;
-                return responseObj;
-              },
-              {}
-            );
-
+          (result, index, type) => {
             if (runID === this._runCounter) {
-              this.setState({
-                isWaitingForResponse: false,
-                response: JSON.stringify(transformResults, null, 2)
+              this.setState(prevState => {
+                const prevRes = prevState.response
+                  ? JSON.parse(prevState.response)
+                  : {};
+
+                prevRes[type + "[" + index + "]"] = result;
+
+                return {
+                  isWaitingForResponse: false,
+                  response: JSON.stringify(prevRes, null, 2)
+                };
               });
             }
           }
@@ -1076,8 +1066,8 @@ export class GraphiQL extends React.Component {
   };
 }
 
-// Configure the UI by providing this Component as a child of GraphiQL.
-GraphiQL.Logo = function GraphiQLLogo(props) {
+// Configure the UI by providing this Component as a child of SuperGraphiQL.
+SuperGraphiQL.Logo = function SuperGraphiQLLogo(props) {
   return (
     <div className="title">
       <span>
@@ -1089,39 +1079,39 @@ GraphiQL.Logo = function GraphiQLLogo(props) {
   );
 };
 
-// Configure the UI by providing this Component as a child of GraphiQL.
-GraphiQL.Toolbar = function GraphiQLToolbar(props) {
+// Configure the UI by providing this Component as a child of SuperGraphiQL.
+SuperGraphiQL.Toolbar = function SuperGraphiQLToolbar(props) {
   return <div className="toolbar">{props.children}</div>;
 };
 
 // Export main windows/panes to be used separately if desired.
-GraphiQL.QueryEditor = QueryEditor;
-GraphiQL.VariableEditor = VariableEditor;
-GraphiQL.ResultViewer = ResultViewer;
+SuperGraphiQL.QueryEditor = QueryEditor;
+SuperGraphiQL.VariableEditor = VariableEditor;
+SuperGraphiQL.ResultViewer = ResultViewer;
 
 // Add a button to the Toolbar.
-GraphiQL.Button = ToolbarButton;
-GraphiQL.ToolbarButton = ToolbarButton; // Don't break existing API.
+SuperGraphiQL.Button = ToolbarButton;
+SuperGraphiQL.ToolbarButton = ToolbarButton; // Don't break existing API.
 
 // Add a group of buttons to the Toolbar
-GraphiQL.Group = ToolbarGroup;
+SuperGraphiQL.Group = ToolbarGroup;
 
 // Add a menu of items to the Toolbar.
-GraphiQL.Menu = ToolbarMenu;
-GraphiQL.MenuItem = ToolbarMenuItem;
+SuperGraphiQL.Menu = ToolbarMenu;
+SuperGraphiQL.MenuItem = ToolbarMenuItem;
 
 // Add a select-option input to the Toolbar.
-GraphiQL.Select = ToolbarSelect;
-GraphiQL.SelectOption = ToolbarSelectOption;
+SuperGraphiQL.Select = ToolbarSelect;
+SuperGraphiQL.SelectOption = ToolbarSelectOption;
 
-// Configure the UI by providing this Component as a child of GraphiQL.
-GraphiQL.Footer = function GraphiQLFooter(props) {
+// Configure the UI by providing this Component as a child of SuperGraphiQL.
+SuperGraphiQL.Footer = function SuperGraphiQLFooter(props) {
   return <div className="footer">{props.children}</div>;
 };
 
-const defaultQuery = `# Welcome to GraphiQL
+const defaultQuery = `# Welcome to SuperGraphiQL
 #
-# GraphiQL is an in-browser tool for writing, validating, and
+# SuperGraphiQL is an in-browser tool for writing, validating, and
 # testing GraphQL queries.
 #
 # Type queries into this side of the screen, and you will see intelligent
