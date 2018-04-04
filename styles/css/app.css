@@ -251,13 +251,12 @@ body {
   background-color: #eeeeee;
   border-color: #e0e0e0;
   cursor: col-resize;
-  width: 40px;
 }
 
 .graphiql-container .result-window .CodeMirror-foldgutter,
 .graphiql-container .result-window .CodeMirror-foldgutter-open:after,
 .graphiql-container .result-window .CodeMirror-foldgutter-folded:after {
-  padding-left: 3px;
+  padding: 0 3px;
 }
 
 .graphiql-container .toolbar-button {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from 'react-dom';
-import { GraphiQL } from './../../src/components/GraphiQL';
+import { SuperGraphiQL } from './../../src/components/SuperGraphiQL';
 import fetch from 'isomorphic-fetch';
 
 // Defines a GraphQL fetcher using the fetch API. You're not required to
@@ -34,7 +34,7 @@ function graphQLFetcher(graphQLParams) {
 
 render((
     <div>
-      <GraphiQL
+      <SuperGraphiQL
         fetcher={graphQLFetcher}
       />
     </div>

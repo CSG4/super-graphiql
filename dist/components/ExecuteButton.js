@@ -100,11 +100,11 @@ var ExecuteButton = exports.ExecuteButton = function (_React$Component) {
         options = _react2.default.createElement(
           "ul",
           { className: "execute-options" },
-          operations.map(function (operation) {
+          operations.map(function (operation, i) {
             return _react2.default.createElement(
               "li",
               {
-                key: operation.name ? operation.name.value : "*",
+                key: operation.name ? operation.name.value : i,
                 className: operation === highlight && "selected" || null,
                 onMouseOver: function onMouseOver() {
                   return _this2.setState({ highlight: operation });

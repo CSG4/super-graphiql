@@ -29,12 +29,12 @@ import {
 const DEFAULT_DOC_EXPLORER_WIDTH = 350;
 
 /**
- * The top-level React component for GraphiQL, intended to encompass the entire
+ * The top-level React component for SuperGraphiQL, intended to encompass the entire
  * browser viewport.
  *
  * @see https://github.com/graphql/graphiql#usage
  */
-export class GraphiQL extends React.Component {
+export class SuperGraphiQL extends React.Component {
   static propTypes = {
     queryList: PropTypes.array,
     fetcher: PropTypes.func.isRequired,
@@ -60,7 +60,7 @@ export class GraphiQL extends React.Component {
     super(props);
     // Ensure props are correct
     if (typeof props.fetcher !== "function") {
-      throw new TypeError("GraphiQL requires a fetcher function.");
+      throw new TypeError("SuperGraphiQL requires a fetcher function.");
     }
 
     // Cache the storage instance
@@ -222,9 +222,9 @@ export class GraphiQL extends React.Component {
 
     const toolbar = find(
       children,
-      child => child.type === GraphiQL.Toolbar
+      child => child.type === SuperGraphiQL.Toolbar
     ) || (
-      <GraphiQL.Toolbar>
+      <SuperGraphiQL.Toolbar>
         <ExecuteButton
           isRunning={Boolean(this.state.subscription)}
           onRun={this.handleRunQuery}
@@ -241,10 +241,10 @@ export class GraphiQL extends React.Component {
           title="Removes all queries from the execution stack"
           label="Delete All"
         />
-      </GraphiQL.Toolbar>
+      </SuperGraphiQL.Toolbar>
     );
 
-    const footer = find(children, child => child.type === GraphiQL.Footer);
+    const footer = find(children, child => child.type === SuperGraphiQL.Footer);
 
     const queryWrapStyle = {
       WebkitFlex: this.state.editorFlex,
@@ -294,7 +294,7 @@ export class GraphiQL extends React.Component {
                 title="Show Schema Documentation"
                 label="History"
               />
-              <GraphiQL.Logo />
+              <SuperGraphiQL.Logo />
               <ToolbarButton
                 onClick={this.handleToggleDocs}
                 title="Show Schema Documentation"
@@ -1066,8 +1066,8 @@ export class GraphiQL extends React.Component {
   };
 }
 
-// Configure the UI by providing this Component as a child of GraphiQL.
-GraphiQL.Logo = function GraphiQLLogo(props) {
+// Configure the UI by providing this Component as a child of SuperGraphiQL.
+SuperGraphiQL.Logo = function SuperGraphiQLLogo(props) {
   return (
     <div className="title">
       <span>
@@ -1079,39 +1079,39 @@ GraphiQL.Logo = function GraphiQLLogo(props) {
   );
 };
 
-// Configure the UI by providing this Component as a child of GraphiQL.
-GraphiQL.Toolbar = function GraphiQLToolbar(props) {
+// Configure the UI by providing this Component as a child of SuperGraphiQL.
+SuperGraphiQL.Toolbar = function SuperGraphiQLToolbar(props) {
   return <div className="toolbar">{props.children}</div>;
 };
 
 // Export main windows/panes to be used separately if desired.
-GraphiQL.QueryEditor = QueryEditor;
-GraphiQL.VariableEditor = VariableEditor;
-GraphiQL.ResultViewer = ResultViewer;
+SuperGraphiQL.QueryEditor = QueryEditor;
+SuperGraphiQL.VariableEditor = VariableEditor;
+SuperGraphiQL.ResultViewer = ResultViewer;
 
 // Add a button to the Toolbar.
-GraphiQL.Button = ToolbarButton;
-GraphiQL.ToolbarButton = ToolbarButton; // Don't break existing API.
+SuperGraphiQL.Button = ToolbarButton;
+SuperGraphiQL.ToolbarButton = ToolbarButton; // Don't break existing API.
 
 // Add a group of buttons to the Toolbar
-GraphiQL.Group = ToolbarGroup;
+SuperGraphiQL.Group = ToolbarGroup;
 
 // Add a menu of items to the Toolbar.
-GraphiQL.Menu = ToolbarMenu;
-GraphiQL.MenuItem = ToolbarMenuItem;
+SuperGraphiQL.Menu = ToolbarMenu;
+SuperGraphiQL.MenuItem = ToolbarMenuItem;
 
 // Add a select-option input to the Toolbar.
-GraphiQL.Select = ToolbarSelect;
-GraphiQL.SelectOption = ToolbarSelectOption;
+SuperGraphiQL.Select = ToolbarSelect;
+SuperGraphiQL.SelectOption = ToolbarSelectOption;
 
-// Configure the UI by providing this Component as a child of GraphiQL.
-GraphiQL.Footer = function GraphiQLFooter(props) {
+// Configure the UI by providing this Component as a child of SuperGraphiQL.
+SuperGraphiQL.Footer = function SuperGraphiQLFooter(props) {
   return <div className="footer">{props.children}</div>;
 };
 
-const defaultQuery = `# Welcome to GraphiQL
+const defaultQuery = `# Welcome to SuperGraphiQL
 #
-# GraphiQL is an in-browser tool for writing, validating, and
+# SuperGraphiQL is an in-browser tool for writing, validating, and
 # testing GraphQL queries.
 #
 # Type queries into this side of the screen, and you will see intelligent

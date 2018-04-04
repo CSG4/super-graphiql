@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.GraphiQL = undefined;
+exports.SuperGraphiQL = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -88,25 +88,25 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var DEFAULT_DOC_EXPLORER_WIDTH = 350;
 
 /**
- * The top-level React component for GraphiQL, intended to encompass the entire
+ * The top-level React component for SuperGraphiQL, intended to encompass the entire
  * browser viewport.
  *
  * @see https://github.com/graphql/graphiql#usage
  */
 
-var GraphiQL = exports.GraphiQL = function (_React$Component) {
-  _inherits(GraphiQL, _React$Component);
+var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
+  _inherits(SuperGraphiQL, _React$Component);
 
-  function GraphiQL(props) {
-    _classCallCheck(this, GraphiQL);
+  function SuperGraphiQL(props) {
+    _classCallCheck(this, SuperGraphiQL);
 
     // Ensure props are correct
-    var _this = _possibleConstructorReturn(this, (GraphiQL.__proto__ || Object.getPrototypeOf(GraphiQL)).call(this, props));
+    var _this = _possibleConstructorReturn(this, (SuperGraphiQL.__proto__ || Object.getPrototypeOf(SuperGraphiQL)).call(this, props));
 
     _initialiseProps.call(_this);
 
     if (typeof props.fetcher !== "function") {
-      throw new TypeError("GraphiQL requires a fetcher function.");
+      throw new TypeError("SuperGraphiQL requires a fetcher function.");
     }
 
     // Cache the storage instance
@@ -164,7 +164,7 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
     return _this;
   }
 
-  _createClass(GraphiQL, [{
+  _createClass(SuperGraphiQL, [{
     key: "componentDidMount",
     value: function componentDidMount() {
       // Only fetch schema via introspection if a schema has not been
@@ -257,9 +257,9 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
       var children = _react2.default.Children.toArray(this.props.children);
 
       var toolbar = (0, _find2.default)(children, function (child) {
-        return child.type === GraphiQL.Toolbar;
+        return child.type === SuperGraphiQL.Toolbar;
       }) || _react2.default.createElement(
-        GraphiQL.Toolbar,
+        SuperGraphiQL.Toolbar,
         null,
         _react2.default.createElement(_ExecuteButton.ExecuteButton, {
           isRunning: Boolean(this.state.subscription),
@@ -280,7 +280,7 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
       );
 
       var footer = (0, _find2.default)(children, function (child) {
-        return child.type === GraphiQL.Footer;
+        return child.type === SuperGraphiQL.Footer;
       });
 
       var queryWrapStyle = {
@@ -342,7 +342,7 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
                 title: "Show Schema Documentation",
                 label: "History"
               }),
-              _react2.default.createElement(GraphiQL.Logo, null),
+              _react2.default.createElement(SuperGraphiQL.Logo, null),
               _react2.default.createElement(_ToolbarButton.ToolbarButton, {
                 onClick: this.handleToggleDocs,
                 title: "Show Schema Documentation",
@@ -723,13 +723,13 @@ var GraphiQL = exports.GraphiQL = function (_React$Component) {
     }
   }]);
 
-  return GraphiQL;
+  return SuperGraphiQL;
 }(_react2.default.Component);
 
-// Configure the UI by providing this Component as a child of GraphiQL.
+// Configure the UI by providing this Component as a child of SuperGraphiQL.
 
 
-GraphiQL.propTypes = {
+SuperGraphiQL.propTypes = {
   queryList: _propTypes2.default.array,
   fetcher: _propTypes2.default.func.isRequired,
   schema: _propTypes2.default.instanceOf(_graphql.GraphQLSchema),
@@ -837,16 +837,15 @@ var _initialiseProps = function _initialiseProps() {
         var subscription = _this6._fetchQuery(editedQueryList, variables,
         // operationName
         function (result) {
-          var cleanResults = result.map(function (resultObj, index) {
-            resultObj["dataSet" + index] = resultObj.data;
-            delete resultObj["data"];
-            return resultObj;
-          });
+          var transformResults = result.reduce(function (responseObj, resultObj, index) {
+            responseObj["dataSet" + index] = resultObj.data;
+            return responseObj;
+          }, {});
 
           if (runID === _this6._runCounter) {
             _this6.setState({
               isWaitingForResponse: false,
-              response: JSON.stringify(cleanResults, null, 2)
+              response: JSON.stringify(transformResults, null, 2)
             });
           }
         });
@@ -1204,7 +1203,7 @@ var _initialiseProps = function _initialiseProps() {
   };
 };
 
-GraphiQL.Logo = function GraphiQLLogo(props) {
+SuperGraphiQL.Logo = function SuperGraphiQLLogo(props) {
   return _react2.default.createElement(
     "div",
     { className: "title" },
@@ -1222,8 +1221,8 @@ GraphiQL.Logo = function GraphiQLLogo(props) {
   );
 };
 
-// Configure the UI by providing this Component as a child of GraphiQL.
-GraphiQL.Toolbar = function GraphiQLToolbar(props) {
+// Configure the UI by providing this Component as a child of SuperGraphiQL.
+SuperGraphiQL.Toolbar = function SuperGraphiQLToolbar(props) {
   return _react2.default.createElement(
     "div",
     { className: "toolbar" },
@@ -1232,27 +1231,27 @@ GraphiQL.Toolbar = function GraphiQLToolbar(props) {
 };
 
 // Export main windows/panes to be used separately if desired.
-GraphiQL.QueryEditor = _QueryEditor.QueryEditor;
-GraphiQL.VariableEditor = _VariableEditor.VariableEditor;
-GraphiQL.ResultViewer = _ResultViewer.ResultViewer;
+SuperGraphiQL.QueryEditor = _QueryEditor.QueryEditor;
+SuperGraphiQL.VariableEditor = _VariableEditor.VariableEditor;
+SuperGraphiQL.ResultViewer = _ResultViewer.ResultViewer;
 
 // Add a button to the Toolbar.
-GraphiQL.Button = _ToolbarButton.ToolbarButton;
-GraphiQL.ToolbarButton = _ToolbarButton.ToolbarButton; // Don't break existing API.
+SuperGraphiQL.Button = _ToolbarButton.ToolbarButton;
+SuperGraphiQL.ToolbarButton = _ToolbarButton.ToolbarButton; // Don't break existing API.
 
 // Add a group of buttons to the Toolbar
-GraphiQL.Group = _ToolbarGroup.ToolbarGroup;
+SuperGraphiQL.Group = _ToolbarGroup.ToolbarGroup;
 
 // Add a menu of items to the Toolbar.
-GraphiQL.Menu = _ToolbarMenu.ToolbarMenu;
-GraphiQL.MenuItem = _ToolbarMenu.ToolbarMenuItem;
+SuperGraphiQL.Menu = _ToolbarMenu.ToolbarMenu;
+SuperGraphiQL.MenuItem = _ToolbarMenu.ToolbarMenuItem;
 
 // Add a select-option input to the Toolbar.
-GraphiQL.Select = _ToolbarSelect.ToolbarSelect;
-GraphiQL.SelectOption = _ToolbarSelect.ToolbarSelectOption;
+SuperGraphiQL.Select = _ToolbarSelect.ToolbarSelect;
+SuperGraphiQL.SelectOption = _ToolbarSelect.ToolbarSelectOption;
 
-// Configure the UI by providing this Component as a child of GraphiQL.
-GraphiQL.Footer = function GraphiQLFooter(props) {
+// Configure the UI by providing this Component as a child of SuperGraphiQL.
+SuperGraphiQL.Footer = function SuperGraphiQLFooter(props) {
   return _react2.default.createElement(
     "div",
     { className: "footer" },
@@ -1260,7 +1259,7 @@ GraphiQL.Footer = function GraphiQLFooter(props) {
   );
 };
 
-var defaultQuery = "# Welcome to GraphiQL\n#\n# GraphiQL is an in-browser tool for writing, validating, and\n# testing GraphQL queries.\n#\n# Type queries into this side of the screen, and you will see intelligent\n# typeaheads aware of the current GraphQL type schema and live syntax and\n# validation errors highlighted within the text.\n#\n# GraphQL queries typically start with a \"{\" character. Lines that starts\n# with a # are ignored.\n#\n# An example GraphQL query might look like:\n#\n#     {\n#       field(arg: \"value\") {\n#         subField\n#       }\n#     }\n#\n# Keyboard shortcuts:\n#\n#  Prettify Query:  Shift-Ctrl-P (or press the prettify button above)\n#\n#       Run Query:  Ctrl-Enter (or press the play button above)\n#\n#   Auto Complete:  Ctrl-Space (or just start typing)\n#\n\n";
+var defaultQuery = "# Welcome to SuperGraphiQL\n#\n# SuperGraphiQL is an in-browser tool for writing, validating, and\n# testing GraphQL queries.\n#\n# Type queries into this side of the screen, and you will see intelligent\n# typeaheads aware of the current GraphQL type schema and live syntax and\n# validation errors highlighted within the text.\n#\n# GraphQL queries typically start with a \"{\" character. Lines that starts\n# with a # are ignored.\n#\n# An example GraphQL query might look like:\n#\n#     {\n#       field(arg: \"value\") {\n#         subField\n#       }\n#     }\n#\n# Keyboard shortcuts:\n#\n#  Prettify Query:  Shift-Ctrl-P (or press the prettify button above)\n#\n#       Run Query:  Ctrl-Enter (or press the play button above)\n#\n#   Auto Complete:  Ctrl-Space (or just start typing)\n#\n\n";
 
 // Duck-type promise detection.
 function isPromise(value) {
