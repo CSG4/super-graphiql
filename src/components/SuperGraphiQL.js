@@ -220,29 +220,13 @@ export class SuperGraphiQL extends React.Component {
   render() {
     const children = React.Children.toArray(this.props.children);
 
-    const toolbar = find(
-      children,
-      child => child.type === SuperGraphiQL.Toolbar
-    ) || (
-      <SuperGraphiQL.Toolbar>
-        <ExecuteButton
-          isRunning={Boolean(this.state.subscription)}
-          onRun={this.handleRunQuery}
-          onStop={this.handleStopQuery}
-          operations={this.state.operations}
-        />
-        <ToolbarButton
-          onClick={this.handleNewQueryBox}
-          title="Add a new query to the execution stack"
-          label="Add Query"
-        />
-        <ToolbarButton
-          onClick={this.handleDeleteAll}
-          title="Removes all queries from the execution stack"
-          label="Delete All"
-        />
-      </SuperGraphiQL.Toolbar>
-    );
+    // const toolbar = find(
+    //   children,
+    //   child => child.type === SuperGraphiQL.Toolbar
+    // ) || (
+    //   <SuperGraphiQL.Toolbar>
+    //   </SuperGraphiQL.Toolbar>
+    // );
 
     const footer = find(children, child => child.type === SuperGraphiQL.Footer);
 
@@ -287,20 +271,45 @@ export class SuperGraphiQL extends React.Component {
           </HistoryExplorer>
         </div>
         <div className="editorWrap">
-          <div className="topBarWrap">
-            <div className="topBar">
-              <ToolbarButton
-                onClick={this.handleToggleHistory}
-                title="Show Schema Documentation"
-                label="History"
-              />
-              <div>{toolbar}</div>
+          <div className="topBar">
+            <div className="top-bar-group">
+              <span className="toolbar">
+                {!this.state.historyPaneOpen && (
+                  <ToolbarButton
+                    onClick={this.handleToggleHistory}
+                    title="Show History"
+                    label="History"
+                  />
+                )}
+                <ExecuteButton
+                  isRunning={Boolean(this.state.subscription)}
+                  onRun={this.handleRunQuery}
+                  onStop={this.handleStopQuery}
+                  operations={this.state.operations}
+                />
+                <ToolbarButton
+                  onClick={this.handleNewQueryBox}
+                  title="Add Query Box"
+                  label="Add"
+                />
+                <ToolbarButton
+                  onClick={this.handleDeleteAll}
+                  title="Clear Entered Queries"
+                  label="Delete All"
+                />
+              </span>
+            </div>
+            <div className="top-bar-group">
               <SuperGraphiQL.Logo />
-              <ToolbarButton
-                onClick={this.handleToggleDocs}
-                title="Show Schema Documentation"
-                label="Schema"
-              />
+            </div>
+            <div className="top-bar-group">
+              {!this.state.docExplorerOpen && (
+                <ToolbarButton
+                  onClick={this.handleToggleDocs}
+                  title="Show Schema Documentation"
+                  label="Schema"
+                />
+              )}
             </div>
           </div>
           <div
@@ -1068,19 +1077,15 @@ export class SuperGraphiQL extends React.Component {
 SuperGraphiQL.Logo = function SuperGraphiQLLogo(props) {
   return (
     <div className="title">
-      <span>
-        {"Super Graph"}
-        <em>{"i"}</em>
-        {"QL"}
-      </span>
+      <span>{"S"}</span>
     </div>
   );
 };
 
 // Configure the UI by providing this Component as a child of SuperGraphiQL.
-SuperGraphiQL.Toolbar = function SuperGraphiQLToolbar(props) {
-  return <div className="toolbar">{props.children}</div>;
-};
+// SuperGraphiQL.Toolbar = function SuperGraphiQLToolbar(props) {
+//   return <span className="toolbar">{props.children}</span>;
+// };
 
 // Export main windows/panes to be used separately if desired.
 SuperGraphiQL.QueryEditor = QueryEditor;
