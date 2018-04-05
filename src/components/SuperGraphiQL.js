@@ -220,14 +220,6 @@ export class SuperGraphiQL extends React.Component {
   render() {
     const children = React.Children.toArray(this.props.children);
 
-    // const toolbar = find(
-    //   children,
-    //   child => child.type === SuperGraphiQL.Toolbar
-    // ) || (
-    //   <SuperGraphiQL.Toolbar>
-    //   </SuperGraphiQL.Toolbar>
-    // );
-
     const footer = find(children, child => child.type === SuperGraphiQL.Footer);
 
     const queryWrapStyle = {
@@ -1089,11 +1081,6 @@ SuperGraphiQL.Logo = function SuperGraphiQLLogo(props) {
     </div>
   );
 };
-
-// Configure the UI by providing this Component as a child of SuperGraphiQL.
-// SuperGraphiQL.Toolbar = function SuperGraphiQLToolbar(props) {
-//   return <span className="toolbar">{props.children}</span>;
-// };
 
 // Export main windows/panes to be used separately if desired.
 SuperGraphiQL.QueryEditor = QueryEditor;

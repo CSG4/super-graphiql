@@ -71,12 +71,6 @@ export class ExecuteButton extends React.Component {
       onMouseDown = this._onOptionsOpen;
     }
 
-    // const pathJSX = this.props.isRunning ? (
-    //   <path d="M 10 10 L 23 10 L 23 23 L 10 23 z" />
-    // ) : (
-    //   <path d="M 11 9 L 24 16 L 11 23 z" />
-    // );
-
     return (
       <span className="execute-button-wrap">
         <a
