@@ -71,27 +71,19 @@ export class ExecuteButton extends React.Component {
       onMouseDown = this._onOptionsOpen;
     }
 
-    const pathJSX = this.props.isRunning ? (
-      <path d="M 10 10 L 23 10 L 23 23 L 10 23 z" />
-    ) : (
-      <path d="M 11 9 L 24 16 L 11 23 z" />
-    );
-
     return (
-      <div className="execute-button-wrap">
-        <button
-          type="button"
-          className="execute-button"
+      <span className="execute-button-wrap">
+        <a
+          className="toolbar-button execute-button"
           onMouseDown={onMouseDown}
           onClick={onClick}
           title="Execute Selected Queries (Ctrl-Enter)"
         >
-          <svg width="34" height="34">
-            {pathJSX}
-          </svg>
-        </button>
+          <i className="fa fa-play-circle" aria-hidden="true" />
+          <span>{"Run"}</span>
+        </a>
         {options}
-      </div>
+      </span>
     );
   }
 

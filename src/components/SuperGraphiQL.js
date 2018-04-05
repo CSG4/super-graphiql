@@ -212,30 +212,6 @@ export class SuperGraphiQL extends React.Component {
   render() {
     const children = React.Children.toArray(this.props.children);
 
-    const toolbar = find(
-      children,
-      child => child.type === SuperGraphiQL.Toolbar
-    ) || (
-      <SuperGraphiQL.Toolbar>
-        <ExecuteButton
-          isRunning={Boolean(this.state.subscription)}
-          onRun={this.handleRunQuery}
-          onStop={this.handleStopQuery}
-          operations={this.state.operations}
-        />
-        <ToolbarButton
-          onClick={this.handleNewQueryBox}
-          title="Add a new query to the execution stack"
-          label="Add Query"
-        />
-        <ToolbarButton
-          onClick={this.handleDeleteAll}
-          title="Removes all queries from the execution stack"
-          label="Delete All"
-        />
-      </SuperGraphiQL.Toolbar>
-    );
-
     const footer = find(children, child => child.type === SuperGraphiQL.Footer);
 
     const queryWrapStyle = {
@@ -256,6 +232,10 @@ export class SuperGraphiQL extends React.Component {
       display: this.state.historyPaneOpen ? "block" : "none",
       width: "300px",
       zIndex: "7"
+    };
+
+    const topBarGroupStyle = {
+      width: !this.state.docExplorerOpen ? "33.33%" : "auto"
     };
 
     const variableOpen = this.state.variableEditorOpen;
@@ -279,23 +259,46 @@ export class SuperGraphiQL extends React.Component {
           </HistoryExplorer>
         </div>
         <div className="editorWrap">
-          <div className="topBarWrap">
-            <div className="topBar">
-              <ToolbarButton
-                onClick={this.handleToggleHistory}
-                title="Show Schema Documentation"
-                label="History"
-              />
-              <SuperGraphiQL.Logo />
-              <ToolbarButton
-                onClick={this.handleToggleDocs}
-                title="Show Schema Documentation"
-                label="Schema"
-              />
+          <div className="topBar">
+            <div className="top-bar-group left" style={topBarGroupStyle}>
+              <span className="toolbar">
+                {!this.state.historyPaneOpen && (
+                  <ToolbarButton
+                    onClick={this.handleToggleHistory}
+                    title="Show History"
+                    label="History"
+                  />
+                )}
+                <ExecuteButton
+                  isRunning={Boolean(this.state.subscription)}
+                  onRun={this.handleRunQuery}
+                  onStop={this.handleStopQuery}
+                  operations={this.state.operations}
+                />
+                <ToolbarButton
+                  onClick={this.handleNewQueryBox}
+                  title="Add Query Box"
+                  label="Add"
+                />
+                <ToolbarButton
+                  onClick={this.handleDeleteAll}
+                  title="Clear Entered Queries"
+                  label="Delete All"
+                />
+              </span>
             </div>
-          </div>
-          <div className="toolbarWrap">
-            <div className="toolbar">{toolbar}</div>
+            <div className="top-bar-group center" style={topBarGroupStyle}>
+              <SuperGraphiQL.Logo />
+            </div>
+            <div className="top-bar-group right" style={topBarGroupStyle}>
+              {!this.state.docExplorerOpen && (
+                <ToolbarButton
+                  onClick={this.handleToggleDocs}
+                  title="Show Schema Documentation"
+                  label="Schema"
+                />
+              )}
+            </div>
           </div>
           <div
             ref={n => {
@@ -1042,11 +1045,6 @@ SuperGraphiQL.Logo = () => {
       </span>
     </div>
   );
-};
-
-// Configure the UI by providing this Component as a child of SuperGraphiQL.
-SuperGraphiQL.Toolbar = function SuperGraphiQLToolbar(props) {
-  return <div className="toolbar">{props.children}</div>;
 };
 
 // Export main windows/panes to be used separately if desired.
