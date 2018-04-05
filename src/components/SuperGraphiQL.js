@@ -250,6 +250,10 @@ export class SuperGraphiQL extends React.Component {
       zIndex: "7"
     };
 
+    const topBarGroupStyle = {
+      width: !this.state.docExplorerOpen ? "33.33%" : "auto"
+    };
+
     const variableOpen = this.state.variableEditorOpen;
     const variableStyle = {
       height: variableOpen ? this.state.variableEditorHeight : null
@@ -272,7 +276,7 @@ export class SuperGraphiQL extends React.Component {
         </div>
         <div className="editorWrap">
           <div className="topBar">
-            <div className="top-bar-group">
+            <div className="top-bar-group left" style={topBarGroupStyle}>
               <span className="toolbar">
                 {!this.state.historyPaneOpen && (
                   <ToolbarButton
@@ -299,10 +303,10 @@ export class SuperGraphiQL extends React.Component {
                 />
               </span>
             </div>
-            <div className="top-bar-group">
+            <div className="top-bar-group center" style={topBarGroupStyle}>
               <SuperGraphiQL.Logo />
             </div>
-            <div className="top-bar-group">
+            <div className="top-bar-group right" style={topBarGroupStyle}>
               {!this.state.docExplorerOpen && (
                 <ToolbarButton
                   onClick={this.handleToggleDocs}

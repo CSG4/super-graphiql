@@ -15,6 +15,8 @@
   position: relative;
   user-select: none;
   // background-color: #34485E;
+  // bright baby blue
+  // background-color: #189cf4;
   background-color: #130068;
   color: #ddd;
   text-transform: uppercase;
@@ -49,7 +51,7 @@
  
   &:hover {
     color: white;
-    background-color: #5a32c5;
+    // background-color: #5a32c5;
     // text-shadow: 1.5px 1px #f48325; // ugly but kind of cool?
   }
 
@@ -65,8 +67,6 @@
     font-size: 15px;
   }
 }
-
-
 
 .history-button {
   padding-right: 0;
@@ -88,9 +88,13 @@
   margin-left: auto;
   padding: 0 20px 0 15px;
   background-color: #00003d;
+  // for bright baby blue
+  // background-color: #006ec1;
 
   &:hover {
-    background-color: initial;
+    background-color: #00003d;
+    // for bright baby blue
+    // background-color: #006ec1;
   }
 
   .fa {
