@@ -86,7 +86,7 @@ export class ExecuteButton extends React.Component {
           title="Execute Selected Queries (Ctrl-Enter)"
         >
           <i className="fa fa-play-circle" aria-hidden="true" />
-          {"Run"}
+          <span>{"Run"}</span>
         </a>
         {options}
       </span>

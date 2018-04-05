@@ -7,18 +7,14 @@
 
 .topBar {
   align-items: center;
-  // border-bottom: 1px solid #eee;
   cursor: default;
   display: flex;
   flex-direction: row;
   overflow-y: visible;
   position: relative;
   user-select: none;
-  // background-color: #34485E;
-  // bright baby blue
-  // background-color: #189cf4;
-  background-color: #130068;
-  color: #ddd;
+  background-color: #2a92e6;
+  color: #eee;
   text-transform: uppercase;
   box-shadow: 0px 2px 15px rgba(0, 0, 0, 0.20);
   z-index: 100;
@@ -28,6 +24,12 @@
   .title {
     margin: 0 auto;
     font-size: 18px;
+    text-transform: none;
+
+    em {
+      font-family: georgia;
+      font-size: 19px;
+    }
   }
 }
 
@@ -39,6 +41,14 @@
 
 .toolbar {
   display: flex;
+
+  .toolbar-button {
+    @media (max-width: 1210px) { 
+      span {
+        display: none;
+      }
+    }
+  }
 }
 
 .toolbar-button {
@@ -51,8 +61,7 @@
  
   &:hover {
     color: white;
-    // background-color: #5a32c5;
-    // text-shadow: 1.5px 1px #f48325; // ugly but kind of cool?
+    text-shadow: 1.5px 1px rgba(20,109,181, 0.8);
   }
 
   .fa {
@@ -87,14 +96,10 @@
 .schema-button {
   margin-left: auto;
   padding: 0 20px 0 15px;
-  background-color: #00003d;
-  // for bright baby blue
-  // background-color: #006ec1;
+  background-color: #006ec1;
 
   &:hover {
-    background-color: #00003d;
-    // for bright baby blue
-    // background-color: #006ec1;
+    background-color: #006ec1;
   }
 
   .fa {

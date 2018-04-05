@@ -1081,7 +1081,11 @@ export class SuperGraphiQL extends React.Component {
 SuperGraphiQL.Logo = function SuperGraphiQLLogo(props) {
   return (
     <div className="title">
-      <span>{"S"}</span>
+      <span>
+        {"Super Graph"}
+        <em>{"i"}</em>
+        {"QL"}
+      </span>
     </div>
   );
 };

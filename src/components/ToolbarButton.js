@@ -58,7 +58,7 @@ export class ToolbarButton extends React.Component {
         title={error ? error.message : this.props.title}
       >
         {this.renderIcon(this.props.label)}
-        {this.props.label}
+        <span>{this.props.label}</span>
       </a>
     );
   }
