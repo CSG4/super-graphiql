@@ -1,0 +1,34 @@
+{
+  "name": "super-graphiql-express",
+  "version": "0.0.1",
+  "description": "\"Super-GraphiQL is a powerful yet simple IDE designed for testing your GraphQL API\"",
+  "main": "src/index.js",
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "example": "nodemon ./example/server.js",
+    "test": "npm run check && npm run testonly && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CSG4/super-graphiql.git"
+  },
+  "keywords": [
+    "graphql",
+    "graphiql",
+    "super-graphiql",
+    "gui",
+    "ide",
+    "middleware",
+    "express"
+  ],
+  "author": "Albert Chen, Angela Scerbo, Eduardo Maillo, Marissa Lafontant <superGraphiQLTeam@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CSG4/super-graphiql/issues"
+  },
+  "homepage": "https://github.com/CSG4/super-graphiql#readme"
+}
