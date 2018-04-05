@@ -235,7 +235,7 @@ export class QueryEditor extends React.Component {
           </div>
         </div>
         <button
-          title="Add"
+          title="Add Query Box"
           className="action-button add-query"
           onClick={() => {
             this.props.onAddNewQueryEditor();
