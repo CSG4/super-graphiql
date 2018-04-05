@@ -1,0 +1,277 @@
+.graphiql-container {
+  button {
+    border: none;
+    background-color: transparent;
+  }
+}
+
+.topBar {
+  align-items: center;
+  cursor: default;
+  display: flex;
+  flex-direction: row;
+  overflow-y: visible;
+  position: relative;
+  user-select: none;
+  background-color: #2a92e6;
+  color: #eee;
+  text-transform: uppercase;
+  box-shadow: 0px 2px 15px rgba(0, 0, 0, 0.20);
+  z-index: 100;
+  font-weight: 700;
+  letter-spacing: .5px;
+
+  .title {
+    margin: 0 auto;
+    font-size: 18px;
+    text-transform: none;
+
+    em {
+      font-family: georgia;
+      font-size: 19px;
+    }
+  }
+}
+
+.top-bar-group {
+  width: 33.33%;
+  display: flex;
+  line-height: 45px;
+}
+
+.toolbar {
+  display: flex;
+
+  .toolbar-button {
+    @media (max-width: 1210px) { 
+      span {
+        display: none;
+      }
+    }
+  }
+}
+
+.toolbar-button {
+  cursor: pointer;
+  height: 100%;
+  display: inline-block;
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+ 
+  &:hover {
+    color: white;
+    text-shadow: 1.5px 1px rgba(20,109,181, 0.8);
+  }
+
+  .fa {
+    margin-right: 5px;
+  }
+
+  .fa-play-circle {
+    font-size: 20px;
+  }
+
+  .fa-trash-o {
+    font-size: 15px;
+  }
+}
+
+.history-button {
+  padding-right: 0;
+  &:after {
+    content: "";
+    height: 70%;
+    width: 1px;
+    background-color: #ccc;
+    display: block;
+    margin-left: 15px;
+  }
+
+  &:hover {
+    background-color: initial;
+  }
+}
+
+.schema-button {
+  margin-left: auto;
+  padding: 0 20px 0 15px;
+  background-color: #006ec1;
+
+  &:hover {
+    background-color: #006ec1;
+  }
+
+  .fa {
+    padding-right: 20px;
+  }
+}
+
+.execute-button-wrap {
+  margin-left: 1px;
+}
+
+.queryEditorsWrap {
+  height: 100%;
+  overflow: scroll;
+  border-top: 1px solid #eee;
+}
+
+.query-editor-container {
+  border-top: 2px solid #eee; 
+
+  &:first-of-type {
+    border: none;
+  }
+
+  &:last-of-type {
+    .add-query {
+      display: block;
+    }
+  }
+}
+
+// need to specify to graphiql-container to override css 
+.graphiql-container { 
+  .query-editor {
+    flex: 1;
+    position: relative;
+
+    .CodeMirror {
+      position: relative;
+      height: auto;
+    } 
+    .CodeMirror-gutters {
+      border: none;
+      background-color: transparent;
+    }
+  }
+
+}
+
+.query-editor-top-actions {
+  display: flex;
+  padding: 5px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+  min-height: 20px;
+
+  &:hover {
+    .delete-query {
+      visibility: visible;
+    }
+    .fa-trash {
+      opacity: 1;
+    }
+
+    .checkbox-container input ~ .checkmark {
+      border: 1px solid #ccc;
+    }
+  }
+
+  .checkbox-container {
+    display: block;
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+
+    input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+    }
+
+    input:checked ~ .checkmark {
+      background-color: #959798;
+      // background-color: #f48325; // orange options
+      border-color: transparent;
+    }
+
+    input:checked ~ .checkmark:after {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .checkmark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 16px;
+      width: 16px;
+      border: 1px solid #eee; 
+      border-radius: 2px;
+    }
+
+    .checkmark:after {
+      content: "";
+      position: absolute;
+      visibility: hidden;
+      opacity: 0;
+      left: 4.5px;
+      top: -1px;
+      width: 4px;
+      height: 11px;
+      border: solid white;
+      border-width: 0 2.5px 2.5px 0;
+      border-radius: 1px;
+      transform: rotate(45deg);
+      transition: all .3s linear;
+    }
+  }
+}
+
+.action-button {
+  cursor: pointer;
+
+  &:hover {
+    outline: 0;
+  }
+}
+
+.run-query-check {
+  position: relative;
+  top: 3px;
+}
+
+.delete-query,
+.add-query {
+  margin-left: auto;
+
+  &:hover {
+    .fa {
+      color: #737576;
+    }
+    
+  }
+
+  .fa {
+    font-size: 16px;
+    color: #999;
+  }
+}
+
+.delete-query {
+  visibility: hidden;
+
+  .fa-trash {
+    opacity: 0;
+    font-size: 19px;
+    transition: opacity 0.5s linear;
+  }
+}
+
+.add-query {
+  display: none;
+  margin-right: 5px;
+  transition: color 0.5s linear;
+}
+
+.result-window .CodeMirror {
+  background-color: #f7f9fc;
+}
+
+.CodeMirror-gutters {
+  background-color: #ebedee;
+}
