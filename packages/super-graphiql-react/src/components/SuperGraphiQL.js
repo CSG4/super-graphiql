@@ -578,9 +578,35 @@ export class SuperGraphiQL extends React.Component {
         if (isPromise(fetch)) {
           otherQueries.push(fetch)
         } else if(isObservable(fetch)) { 
-          subscriptions.push(fetch)
+          // subscribe to the observable here
+          const subscriptionID = fetch.subscribe({
+            next: response => {
+              this.setState(prevState => {
+                const newResponse = prevState.response ? JSON.parse(prevState.response) : {}
+                newResponse[i + " subscription"] = response;
+                return {
+                  response: newResponse
+                }
+              })
+            },
+            error: error => {
+              this.setState({
+                isWaitingForResponse: false,
+                response: error && String(error.stack || error),
+                subscription: null
+              });
+            },
+            complete: () => {
+              this.setState({
+                isWaitingForResponse: false,
+                subscription: null
+              });
+            }
+          });
+          // push subscription IDs to array
+          subscriptions.push(subscriptionID)
         }
-        
+
         return otherQueries;
       }, []);
 
@@ -693,7 +719,7 @@ export class SuperGraphiQL extends React.Component {
           results => {
             if (runID === this._runCounter) {
               const updatedResults = results.reduce((resObj, result, i) => {
-                resObj[i.toString()] = result;
+                resObj[i] = result;
                 return resObj;
               }, {})
 
