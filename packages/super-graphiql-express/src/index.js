@@ -37,7 +37,8 @@ superGraphiql.renderGraphiQL = function (data) {
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/super-graphiql@latest/super-graphiql.min.css" />
         <script src="http://unpkg.com/react@15.6.1/dist/react.min.js"></script>
         <script src="http://unpkg.com/react-dom@15.6.1/dist/react-dom.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/super-graphiql@latest/super-graphiql.min.js"></script>
+        <!-- <script src="https://cdn.jsdelivr.net/npm/super-graphiql@latest/super-graphiql.min.js"></script> -->
+        <script src="/super-graphiql.js"></script>
         <script src="https://use.fontawesome.com/992e44b468.js"></script>
         ${usingHttp ? `<script src="//cdn.jsdelivr.net/fetch/2.0.1/fetch.min.js"></script>` : ''}
         ${usingWs ? `<script src="//unpkg.com/subscriptions-transport-ws@${SUBSCRIPTIONS_TRANSPORT_VERSION}/browser/client.js"></script>` : ''}

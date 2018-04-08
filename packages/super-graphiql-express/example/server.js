@@ -6,7 +6,7 @@ const { execute, subscribe } = require("graphql");
 const app = express();
 const ws = createServer(app);
 const bodyParser = require("body-parser");
-
+const path = require("path");
 const { supergraphiqlExpress } = require("./../src/index");
 const schema = require("./schema");
 
@@ -19,6 +19,9 @@ supergraphiqlExpress({
 // HTTP Request endpoint
 app.use('/graphql', bodyParser.json(), graphqlExpress({ schema }));
 
+app.use('/super-graphiql.js', (req, res) => {
+  res.sendFile(path.join(__dirname, './../../super-graphiql-react/super-graphiql.js'));
+})
 // run main application on port 9000    
 app.listen(9000, () => {
   console.log("listening on 9000");
