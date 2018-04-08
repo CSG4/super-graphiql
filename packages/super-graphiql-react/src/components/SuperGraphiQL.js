@@ -370,7 +370,27 @@ export class SuperGraphiQL extends React.Component {
                 editorTheme={this.props.editorTheme}
                 ResultsTooltip={this.props.ResultsTooltip}
               />
-              {footer}
+                            <div className="variable-editor" style={variableStyle}>
+                <div
+                  className="variable-editor-title"
+                  style={{ cursor: variableOpen ? "row-resize" : "n-resize" }}
+                  onMouseDown={this.handleVariableResizeStart}
+                >
+                  {"Query Variables"}
+                </div>
+                <VariableEditor
+                  ref={n => {
+                    this.variableEditorComponent = n;
+                  }}
+                  value={this.state.variables}
+                  variableToType={this.state.variableToType}
+                  onEdit={this.handleEditVariables}
+                  onHintInformationRender={this.handleHintInformationRender}
+                  onPrettifyQuery={this.handlePrettifyQuery}
+                  onRunQuery={this.handleEditorRunQuery}
+                  editorTheme={this.props.editorTheme}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -578,7 +598,7 @@ export class SuperGraphiQL extends React.Component {
         const fetch = fetcher(cleanQuery, variables);
 
         if (isPromise(fetch)) {
-          otherQueries.push(fetch)
+          promises.push(fetch)
         } else if(isObservable(fetch)) { 
           // subscribe to the observable here
           const subscriptionID = fetch.subscribe({
