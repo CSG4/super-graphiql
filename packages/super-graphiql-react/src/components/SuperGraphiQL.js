@@ -561,7 +561,7 @@ export class SuperGraphiQL extends React.Component {
     } else {
       const executeSeries = funcs =>
         funcs.reduce((promise, func) =>
-          promise.then(result => func().then(response => result.concat(response))),
+          promise.then(result => func.then(response => result.concat(response))),
           Promise.resolve([]));
 
       const subscriptions = [];
@@ -583,7 +583,7 @@ export class SuperGraphiQL extends React.Component {
             next: response => {
               this.setState(prevState => {
                 const newResponse = prevState.response ? JSON.parse(prevState.response) : {}
-                newResponse[i + " subscription"] = response;
+                newResponse[i + ": subscription"] = response;
                 return {
                   response: newResponse
                 }
@@ -716,10 +716,10 @@ export class SuperGraphiQL extends React.Component {
         const subscription = this._fetchQuery(
           filteredQuery,
           variables,
-          results => {
+          (results, type) => {
             if (runID === this._runCounter) {
               const updatedResults = results.reduce((resObj, result, i) => {
-                resObj[i] = result;
+                resObj[i + ": " + type] = result;
                 return resObj;
               }, {})
 
