@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const myURI = "mongodb://user:pw1@ds113169.mlab.com:13169/graphql-test";
+const myURI = "";
 const uri = process.env.MONGO_URI || myURI;
 mongoose.connect(uri);
 mongoose.connection.once("open", () => {
@@ -27,9 +27,11 @@ const SubjectType = new GraphQLObjectType({
     professor: { type: GraphQLString },
     students: {
       type: new GraphQLList(StudentType),
-      resolve(parentValue, args) {
+      resolve(parentValue) {
         return Student.find({ subjectId: parentValue.id }, (err, doc) => {
-          if (!doc || err) return "Not Found";
+          if (!doc || err) {
+            return "Not Found";
+          }
           return doc;
         });
       }
@@ -44,9 +46,11 @@ const StudentType = new GraphQLObjectType({
     name: { type: GraphQLString },
     subject: {
       type: SubjectType,
-      resolve(parentValue, args) {
+      resolve(parentValue) {
         return Subject.findOne({ id: parentValue.subjectId }, (err, doc2) => {
-          if (!doc2 || err) return "Not Found";
+          if (!doc2 || err) {
+            return "Not Found";
+          }
           return doc2;
         });
       }
@@ -59,9 +63,11 @@ const RootQuery = new GraphQLObjectType({
   fields: {
     allStudents: {
       type: new GraphQLList(StudentType),
-      resolve(parentValue) {
+      resolve() {
         return Student.find({}, (err, docs) => {
-          if (err || !docs) return "No Entry Found";
+          if (err || !docs) {
+            return "No Entry Found";
+          }
           return docs;
         });
       }
@@ -71,16 +77,20 @@ const RootQuery = new GraphQLObjectType({
       args: { id: { type: GraphQLInt } },
       resolve(parentValue, args) {
         return Student.findOne({ id: args.id }, (err, doc) => {
-          if (!doc || err) return "Not Found";
+          if (!doc || err) {
+            return "Not Found";
+          }
           return doc;
         });
       }
     },
     allSubjects: {
       type: new GraphQLList(SubjectType),
-      resolve(parentValue) {
+      resolve() {
         return Subject.find({}, (err, docs) => {
-          if (err || !docs) return "No Entry Found";
+          if (err || !docs) {
+            return "No Entry Found";
+          }
           return docs;
         });
       }
@@ -90,7 +100,9 @@ const RootQuery = new GraphQLObjectType({
       args: { id: { type: GraphQLString } },
       resolve(parentValue, args) {
         return Subject.findOne({ id: args.id }, (err, doc) => {
-          if (!doc || err) return "Not Found";
+          if (!doc || err) {
+            return "Not Found";
+          }
           return doc;
         });
       }
@@ -104,14 +116,16 @@ const mutation = new GraphQLObjectType({
     addStudent: {
       type: StudentType,
       args: {
-        id: { type: new GraphQLNonNull(GraphQLInt) }, //Nonnull means the field is required
+        id: { type: new GraphQLNonNull(GraphQLInt) },
         name: { type: GraphQLString },
         subjectId: { type: GraphQLString }
       },
       resolve(parentValue, { id, name, subjectId }) {
         return new Promise((resolve, reject) => {
           Student.create({ id, name, subjectId }, (err, doc) => {
-            if (err || !doc) reject("Entry not created");
+            if (err || !doc) {
+              reject("Entry not created");
+            }
             resolve(doc);
           });
         });
@@ -125,7 +139,9 @@ const mutation = new GraphQLObjectType({
       resolve(parentValue, { id }) {
         return new Promise((resolve, reject) => {
           Student.findOneAndRemove({ id }, (err, doc) => {
-            if (err || !doc) reject("Entry not created");
+            if (err || !doc) {
+              reject("Entry not created");
+            }
             resolve(doc);
           });
         });
@@ -134,14 +150,16 @@ const mutation = new GraphQLObjectType({
     addSubject: {
       type: SubjectType,
       args: {
-        id: { type: new GraphQLNonNull(GraphQLString) }, //Nonnull means the field is required
+        id: { type: new GraphQLNonNull(GraphQLString) },
         name: { type: GraphQLString },
         professor: { type: GraphQLString }
       },
       resolve(parentValue, { id, name, professor }) {
         return new Promise((resolve, reject) => {
           Subject.create({ id, name, professor }, (err, doc) => {
-            if (err || !doc) reject("Entry not created");
+            if (err || !doc) {
+              reject("Entry not created");
+            }
             resolve(doc);
           });
         });
@@ -155,7 +173,9 @@ const mutation = new GraphQLObjectType({
       resolve(parentValue, { id }) {
         return new Promise((resolve, reject) => {
           Subject.findOneAndRemove({ id }, (err, doc) => {
-            if (err || !doc) reject("Entry not created");
+            if(err || !doc) {
+              reject("Entry not created");
+            }
             resolve(doc);
           });
         });
