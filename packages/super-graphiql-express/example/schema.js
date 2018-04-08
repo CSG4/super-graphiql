@@ -24,15 +24,17 @@ const typeDefs = `
 	}
 
 	type Query {
-    Student(id: Int!): Student
-    Subject(id: String!): Subject
+    getStudent(id: Int!): Student
+    getSubject(id: String!): Subject
 		allStudents(last: Int): [Student!]!
 		allSubjects(last: String): [Subject!]!
 	}
 
 	type Mutation {
 		addStudent(name: String!, id: Int!, subjects: String): Student
-		addSubject(name: String!, professor: String!, id: String!, students: String): Subject
+    addSubject(name: String!, professor: String!, id: String!, students: String): [Subject]
+    removeStudent(id: Int!): Student
+    removeSubject(id: String!): [Subject]
 	}
 
 	type Subscription {
