@@ -10,7 +10,7 @@ const SUBJECT_ADDED_TOPIC = "newSubject";
 
 module.exports = {
   Query: {
-    Student: (root, args) => {
+    getStudent: (root, args) => {
       return Student.findOne({ id: args.id }, (err, docs) => {
         if (err) {
           console.log(err);
@@ -26,7 +26,7 @@ module.exports = {
         return docs;
       });
     },
-    Subject: (root, args) => {
+    getSubject: (root, args) => {
       return Subject.findOne({ id: args.id }, (err, docs) => {
         if (err) {
           console.log(err);
@@ -51,7 +51,7 @@ module.exports = {
         name: args.name,
         subjects: args.subjects
       };
-      return new Promise((resolve, reject) => { 
+      return new Promise((resolve, reject) => {
         Student.create(newStudent, (err, docs) => {
           if (err) {
             reject(err);
@@ -59,6 +59,16 @@ module.exports = {
           // Publish the new student to the newStudent topic; it will then be received by clients that are subscribed to this topic
           pubsub.publish(STUDENT_ADDED_TOPIC, { studentAdded: docs });
           resolve(docs);
+        });
+      });
+    },
+    removeStudent: (parentValue, { id }) => {
+      return new Promise((resolve, reject) => {
+        Student.findOneAndRemove({ id }, (err, doc) => {
+          if (err || !doc) {
+            reject("Student not found");
+          }
+          resolve(doc);
         });
       });
     },
@@ -70,12 +80,32 @@ module.exports = {
         students: args.students
       };
       return new Promise((resolve, reject) => {
-        Subject.create(newSubject, (err, docs) => {
-          if (err) {
-            reject(err);
+        Subject.create(newSubject, (err, doc) => {
+          if (err || !doc) {
+            reject("Subject not created");
           }
-          pubsub.publish(SUBJECT_ADDED_TOPIC, { subjectAdded: docs });
-          resolve(docs);
+          Subject.find({}, (err, docs) => {
+            if (err || !docs) {
+              reject("No subjects found");
+            }
+            pubsub.publish(SUBJECT_ADDED_TOPIC, { subjectAdded: docs });
+            resolve(docs);
+          });
+        });
+      });
+    },
+    removeSubject: (parentValue, { id }) => {
+      return new Promise((resolve, reject) => {
+        Subject.findOneAndRemove({ id }, (err, doc) => {
+          if (err || !doc) {
+            reject("Subject not found nor removed");
+          }
+          Subject.find({}, (err, docs) => {
+            if (err || !docs) {
+              reject("No subjects found");
+            }
+            resolve(docs)
+          });
         });
       });
     },
