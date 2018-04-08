@@ -18,9 +18,6 @@ superGraphiql.supergraphiqlExpress = function (data) {
 
 
 superGraphiql.renderGraphiQL = function (data) {
-  // if(!(data instanceof GraphiQLData)) {
-  //   throw new Error("invalid param passed");
-  // }
   const endpointURL = data.endpointURL;
   const endpointWs =
     endpointURL.startsWith('ws://') || endpointURL.startsWith('wss://');
