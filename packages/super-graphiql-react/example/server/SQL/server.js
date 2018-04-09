@@ -1,9 +1,10 @@
-const express = require("express");   
+const express = require("express");
+const app = express();   
+const { graphqlExpress } = require('apollo-server-express');
 const bodyParser = require("body-parser");  
+const { makeExecutableSchema } = require('graphql-tools');
 const path = require("path");  
 const models = require('./models');
-const { graphqlExpress } = require('apollo-server-express');
-const { makeExecutableSchema } = require('graphql-tools');
 const { fileLoader, mergeTypes, mergeResolvers } = require('merge-graphql-schemas');
 const typeDefs = mergeTypes(fileLoader(path.join(__dirname, './schema')));
 const resolvers = mergeResolvers(fileLoader(path.join(__dirname, './resolvers')));
@@ -13,16 +14,23 @@ const schema = makeExecutableSchema({
   resolvers,
 });
 
-const app = express();
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+// port to run SuperGraphiQL, defaulted to localhost:9000
+const PORT = 9000;
 
-app.use("/*/graphiql.css", (req, res) => {
-  res.sendFile(path.join(__dirname, "./../../graphiql.css"));
+// Serve Super-Graphiql static files (i.e. HTML)
+app.use("/supergraphiql", express.static(path.join(__dirname, "./../../")));
+
+// Serve the bundled React application
+app.use("/*/webpack-bundle.js", (req, res) => {
+  res.sendFile(path.join(__dirname, "./../../../dist/webpack-bundle.js"));
 });
 
-app.use(express.static(__dirname + "./../"));
+// Serve the bundled css file
+app.use("/*/app.bundle.css", (req, res) => {
+  res.sendFile(path.join(__dirname, "./../../../dist/app.bundle.css"));
+});
 
+// HttpEndpoint to access SQL graphql schema
 app.use("/graphql", bodyParser.json(),
 graphqlExpress({
   schema,
@@ -32,8 +40,11 @@ graphqlExpress({
 }),
 );
 
+// Sequelize model synchronization
+// Create tables if they don't exist in the database
+// Then, Server starts to listen
 models.sequelize.sync({}).then(
-  app.listen(9000, () => {
-    console.log("listening on port 9000");
+  app.listen(PORT, () => {
+    console.log("Listening on port 9000");
   })
-)
+);
