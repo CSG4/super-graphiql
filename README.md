@@ -31,12 +31,15 @@ supergraphiqlExpress({
 ```
 
 <b>React Component</b>
-<p>You can incorporate Super-GraphiQL into your existing project with npm:</p>
+You can incorporate Super-GraphiQL into your existing project with npm:
+
 ```sh
 $ npm install --save super-graphiql
 
 ```
+
 SuperGraphiQL provides a React component responsible for rendering the GUI. The component must be provided with the graphQLFetcher function for fetching from GraphQL, we recommend using the [fetch](https://fetch.spec.whatwg.org/) standard API.
+
 ```sh
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -53,6 +56,7 @@ function graphQLFetcher(graphQLParams) {
 
 ReactDOM.render(<SuperGraphiQL fetcher={graphQLFetcher} />, document.body);
 ```
+
 Build the component into your existing project with [webpack](https://webpack.js.org/) or [browserify](http://browserify.org/).
 Include the necessary CSS and Font Awesome script on your page.
 
