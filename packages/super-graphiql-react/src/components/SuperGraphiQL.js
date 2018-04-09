@@ -1038,11 +1038,13 @@ export class SuperGraphiQL extends React.Component {
 SuperGraphiQL.Logo = () => {
   return (
     <div className="title">
-      <span>
+      <span style={{display:'none'}}>
         {"Super Graph"}
         <em>{"i"}</em>
         {"QL"}
       </span>
+      <img src="https://imgur.com/6zJO4SS.png" alt="SuperGraphiQL" height="43.65" width="37.35" />
+      <img src="https://imgur.com/QgYQBdn.png" className="subtitle" alt="SuperGraphiQL" height="23.4" width="172.8" />
     </div>
   );
 };
