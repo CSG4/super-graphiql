@@ -9,6 +9,7 @@ With Super-GraphiQL users are able to quickly setup a series of tests for GraphQ
 ## Getting Started
 <b>Express Middleware</b> 
 <p>To use Super-GraphiQL, install and incorporate the express middleware into your existing project with npm:</p>
+
 ```sh
 
 $ npm install --save super-graphiql-express
@@ -54,6 +55,7 @@ ReactDOM.render(<SuperGraphiQL fetcher={graphQLFetcher} />, document.body);
 ```
 Build the component into your existing project with [webpack](https://webpack.js.org/) or [browserify](http://browserify.org/).
 Include the necessary CSS and Font Awesome script on your page.
+
 ```sh
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/super-graphiql@latest/super-graphiql.min.css" />
 ```
@@ -73,8 +75,9 @@ Super-GraphiQL leverages components of [GraphiQL](https://github.com/graphql/gra
 <img src="https://imgur.com/ogV6z6Q.gif" title="search-history" width="750"/>
 
 ## Packages
-<p>[super-graphiql-express](https://www.npmjs.com/package/super-graphiql-express): Express middleware </p>
-<p> [super-graphiql-react](https://www.npmjs.com/package/super-graphiql): Core of Super Graphiql built with ReactJS </p>
+[super-graphiql-express](https://www.npmjs.com/package/super-graphiql-express): Express middleware
+
+[super-graphiql-react](https://www.npmjs.com/package/super-graphiql): Core of Super Graphiql built with ReactJS
 
 ## Authors
 [Albert Chen](https://github.com/ac3639) | [Marissa Lafontant](https://github.com/mlafontant) | [Eduardo Maillo](https://github.com/eduardomaillo) | [Angela Scerbo](https://github.com/angelascerbo)
