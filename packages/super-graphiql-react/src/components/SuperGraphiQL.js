@@ -1097,7 +1097,7 @@ SuperGraphiQL.Footer = function SuperGraphiQLFooter(props) {
 
 const defaultQuery = `# Welcome to SuperGraphiQL
 #
-# GraphiQL is an in-browser tool for writing, validating, and
+# SuperGraphiQL is an in-browser tool for writing, validating, and
 # testing GraphQL queries.
 #
 # An example GraphQL query might look like:
