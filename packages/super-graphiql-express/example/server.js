@@ -6,7 +6,6 @@ const { execute, subscribe } = require("graphql");
 const app = express();
 const ws = createServer(app);
 const bodyParser = require("body-parser");
-
 const { supergraphiqlExpress } = require("./../src/index");
 const schema = require("./schema");
 

@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const myURI = "";
+const myURI = "mongodb://user:pw1@ds113169.mlab.com:13169/graphql-test";
 const uri = process.env.MONGO_URI || myURI;
 mongoose.connect(uri);
 mongoose.connection.once("open", () => {
