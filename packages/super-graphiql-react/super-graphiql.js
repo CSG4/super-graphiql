@@ -3042,8 +3042,7 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
                 value: this.state.response,
                 editorTheme: this.props.editorTheme,
                 ResultsTooltip: this.props.ResultsTooltip
-              }),
-              footer
+              })
             )
           )
         ),
@@ -3249,6 +3248,19 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
           });
         });
       } else {
+        var executeSeries = function executeSeries(funcs) {
+          return funcs.reduce(function (promise, func) {
+            return promise.then(function (result) {
+              return func.then(function (response) {
+                return result.concat(response);
+              });
+            });
+          }, Promise.resolve([]));
+        };
+
+        var subscriptions = [];
+        var promises = [];
+
         queries.forEach(function (elem, i) {
           var query = elem.query,
               operationName = elem.operationName;
@@ -3258,26 +3270,24 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
             operationName: operationName,
             variables: variables
           };
-          // check if it is a subscription or not
+
           var fetch = fetcher(cleanQuery, variables);
+
           if (isPromise(fetch)) {
-            // If fetcher returned a Promise, then call the callback when the promise
-            // resolves, otherwise handle the error.
-            fetch.then(function (response) {
-              cb(response, i, "output");
-            }).catch(function (error) {
-              _this6.setState({
-                isWaitingForResponse: false,
-                response: error && String(error.stack || error)
-              });
-            });
+            promises.push(fetch);
           } else if (isObservable(fetch)) {
-            // If the fetcher returned an Observable, then subscribe to it, calling
-            // the callback on each next value, and handling both errors and the
-            // completion of the Observable. Returns a Subscription object.
-            var subscription = fetch.subscribe({
+            // subscribe to the observable here
+            var subscriptionID = fetch.subscribe({
               next: function next(response) {
-                cb(response, i, "subscription");
+                console.log(response);
+                _this6.setState(function (prevState) {
+                  var subResponse = prevState.response ? JSON.parse(prevState.response) : {};
+                  subResponse[i++ + " | subscription"] = response;
+                  return {
+                    isWaitingForResponse: false,
+                    response: JSON.stringify(subResponse, null, 2)
+                  };
+                });
               },
               error: function error(_error) {
                 _this6.setState({
@@ -3293,12 +3303,16 @@ var SuperGraphiQL = exports.SuperGraphiQL = function (_React$Component) {
                 });
               }
             });
-
-            return subscription;
-          } else {
-            throw new Error("Fetcher did not return Promise or Observable.");
+            // push subscription IDs to array
+            subscriptions.push(subscriptionID);
           }
         });
+
+        if (promises.length) {
+          executeSeries(promises).then(function (response) {
+            cb(response, "output");
+          }).catch(console.error.bind(console));
+        }
       }
     }
   }, {
@@ -3428,17 +3442,17 @@ var _initialiseProps = function _initialiseProps() {
         });
 
         // _fetchQuery may return a subscription.
-        var subscription = _this7._fetchQuery(filteredQuery, variables, function (result, index, type) {
+        var subscription = _this7._fetchQuery(filteredQuery, variables, function (results, type) {
+          console.log(results, type);
           if (runID === _this7._runCounter) {
-            _this7.setState(function (prevState) {
-              var prevRes = prevState.response ? JSON.parse(prevState.response) : {};
+            var updatedResults = results.reduce(function (resObj, result, i) {
+              resObj[i + " | " + type] = result;
+              return resObj;
+            }, {});
 
-              prevRes[type + "[" + index + "]"] = result;
-
-              return {
-                isWaitingForResponse: false,
-                response: JSON.stringify(prevRes, null, 2)
-              };
+            _this7.setState({
+              isWaitingForResponse: false,
+              response: JSON.stringify(updatedResults, null, 2)
             });
           }
         });
@@ -3787,7 +3801,7 @@ SuperGraphiQL.Logo = function () {
     { className: "title" },
     _react2.default.createElement(
       "span",
-      null,
+      { style: { display: 'none' } },
       "Super Graph",
       _react2.default.createElement(
         "em",
@@ -3795,7 +3809,9 @@ SuperGraphiQL.Logo = function () {
         "i"
       ),
       "QL"
-    )
+    ),
+    _react2.default.createElement("img", { src: "https://imgur.com/6zJO4SS.png", alt: "SuperGraphiQL", height: "43.65", width: "37.35" }),
+    _react2.default.createElement("img", { src: "https://imgur.com/QgYQBdn.png", className: "subtitle", alt: "SuperGraphiQL", height: "23.4", width: "172.8" })
   );
 };
 
@@ -3828,7 +3844,7 @@ SuperGraphiQL.Footer = function SuperGraphiQLFooter(props) {
   );
 };
 
-var defaultQuery = "# Welcome to SuperGraphiQL\n#\n# GraphiQL is an in-browser tool for writing, validating, and\n# testing GraphQL queries.\n#\n# An example GraphQL query might look like:\n#\n#     {\n#       field(arg: \"value\") {\n#         subField\n#       }\n#     }\n#\n#       Run Query:  Ctrl-Enter (or press the play button above)\n#   Auto Complete:  Ctrl-Space (or just start typing)\n#\n";
+var defaultQuery = "# Welcome to SuperGraphiQL\n#\n# SuperGraphiQL is an in-browser tool for writing, validating, and\n# testing GraphQL queries.\n#\n# An example GraphQL query might look like:\n#\n#     {\n#       field(arg: \"value\") {\n#         subField\n#       }\n#     }\n#\n#       Run Query:  Ctrl-Enter (or press the play button above)\n#   Auto Complete:  Ctrl-Space (or just start typing)\n#\n";
 
 // Duck-type promise detection.
 function isPromise(value) {

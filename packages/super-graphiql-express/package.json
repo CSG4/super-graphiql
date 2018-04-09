@@ -1,6 +1,6 @@
 {
   "name": "super-graphiql-express",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "\"Super-GraphiQL is a powerful yet simple IDE designed for testing your GraphQL API\"",
   "main": "src/index.js",
   "files": [
