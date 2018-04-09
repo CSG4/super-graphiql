@@ -109,7 +109,10 @@ export class SuperGraphiQL extends React.Component {
         Number(this._storage.get("docExplorerWidth")) ||
         DEFAULT_DOC_EXPLORER_WIDTH,
       isWaitingForResponse: false,
-      subscription: null
+      subscription: null,
+      subscriptions: null,
+      subscriptionsViewerOpen: false,
+      subscriptionsViewerHeight: 200
     };
 
     // Reset execution / run counter to 0
@@ -243,6 +246,11 @@ export class SuperGraphiQL extends React.Component {
       height: variableOpen ? this.state.variableEditorHeight : null
     };
 
+    const subscriptionsViewerOpen = this.state.subscriptionsViewerOpen;
+    const subscriptionsStyle = {
+      height: subscriptionsViewerOpen ? this.state.subscriptionsViewerHeight : null
+    };
+
     return (
       <div className="graphiql-container">
         <div className="historyPaneWrap" style={historyPaneStyle}>
@@ -337,6 +345,7 @@ export class SuperGraphiQL extends React.Component {
               <div className="variable-editor" style={variableStyle}>
                 <div
                   className="variable-editor-title"
+                  id="variableTarget"
                   style={{ cursor: variableOpen ? "row-resize" : "n-resize" }}
                   onMouseDown={this.handleVariableResizeStart}
                 >
@@ -370,25 +379,22 @@ export class SuperGraphiQL extends React.Component {
                 editorTheme={this.props.editorTheme}
                 ResultsTooltip={this.props.ResultsTooltip}
               />
-                            <div className="variable-editor" style={variableStyle}>
+              <div className="subscriptions-viewer" style={subscriptionsStyle}>
                 <div
                   className="variable-editor-title"
-                  style={{ cursor: variableOpen ? "row-resize" : "n-resize" }}
+                  id="subscriptionTarget"
+                  style={{ cursor: subscriptionsViewerOpen ? "row-resize" : "n-resize" }}
                   onMouseDown={this.handleVariableResizeStart}
                 >
-                  {"Query Variables"}
+                  {"Subscriptions"}
                 </div>
-                <VariableEditor
-                  ref={n => {
-                    this.variableEditorComponent = n;
+                <ResultViewer
+                  ref={c => {
+                    this.resultComponent = c;
                   }}
-                  value={this.state.variables}
-                  variableToType={this.state.variableToType}
-                  onEdit={this.handleEditVariables}
-                  onHintInformationRender={this.handleHintInformationRender}
-                  onPrettifyQuery={this.handlePrettifyQuery}
-                  onRunQuery={this.handleEditorRunQuery}
+                  value={this.state.subscriptions}
                   editorTheme={this.props.editorTheme}
+                  ResultsTooltip={this.props.ResultsTooltip}
                 />
               </div>
             </div>
@@ -603,13 +609,13 @@ export class SuperGraphiQL extends React.Component {
           // subscribe to the observable here
           const subscriptionID = fetch.subscribe({
             next: response => {
-              console.log(response);
               this.setState(prevState => {
-                const subResponse = prevState.response ? JSON.parse(prevState.response) : {}
+                const subResponse = prevState.subscriptions ? JSON.parse(prevState.subscriptions) : {}
                 subResponse[i++ + " | subscription"] = response;
+
                 return {
                   isWaitingForResponse: false,
-                  response: JSON.stringify(subResponse, null, 2)
+                  subscriptions: JSON.stringify(subResponse, null, 2)
                 }
               })
             },
@@ -691,7 +697,6 @@ export class SuperGraphiQL extends React.Component {
           filteredQuery,
           variables,
           (results, type) => {
-            console.log(results, type)
             if (runID === this._runCounter) {
               const updatedResults = results.reduce((resObj, result, i) => {
                 resObj[i + " | " + type] = result;
@@ -704,22 +709,6 @@ export class SuperGraphiQL extends React.Component {
               })
             }
           }
-          // (result, index, type) => {
-          //   if (runID === this._runCounter) {
-          //     this.setState(prevState => {
-          //       const prevRes = prevState.response
-          //         ? JSON.parse(prevState.response)
-          //         : {};
-
-          //       prevRes[type + "[" + index + "]"] = result;
-
-          //       return {
-          //         isWaitingForResponse: false,
-          //         response: JSON.stringify(prevRes, null, 2)
-          //       };
-          //     });
-          //   }
-          // }
         );
         this.setState({ subscription });
       } catch (error) {
@@ -1033,10 +1022,13 @@ export class SuperGraphiQL extends React.Component {
 
   handleVariableResizeStart = downEvent => {
     downEvent.preventDefault();
+    const targetID = downEvent.currentTarget.id;
+    const subscriptionEditor = Boolean(targetID === "subscriptionTarget");
+    const variablesEditor = Boolean(targetID === "variableTarget");
 
     let didMove = false;
-    const wasOpen = this.state.variableEditorOpen;
-    const hadHeight = this.state.variableEditorHeight;
+    const wasOpen = variablesEditor ? this.state.variableEditorOpen : this.state.subscriptionsViewerOpen;
+    const hadHeight = variablesEditor ? this.state.variableEditorHeight : this.state.subscriptionsViewerHeight;
     const offset = downEvent.clientY - getTop(downEvent.target);
 
     let onMouseMove = moveEvent => {
@@ -1049,22 +1041,39 @@ export class SuperGraphiQL extends React.Component {
       const editorBar = ReactDOM.findDOMNode(this.editorBarComponent);
       const topSize = moveEvent.clientY - getTop(editorBar) - offset;
       const bottomSize = editorBar.clientHeight - topSize;
+
+      let updateObj = {};
+
       if (bottomSize < 60) {
-        this.setState({
-          variableEditorOpen: false,
-          variableEditorHeight: hadHeight
-        });
+        if (variablesEditor) {
+          updateObj['variableEditorOpen'] = false;
+          updateObj['variableEditorHeight'] = hadHeight;
+        } else {
+          updateObj['subscriptionsViewerOpen'] = false;
+          updateObj['subscriptionsViewerHeight'] = hadHeight;
+        }
       } else {
-        this.setState({
-          variableEditorOpen: true,
-          variableEditorHeight: bottomSize
-        });
+        if (variablesEditor) {
+          updateObj['variableEditorOpen'] = true;
+          updateObj['variableEditorHeight'] = bottomSize;
+        } else {
+          updateObj['subscriptionsViewerOpen'] = true;
+          updateObj['subscriptionsViewerHeight'] = bottomSize;
+        }
       }
+
+      this.setState(updateObj);
     };
 
-    let onMouseUp = () => {
+    let onMouseUp = () => {      
       if (!didMove) {
-        this.setState({ variableEditorOpen: !wasOpen });
+        let updateObj = {};
+        if (variablesEditor) {
+          updateObj['variableEditorOpen'] = !wasOpen;
+        } else {
+          updateObj['subscriptionsViewerOpen'] = !wasOpen;
+        }
+        this.setState(updateObj);
       }
 
       document.removeEventListener("mousemove", onMouseMove);
