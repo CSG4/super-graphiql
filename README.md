@@ -1,11 +1,8 @@
-<h1 align="center">Super GraphiQL</h1>
+<h1 align="center"><img src="https://imgur.com/FGT9yfC.png" width="269"></h1>
+
 <p align="center">Super-GraphiQL is a powerful yet simple GUI designed for testing your GraphQL API.</p>
 
 With Super-GraphiQL users are able to quickly setup a series of tests for GraphQL API, better understand the execution of queries and save test cases for easy reuse.
-
-[![Build Status](https://travis-ci.org/graphql/graphiql.svg?branch=master)](https://travis-ci.org/graphql/graphiql)
-[![CDNJS](https://img.shields.io/cdnjs/v/graphiql.svg)](https://cdn.jsdelivr.net/npm/super-graphiql@latest/super-graphiql.min.js) 
-[![npm](https://img.shields.io/npm/v/graphiql.svg)](https://www.npmjs.com/package/super-graphiql) 
 
 ## Getting Started
 <b>React Component</b>
@@ -43,6 +40,20 @@ Include the necessary CSS and Font Awesome script on your page.
 $ npm install --save super-graphiql-express
 
 ```
+
+To use the express middleware, simply import the package into your server file and specify the HTTP endpoint and / or websocket endpoint of your GraphQL server. The SuperGraphiQL IDE will automatically be rendered at the '/supergraphiql' route and include support for GraphQL subscriptions.
+
+```sh
+
+const { supergraphiqlExpress } = require('super-graphiql-express');
+
+app.use('/supergraphiql', 
+supergraphiqlExpress({
+  endpointURL: "/graphql",
+  subscriptionsEndpoint: "ws://localhost:9999/subscriptions"
+}));
+
+```
 ## Features 
 Super-GraphiQL leverages components of [GraphiQL](https://github.com/graphql/graphiql) under the hood but developed to be a more powerful and flexibile GraphQL IDE to enable a smooth and efficient testing workflow. Super-GraphiQL adds the following features to the GraphQL ecosystem:
   
@@ -64,11 +75,12 @@ Super-GraphiQL leverages components of [GraphiQL](https://github.com/graphql/gra
 
 ## How to use?
 - Make mulitple queries in one script
+
 - Build a full test script of queries and test only the ones you need
 
 ## Packages
-[super-graphiql-express](https://www.npmjs.com/package/super-graphiql-express): Express middleware
-[super-graphiql-react](https://www.npmjs.com/package/super-graphiql): Core of Super Graphiql built with ReactJS
+<p>[super-graphiql-express](https://www.npmjs.com/package/super-graphiql-express): Express middleware </p>
+<p> [super-graphiql-react](https://www.npmjs.com/package/super-graphiql): Core of Super Graphiql built with ReactJS </p>
 
 
 ## Authors
@@ -83,5 +95,3 @@ Super-GraphiQL leverages components of [GraphiQL](https://github.com/graphql/gra
 
 ## License
 See LICENSE file
-MIT ©
-
