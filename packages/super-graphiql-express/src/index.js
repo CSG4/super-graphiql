@@ -34,6 +34,7 @@ superGraphiql.renderGraphiQL = function (data) {
     <head>
       <meta charset="UTF-8">
         <title>Super GraphiQL</title>
+        <link rel="icon" type="image/png" href="https://imgur.com/vbfCba9.png">
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/super-graphiql@latest/super-graphiql.min.css" />
         <script src="http://unpkg.com/react@15.6.1/dist/react.min.js"></script>
         <script src="http://unpkg.com/react-dom@15.6.1/dist/react-dom.min.js"></script>
