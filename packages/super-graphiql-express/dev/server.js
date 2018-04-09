@@ -22,6 +22,11 @@ app.use('/graphql', bodyParser.json(), graphqlExpress({ schema }));
 app.use('/super-graphiql.js', (req, res) => {
   res.sendFile(path.join(__dirname, './../../super-graphiql-react/super-graphiql.js'));
 })
+
+app.use('/super-graphiql.min.css', (req, res) => {
+  res.sendFile(path.join(__dirname, './../../super-graphiql-react/super-graphiql.min.css'));
+})
+
 // run main application on port 9000    
 app.listen(9000, () => {
   console.log("listening on 9000");
