@@ -58,4 +58,5 @@ typings/
 .env
 
 example/dist/
+packages/super-graphiql-react/example/dist/
 
