@@ -370,27 +370,6 @@ export class SuperGraphiQL extends React.Component {
                 editorTheme={this.props.editorTheme}
                 ResultsTooltip={this.props.ResultsTooltip}
               />
-                            <div className="variable-editor" style={variableStyle}>
-                <div
-                  className="variable-editor-title"
-                  style={{ cursor: variableOpen ? "row-resize" : "n-resize" }}
-                  onMouseDown={this.handleVariableResizeStart}
-                >
-                  {"Query Variables"}
-                </div>
-                <VariableEditor
-                  ref={n => {
-                    this.variableEditorComponent = n;
-                  }}
-                  value={this.state.variables}
-                  variableToType={this.state.variableToType}
-                  onEdit={this.handleEditVariables}
-                  onHintInformationRender={this.handleHintInformationRender}
-                  onPrettifyQuery={this.handlePrettifyQuery}
-                  onRunQuery={this.handleEditorRunQuery}
-                  editorTheme={this.props.editorTheme}
-                />
-              </div>
             </div>
           </div>
         </div>
