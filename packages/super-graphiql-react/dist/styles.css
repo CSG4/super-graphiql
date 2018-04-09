@@ -1284,7 +1284,7 @@ li.CodeMirror-hint-active {
   overflow-y: visible;
   position: relative;
   user-select: none;
-  background-color: #2a92e6;
+  background-color: #304053;
   color: #eee;
   text-transform: uppercase;
   box-shadow: 0px 2px 15px rgba(0, 0, 0, 0.2);
@@ -1294,19 +1294,26 @@ li.CodeMirror-hint-active {
   .topBar .title {
     margin: 0 auto;
     font-size: 18px;
-    text-transform: none; }
+    text-transform: none;
+    display: flex;
+    align-items: center; }
     .topBar .title em {
       font-family: georgia;
       font-size: 19px; }
+    .topBar .title img.subtitle {
+      margin: 5px 0 0 5px; }
+      @media (max-width: 1240px) {
+        .topBar .title img.subtitle {
+          display: none; } }
 
 .top-bar-group {
   width: 33.33%;
   display: flex;
-  line-height: 45px; }
+  line-height: 53px; }
 
 .toolbar {
   display: flex; }
-  @media (max-width: 1210px) {
+  @media (max-width: 1240px) {
     .toolbar .toolbar-button span {
       display: none; } }
 
@@ -1319,7 +1326,7 @@ li.CodeMirror-hint-active {
   align-items: center; }
   .toolbar-button:hover {
     color: white;
-    text-shadow: 1.5px 1px rgba(20, 109, 181, 0.8); }
+    text-shadow: 1.5px 1px rgba(14, 34, 59, 0.8); }
   .toolbar-button .fa {
     margin-right: 5px; }
   .toolbar-button .fa-play-circle {
@@ -1342,9 +1349,9 @@ li.CodeMirror-hint-active {
 .schema-button {
   margin-left: auto;
   padding: 0 20px 0 15px;
-  background-color: #006ec1; }
+  background-color: #5f7a9b; }
   .schema-button:hover {
-    background-color: #006ec1; }
+    background-color: #5f7a9b; }
   .schema-button .fa {
     padding-right: 20px; }
 

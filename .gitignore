@@ -57,5 +57,6 @@ typings/
 # dotenv environment variables file
 .env
 
-example/dist/
+
+packages/super-graphiql-react/example/dist/
 

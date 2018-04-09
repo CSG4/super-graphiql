@@ -370,7 +370,6 @@ export class SuperGraphiQL extends React.Component {
                 editorTheme={this.props.editorTheme}
                 ResultsTooltip={this.props.ResultsTooltip}
               />
-              {footer}
             </div>
           </div>
         </div>
@@ -559,6 +558,14 @@ export class SuperGraphiQL extends React.Component {
           });
         });
     } else {
+      const executeSeries = funcs =>
+        funcs.reduce((promise, func) =>
+          promise.then(result => func.then(response => result.concat(response))),
+          Promise.resolve([]));
+
+      const subscriptions = [];
+      const promises = [];
+
       queries.forEach((elem, i) => {
         const { query, operationName } = elem;
         const cleanQuery = {
@@ -566,28 +573,24 @@ export class SuperGraphiQL extends React.Component {
           operationName,
           variables
         };
-        // check if it is a subscription or not
+
         const fetch = fetcher(cleanQuery, variables);
+
         if (isPromise(fetch)) {
-          // If fetcher returned a Promise, then call the callback when the promise
-          // resolves, otherwise handle the error.
-          fetch
-            .then(response => {
-              cb(response, i, "output");
-            })
-            .catch(error => {
-              this.setState({
-                isWaitingForResponse: false,
-                response: error && String(error.stack || error)
-              });
-            });
-        } else if (isObservable(fetch)) {
-          // If the fetcher returned an Observable, then subscribe to it, calling
-          // the callback on each next value, and handling both errors and the
-          // completion of the Observable. Returns a Subscription object.
-          const subscription = fetch.subscribe({
+          promises.push(fetch)
+        } else if(isObservable(fetch)) { 
+          // subscribe to the observable here
+          const subscriptionID = fetch.subscribe({
             next: response => {
-              cb(response, i, "subscription");
+              console.log(response);
+              this.setState(prevState => {
+                const subResponse = prevState.response ? JSON.parse(prevState.response) : {}
+                subResponse[i++ + " | subscription"] = response;
+                return {
+                  isWaitingForResponse: false,
+                  response: JSON.stringify(subResponse, null, 2)
+                }
+              })
             },
             error: error => {
               this.setState({
@@ -603,12 +606,18 @@ export class SuperGraphiQL extends React.Component {
               });
             }
           });
-
-          return subscription;
-        } else {
-          throw new Error("Fetcher did not return Promise or Observable.");
+          // push subscription IDs to array
+          subscriptions.push(subscriptionID)
         }
       });
+
+      if (promises.length) {
+        executeSeries(promises)
+          .then(response => {
+            cb(response, "output");
+          })
+          .catch(console.error.bind(console))
+      }
     }
   }
 
@@ -660,20 +669,18 @@ export class SuperGraphiQL extends React.Component {
         const subscription = this._fetchQuery(
           filteredQuery,
           variables,
-          (result, index, type) => {
+          (results, type) => {
+            console.log(results, type)
             if (runID === this._runCounter) {
-              this.setState(prevState => {
-                const prevRes = prevState.response
-                  ? JSON.parse(prevState.response)
-                  : {};
+              const updatedResults = results.reduce((resObj, result, i) => {
+                resObj[i + " | " + type] = result;
+                return resObj;
+              }, {})
 
-                prevRes[type + "[" + index + "]"] = result;
-
-                return {
-                  isWaitingForResponse: false,
-                  response: JSON.stringify(prevRes, null, 2)
-                };
-              });
+              this.setState({
+                isWaitingForResponse: false,
+                response: JSON.stringify(updatedResults, null, 2)
+              })
             }
           }
         );
@@ -1038,11 +1045,13 @@ export class SuperGraphiQL extends React.Component {
 SuperGraphiQL.Logo = () => {
   return (
     <div className="title">
-      <span>
+      <span style={{display:'none'}}>
         {"Super Graph"}
         <em>{"i"}</em>
         {"QL"}
       </span>
+      <img src="https://imgur.com/6zJO4SS.png" alt="SuperGraphiQL" height="43.65" width="37.35" />
+      <img src="https://imgur.com/QgYQBdn.png" className="subtitle" alt="SuperGraphiQL" height="23.4" width="172.8" />
     </div>
   );
 };
@@ -1074,7 +1083,7 @@ SuperGraphiQL.Footer = function SuperGraphiQLFooter(props) {
 
 const defaultQuery = `# Welcome to SuperGraphiQL
 #
-# GraphiQL is an in-browser tool for writing, validating, and
+# SuperGraphiQL is an in-browser tool for writing, validating, and
 # testing GraphQL queries.
 #
 # An example GraphQL query might look like:

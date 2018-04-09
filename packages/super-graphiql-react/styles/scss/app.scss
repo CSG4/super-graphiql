@@ -13,7 +13,7 @@
   overflow-y: visible;
   position: relative;
   user-select: none;
-  background-color: #2a92e6;
+  background-color: #304053;
   color: #eee;
   text-transform: uppercase;
   box-shadow: 0px 2px 15px rgba(0, 0, 0, 0.20);
@@ -25,10 +25,22 @@
     margin: 0 auto;
     font-size: 18px;
     text-transform: none;
+    display: flex;
+    align-items: center;
 
     em {
       font-family: georgia;
       font-size: 19px;
+    }
+
+    img {
+      &.subtitle {
+        margin: 5px 0 0 5px;
+
+        @media (max-width: 1240px) { 
+          display: none;
+        }
+      }
     }
   }
 }
@@ -36,14 +48,14 @@
 .top-bar-group {
   width: 33.33%;
   display: flex;
-  line-height: 45px;
+  line-height: 53px;
 }
 
 .toolbar {
   display: flex;
 
   .toolbar-button {
-    @media (max-width: 1210px) { 
+    @media (max-width: 1240px) { 
       span {
         display: none;
       }
@@ -61,7 +73,7 @@
  
   &:hover {
     color: white;
-    text-shadow: 1.5px 1px rgba(20,109,181, 0.8);
+    text-shadow: 1.5px 1px rgba(14,34,59, 0.8);
   }
 
   .fa {
@@ -96,10 +108,10 @@
 .schema-button {
   margin-left: auto;
   padding: 0 20px 0 15px;
-  background-color: #006ec1;
+  background-color: #5f7a9b;
 
   &:hover {
-    background-color: #006ec1;
+    background-color: #5f7a9b;
   }
 
   .fa {
