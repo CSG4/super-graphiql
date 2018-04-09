@@ -683,22 +683,6 @@ export class SuperGraphiQL extends React.Component {
               })
             }
           }
-          // (result, index, type) => {
-          //   if (runID === this._runCounter) {
-          //     this.setState(prevState => {
-          //       const prevRes = prevState.response
-          //         ? JSON.parse(prevState.response)
-          //         : {};
-
-          //       prevRes[type + "[" + index + "]"] = result;
-
-          //       return {
-          //         isWaitingForResponse: false,
-          //         response: JSON.stringify(prevRes, null, 2)
-          //       };
-          //     });
-          //   }
-          // }
         );
         this.setState({ subscription });
       } catch (error) {
