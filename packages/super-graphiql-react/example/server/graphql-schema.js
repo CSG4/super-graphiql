@@ -2,9 +2,12 @@ const mongoose = require("mongoose");
 const myURI = "";
 const uri = process.env.MONGO_URI || myURI;
 mongoose.connect(uri);
-mongoose.connection.once("open", () => {
-  console.log("Connected to Database");
-});
+mongoose.connection.then(
+  // resolve callback
+  () => { console.log('Connected to MongoDB')},
+  // reject callback
+  err => { console.log('Unable to connect to MongoDB')}
+);
 
 const graphql = require("graphql");
 const {
