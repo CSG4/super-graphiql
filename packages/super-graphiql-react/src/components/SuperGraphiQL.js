@@ -16,7 +16,6 @@ import CodeMirrorSizer from "../utility/CodeMirrorSizer";
 import StorageAPI from "../utility/StorageAPI";
 import getSelectedOperationName from "../utility/getSelectedOperationName";
 import debounce from "../utility/debounce";
-import find from "../utility/find";
 import { fillLeafs } from "../utility/fillLeafs";
 import { getLeft, getTop } from "../utility/elementPosition";
 import {
@@ -210,10 +209,6 @@ export class SuperGraphiQL extends React.Component {
   }
 
   render() {
-    const children = React.Children.toArray(this.props.children);
-
-    const footer = find(children, child => child.type === SuperGraphiQL.Footer);
-
     const queryWrapStyle = {
       WebkitFlex: this.state.editorFlex,
       flex: this.state.editorFlex
@@ -582,7 +577,6 @@ export class SuperGraphiQL extends React.Component {
           // subscribe to the observable here
           const subscriptionID = fetch.subscribe({
             next: response => {
-              console.log(response);
               this.setState(prevState => {
                 const subResponse = prevState.response ? JSON.parse(prevState.response) : {}
                 subResponse[i++ + " | subscription"] = response;
@@ -627,19 +621,21 @@ export class SuperGraphiQL extends React.Component {
     });
   };
 
-  handleRunQuery = selectedOperationName => {
+  handleRunQuery = (selectedOperationName, editorId) => {
     this._runCounter++;
     const runID = this._runCounter;
 
-    // filter out query editors that are not checked
-    const querytoRun = this.state.queryList.filter(
-      queryObj => queryObj.checked && queryObj.query.trim()
+    const querytoRun = this.state.queryList.filter(queryObj => {
+      if (editorId) {
+        return queryObj.id === editorId && queryObj.query.trim();  
+      }
+        return queryObj.checked && queryObj.query.trim();
+      }
     );
 
     // Use the filtered queries to run after autoCompleteLeafs() runs or,
     // in case autoCompletion fails (the function returns undefined),
     // the current query from the editor.
-
     const editedQueryList = this.autoCompleteLeafs(querytoRun);
     const filteredQuery = editedQueryList.every(result => Boolean(result))
       ? editedQueryList
@@ -670,7 +666,6 @@ export class SuperGraphiQL extends React.Component {
           filteredQuery,
           variables,
           (results, type) => {
-            console.log(results, type)
             if (runID === this._runCounter) {
               const updatedResults = results.reduce((resObj, result, i) => {
                 resObj[i + " | " + type] = result;
@@ -705,7 +700,7 @@ export class SuperGraphiQL extends React.Component {
     }
   };
 
-  _runQueryAtCursor() {
+  _runQueryAtCursor(editorId) {
     if (this.state.subscription) {
       this.handleStopQuery();
       return;
@@ -715,6 +710,7 @@ export class SuperGraphiQL extends React.Component {
     const operations = this.state.operations;
     if (operations) {
       const editor = this.getQueryEditor();
+      
       if (editor.hasFocus()) {
         const cursor = editor.getCursor();
         const cursorIndex = editor.indexFromPos(cursor);
@@ -732,7 +728,7 @@ export class SuperGraphiQL extends React.Component {
         }
       }
     }
-    this.handleRunQuery(operationName);
+    this.handleRunQuery(operationName, editorId);
   }
 
   handleNewQueryBox = (query = "") => {
@@ -821,11 +817,11 @@ export class SuperGraphiQL extends React.Component {
     editor.setValue(print(parse(editor.getValue())));
   };
 
-  handleEditQuery = debounce(100, (value, editorID) => {
+  handleEditQuery = debounce(100, (value, editorId) => {
     const queryListCopy = [...this.state.queryList];
     // find object in query list with id of editor ID and update query value
     const queryList = queryListCopy.map(queryObj => {
-      if (queryObj.id === editorID) {
+      if (queryObj.id === editorId) {
         queryObj.query = value;
       }
       return queryObj;
@@ -853,8 +849,8 @@ export class SuperGraphiQL extends React.Component {
     );
   };
 
-  handleEditorRunQuery = () => {
-    this._runQueryAtCursor();
+  handleEditorRunQuery = (editorId) => {
+    this._runQueryAtCursor(editorId);
   };
 
   _onClickHintInformation = event => {
@@ -1094,8 +1090,10 @@ const defaultQuery = `# Welcome to SuperGraphiQL
 #       }
 #     }
 #
-#       Run Query:  Ctrl-Enter (or press the play button above)
-#   Auto Complete:  Ctrl-Space (or just start typing)
+# Run All Selected Queries: Ctrl-Enter (or press the play button above)
+# Run Current Query: Cmd-Enter (only runs query with cursor focus)
+# Auto Complete:  Ctrl-Space (or just start typing)
+# PrettifyQuery: Shift-Ctrl-P
 #
 `;
 

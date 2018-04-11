@@ -118,7 +118,7 @@ export class QueryEditor extends React.Component {
 
         "Cmd-Enter": () => {
           if (this.props.onRunQuery) {
-            this.props.onRunQuery();
+            this.props.onRunQuery(this.props.editorId);
           }
         },
         "Ctrl-Enter": () => {
