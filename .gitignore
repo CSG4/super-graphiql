@@ -57,8 +57,11 @@ typings/
 # dotenv environment variables file
 .env
 
-
+# webpack bundles for example
 packages/super-graphiql-react/example/dist/
+
+# vscode
+.vscode
 
 
 # Created by https://www.gitignore.io/api/node,macos,windows
