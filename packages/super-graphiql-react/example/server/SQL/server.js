@@ -1,21 +1,29 @@
+/* eslint-disable */
+
+const path = require("path");
 const express = require("express");
-const app = express();   
-const { graphqlExpress } = require('apollo-server-express');
-const bodyParser = require("body-parser");  
+const { createServer } = require('http');
+const app = express();  
+const ws = createServer(app); 
+const bodyParser = require("body-parser"); 
+const { execute, subscribe } = require('graphql');
 const { makeExecutableSchema } = require('graphql-tools');
-const path = require("path");  
-const models = require('./models');
+const { graphqlExpress } = require('apollo-server-express');
+const { SubscriptionServer } = require('subscriptions-transport-ws');
+const joinMonsterJoins = require('./joinMonsterJoins');
+const joinMonsterAdapt = require('join-monster-graphql-tools-adapter'); 
 const { fileLoader, mergeTypes, mergeResolvers } = require('merge-graphql-schemas');
+
+const models = require('./models');
 const typeDefs = mergeTypes(fileLoader(path.join(__dirname, './schema')));
 const resolvers = mergeResolvers(fileLoader(path.join(__dirname, './resolvers')));
+const schema = makeExecutableSchema({typeDefs, resolvers});
 
-const schema = makeExecutableSchema({
-  typeDefs,
-  resolvers,
-});
+joinMonsterAdapt(schema, joinMonsterJoins);
 
-// port to run SuperGraphiQL, defaulted to localhost:9000
-const PORT = 9000;
+// ports to run SuperGraphiQL and susbscriptions (websockets)
+const HTTP_PORT = 7777;
+const WS_PORT = 8888
 
 // Serve Super-Graphiql static files (i.e. HTML)
 app.use("/supergraphiql", express.static(path.join(__dirname, "./../../")));
@@ -40,11 +48,26 @@ graphqlExpress({
 }),
 );
 
-// Sequelize model synchronization
 // Create tables if they don't exist in the database
-// Then, Server starts to listen
+// Then Express server starts to listen 
 models.sequelize.sync({}).then(
-  app.listen(PORT, () => {
-    console.log("Listening on port 9000");
+  app.listen(HTTP_PORT, () => {
+    console.log("Listening on port 7777");
   })
 );
+
+// Run websocket on port 8888
+ws.listen(WS_PORT, () => {
+  console.log("Websocket is running on ws://localhost:8888");
+  new SubscriptionServer(
+    {
+      execute,
+      subscribe,
+      schema,
+    },
+    {
+      server: ws,
+      path: "/subscriptions"
+    }
+  );
+});
