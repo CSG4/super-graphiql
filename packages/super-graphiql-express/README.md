@@ -1,53 +1,62 @@
-<h1 align="center">Super GraphiQL</h1>
+<p align="center"><img src="https://imgur.com/FGT9yfC.png" width="350"></p>
+
 <p align="center">Super-GraphiQL is a powerful yet simple GUI designed for testing your GraphQL API.</p>
 
-Super-GraphiQL is an application dedicating to testing your GraphQL API. Users are able to quickly setup a series of tests for their project, understand the results and save the test cases for later use.
+With Super-GraphiQL users are able to quickly setup a series of tests for GraphQL API, better understand the execution of queries and save test cases for easy reuse.
 
-[![Build Status](https://travis-ci.org/graphql/graphiql.svg?branch=master)](https://travis-ci.org/graphql/graphiql)
+<p align="center"><img src="https://imgur.com/oUNUTSW.png" width="750"></p>
 
-## Installation
+## Getting Started
+<b>Express Middleware</b> 
+<p>To use Super-GraphiQL, install and incorporate the express middleware into your existing project with npm:</p>
+
 ```sh
-$ npm install super-graphiql
 
-$ npm install super-graphiql-express
+$ npm install --save super-graphiql-express
+
 ```
+
+To use the express middleware, simply import the package into your server file and specify the HTTP endpoint and / or websocket endpoint of your GraphQL server. The SuperGraphiQL IDE will automatically be rendered at the '/supergraphiql' route and include support for GraphQL subscriptions.
+
+```sh
+
+const { supergraphiqlExpress } = require('super-graphiql-express');
+
+app.use('/supergraphiql', 
+supergraphiqlExpress({
+  endpointURL: "/graphql",
+  subscriptionsEndpoint: "ws://localhost:9999/subscriptions"
+}));
+
+```
+
+<b>React Component</b>
+You can incorporate Super-GraphiQL into your existing project with npm:
+
+```sh
+$ npm install --save super-graphiql
+
+```
+
 ## Features 
-Super GraphiQL leverages components of GraphiQl [GraphiQL](https://github.com/graphql/graphiql) under the hood but is meant as a more powerful and flexibile GraphQL IDE to enable smooth testing workflow resulting enabling more efficicent workflows. Super GraphiQL thus adds the following features to the GraphQL ecosystem:
+Super-GraphiQL leverages components of [GraphiQL](https://github.com/graphql/graphiql) under the hood but developed to be a more powerful and flexibile GraphQL IDE to enable a smooth and efficient testing workflow. Super-GraphiQL adds the following features to the GraphQL ecosystem:
   
   - Supports multiple GraphQL queries and mutations in one test script
-  - Intuitive visualization of test results
-  - Save and reuse test scripts
-  - Searchable Query history
-  - Context-aware autocompletion & error highlighting
-  - Supports real-time GraphQL Subscriptions
+  - Save and reuse test scripts including a searchable Query history
+  - Includes real world examples with NoSQL and SQL databases.
 
-## Tech/framework used
+## How to use?
+- Build test scripts full of queries and test only the ones you need
+<img src="https://imgur.com/3mqzuy6.gif" title="search-history" width="750"/>
 
-<b>Built with</b>
-- [React]()
-- [Flow]()
-- [Apollo]()
-- [Express]()
-- [MongoDB]()
-- [Postgres]()
-
+- Search History to find the reusable queries
+<img src="https://imgur.com/ogV6z6Q.gif" title="search-history" width="750"/>
 
 ## Packages
-super-graphiql-middleware-express: Express middleware
-super-graphiql-react: Core of Super Graphiql built with ReactJS
-
+[super-graphiql-express](https://www.npmjs.com/package/super-graphiql-express): Express middleware
 
 ## Authors
-
-<!-- [![Albert Chen](https://avatars3.githubusercontent.com/u/23642624?s=400&v=4?raw=true)](https://github.com/ac3639) | 
-[![Marissa Lafontant](https://avatars3.githubusercontent.com/u/31493327?s=460&v=4?raw=true)](https://github.com/mlafontant) | 
-[![Eduardo Maillo](https://avatars2.githubusercontent.com/u/33046720?s=400&v=4?raw=true)](https://github.com/eduardomaillo) | 
-[![Angela Scerbo](https://avatars2.githubusercontent.com/u/11137912?s=400&v=4?raw=true)](https://github.com/angelascerbo)
----|---|---|--- -->
 [Albert Chen](https://github.com/ac3639) | [Marissa Lafontant](https://github.com/mlafontant) | [Eduardo Maillo](https://github.com/eduardomaillo) | [Angela Scerbo](https://github.com/angelascerbo)
-
 
 ## License
 See LICENSE file
-MIT ©
-
