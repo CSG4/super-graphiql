@@ -1,8 +1,8 @@
 const Sequelize = require('sequelize');
 
 // Replace with your database connection information.
-const sequelize = new Sequelize('test-seql-monster', 'postgres', '3sp3r4nz4', {
-  dialect: 'postgres',
+const sequelize = new Sequelize('Database name', 'User', 'Password', {
+  dialect: 'SQL server engine',
   define: {
     underscored: true,
   },
