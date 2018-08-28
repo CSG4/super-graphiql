@@ -4,7 +4,7 @@
 const Sequelize = require('sequelize');
 
 // Introduce your database connection information.
-const sequelize = new Sequelize('Database-name', 'user', 'password', {
+const sequelize = new Sequelize('<your database>', '<db user>', '<password>', {
   dialect: 'postgres',
   define: {
     underscored: true,
@@ -19,6 +19,7 @@ const sequelize = new Sequelize('Database-name', 'user', 'password', {
 const models = {
   Student: sequelize.import('./student'),
   Subject: sequelize.import('./subject'),
+  Class: sequelize.import('./class')
 };
 
 Object.keys(models).forEach((modelName) => {
