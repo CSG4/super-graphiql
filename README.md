@@ -62,7 +62,6 @@ Include the necessary CSS and Font Awesome script on your page.
 
 ```sh
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/super-graphiql@latest/super-graphiql.min.css" />
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/super-graphiql@latest/super-graphiql.min.css" />
 ```
 
 ## Features 
